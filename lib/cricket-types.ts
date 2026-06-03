@@ -1,0 +1,88 @@
+export type DismissalType =
+  | "bowled"
+  | "lbw"
+  | "caught"
+  | "stumped"
+  | "run-out"
+  | "none";
+
+export type ExtraType = "wide" | "no-ball" | "bye" | "leg-bye" | "none";
+
+export type TournamentPreset = "T20" | "ODI" | "T10";
+
+export interface BallData {
+  id: string;
+  runs: number;
+  extra: ExtraType;
+  extraRuns: number;
+  dismissal: DismissalType;
+  dismissedPlayer?: string;
+  fielderName?: string;
+  bowlerName: string;
+  batsmanName: string;
+  ballNumber: number;
+  overNumber: number;
+}
+
+export type PlayerGender = "male" | "female" | "other";
+
+export type PlayerRole = "batsman" | "bowler" | "all-rounder" | "wicket-keeper";
+
+export type BattingStyle = "right-hand" | "left-hand";
+
+export type BowlingStyle =
+  | "none"
+  | "right-arm-fast"
+  | "right-arm-medium"
+  | "right-arm-off-spin"
+  | "right-arm-leg-spin"
+  | "left-arm-fast"
+  | "left-arm-medium"
+  | "left-arm-orthodox"
+  | "left-arm-chinaman";
+
+export interface Player {
+  id: string;
+  name: string;
+  role: PlayerRole;
+  gender: PlayerGender;
+  age?: number;
+  battingStyle: BattingStyle;
+  bowlingStyle: BowlingStyle;
+  imageUrl?: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  ownerName?: string;
+  logoUrl?: string;
+  players: Player[];
+}
+
+export interface MatchConfig {
+  totalOvers: number;
+  ballsPerOver: number;
+}
+
+export interface InningsData {
+  teamId: string;
+  teamName: string;
+  balls: BallData[];
+  currentBatsmanIndex: number;
+  currentBowlerIndex: number;
+  strikerPlayerId: string;
+  nonStrikerPlayerId: string;
+  currentBowlerPlayerId: string;
+  lastBowlerPlayerId?: string;
+}
+
+export interface MatchState {
+  team1: Team;
+  team2: Team;
+  config: MatchConfig | null;
+  innings1: InningsData | null;
+  innings2: InningsData | null;
+  currentInnings: 1 | 2;
+  matchStarted: boolean;
+}

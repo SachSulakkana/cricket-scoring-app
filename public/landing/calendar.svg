@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 308 344" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#121820"/>
+      <stop offset="100%" stop-color="#0c1016"/>
+    </linearGradient>
+  </defs>
+  <rect width="308" height="344" fill="url(#bg)"/>
+  <!-- Calendar panel -->
+  <rect x="44" y="72" width="220" height="240" rx="12" stroke="#3ecf6a" stroke-width="1.5" fill="#1a222c" fill-opacity="0.9"/>
+  <rect x="44" y="72" width="220" height="44" rx="12" fill="#1a3d28" fill-opacity="0.8"/>
+  <rect x="44" y="104" width="220" height="12" fill="#3ecf6a" fill-opacity="0.15"/>
+  <!-- Grid dots -->
+  <g fill="#3ecf6a" fill-opacity="0.35">
+    <circle cx="88" cy="148" r="10"/><circle cx="154" cy="148" r="10"/>
+    <circle cx="220" cy="148" r="10"/><circle cx="88" cy="198" r="10"/>
+    <circle cx="154" cy="198" r="10"/><circle cx="220" cy="198" r="10"/>
+    <circle cx="88" cy="248" r="10"/><circle cx="154" cy="248" r="10"/>
+  </g>
+  <circle cx="220" cy="248" r="12" fill="#d4a84b" fill-opacity="0.85"/>
+  <!-- Active match highlight -->
+  <rect x="130" y="136" width="48" height="32" rx="4" stroke="#3ecf6a" stroke-width="2" fill="#3ecf6a" fill-opacity="0.2"/>
+  <!-- Trophy header icon -->
+  <path d="M154 36 L144 68 H164 Z" stroke="#d4a84b" stroke-width="2" fill="#d4a84b" fill-opacity="0.25"/>
+  <path d="M132 68 Q132 92 154 102 Q176 92 176 68" stroke="#d4a84b" stroke-width="2" fill="none"/>
+  <line x1="148" y1="102" x2="160" y2="114" stroke="#d4a84b" stroke-width="2"/>
+  <line x1="142" y1="114" x2="166" y2="114" stroke="#d4a84b" stroke-width="2"/>
+</svg>

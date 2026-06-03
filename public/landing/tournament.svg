@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 308 344" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#121820"/>
+      <stop offset="100%" stop-color="#0a1018"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="30%" r="55%">
+      <stop offset="0%" stop-color="#3ecf6a" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#3ecf6a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d4a84b" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#d4a84b" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="308" height="344" fill="url(#bg)"/>
+  <rect width="308" height="344" fill="url(#glow)"/>
+  <!-- Broadcast corner brackets -->
+  <path d="M16 20 H44 V32 H28 V48 H16 Z" fill="#3ecf6a" fill-opacity="0.85"/>
+  <path d="M292 20 H264 V32 H280 V48 H292 Z" fill="#3ecf6a" fill-opacity="0.85"/>
+  <path d="M16 324 H44 V312 H28 V296 H16 Z" fill="#3ecf6a" fill-opacity="0.35"/>
+  <path d="M292 324 H264 V312 H280 V296 H292 Z" fill="#3ecf6a" fill-opacity="0.35"/>
+  <!-- Floodlights -->
+  <path d="M40 24 L80 120 L40 120 Z" fill="url(#beam)" opacity="0.6"/>
+  <path d="M268 24 L228 120 L268 120 Z" fill="url(#beam)" opacity="0.6"/>
+  <!-- Pitch oval -->
+  <ellipse cx="154" cy="248" rx="118" ry="52" stroke="#3d7a4a" stroke-width="1.5" fill="#1a3d28" fill-opacity="0.5"/>
+  <ellipse cx="154" cy="248" rx="88" ry="38" stroke="#3ecf6a" stroke-width="1" stroke-opacity="0.4" fill="none"/>
+  <!-- Trophy outline -->
+  <path d="M154 130 L142 168 H166 Z" stroke="#d4a84b" stroke-width="2" fill="#d4a84b" fill-opacity="0.15"/>
+  <path d="M128 168 Q128 200 154 212 Q180 200 180 168" stroke="#d4a84b" stroke-width="2" fill="none"/>
+  <line x1="148" y1="212" x2="160" y2="228" stroke="#d4a84b" stroke-width="2"/>
+  <line x1="140" y1="228" x2="168" y2="228" stroke="#d4a84b" stroke-width="2"/>
+  <!-- Scan lines -->
+  <g opacity="0.06" stroke="#f0ebe0" stroke-width="1">
+    <line x1="0" y1="80" x2="308" y2="80"/><line x1="0" y1="140" x2="308" y2="140"/>
+    <line x1="0" y1="200" x2="308" y2="200"/><line x1="0" y1="260" x2="308" y2="260"/>
+  </g>
+</svg>

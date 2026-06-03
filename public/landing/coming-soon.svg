@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 308 164" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#161a1e"/>
+      <stop offset="100%" stop-color="#0e1014"/>
+    </linearGradient>
+  </defs>
+  <rect width="308" height="164" fill="url(#bg)"/>
+  <ellipse cx="154" cy="130" rx="130" ry="24" fill="#1a2228" stroke="#2a3540" stroke-width="1"/>
+  <!-- Muted pitch -->
+  <ellipse cx="154" cy="128" rx="90" ry="18" stroke="#3d7a4a" stroke-width="1" stroke-opacity="0.2" fill="none"/>
+  <!-- Lock -->
+  <rect x="138" y="58" width="32" height="38" rx="6" stroke="#4a5568" stroke-width="2" fill="#252b32"/>
+  <path d="M146 58 V50 Q154 40 162 50 V58" stroke="#4a5568" stroke-width="2" fill="none"/>
+  <circle cx="154" cy="76" r="5" fill="#4a5568"/>
+  <line x1="154" y1="81" x2="154" y2="88" stroke="#4a5568" stroke-width="2" stroke-linecap="round"/>
+  <!-- Dashed border hint -->
+  <rect x="12" y="12" width="284" height="140" rx="6" stroke="#3ecf6a" stroke-width="1" stroke-opacity="0.12" stroke-dasharray="8 6" fill="none"/>
+</svg>

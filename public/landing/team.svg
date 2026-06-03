@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 308 344" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#131a22"/>
+      <stop offset="100%" stop-color="#0a0f14"/>
+    </linearGradient>
+  </defs>
+  <rect width="308" height="344" fill="url(#bg)"/>
+  <ellipse cx="154" cy="290" rx="130" ry="36" fill="#1a3020" fill-opacity="0.5" stroke="#3d7a4a" stroke-width="1"/>
+  <!-- Three jerseys -->
+  <g stroke-width="2">
+    <rect x="52" y="120" width="56" height="72" rx="8" stroke="#5b7fd4" fill="#5b7fd4" fill-opacity="0.12"/>
+    <text x="80" y="168" text-anchor="middle" fill="#5b7fd4" font-family="system-ui,sans-serif" font-size="22" font-weight="700" opacity="0.9">7</text>
+    <rect x="126" y="100" width="56" height="80" rx="8" stroke="#3ecf6a" fill="#3ecf6a" fill-opacity="0.12"/>
+    <text x="154" y="155" text-anchor="middle" fill="#3ecf6a" font-family="system-ui,sans-serif" font-size="24" font-weight="700">18</text>
+    <rect x="200" y="120" width="56" height="72" rx="8" stroke="#d4a84b" fill="#d4a84b" fill-opacity="0.12"/>
+    <text x="228" y="168" text-anchor="middle" fill="#d4a84b" font-family="system-ui,sans-serif" font-size="22" font-weight="700" opacity="0.9">3</text>
+  </g>
+  <!-- Captain band / crest -->
+  <circle cx="154" cy="72" r="36" stroke="#3ecf6a" stroke-width="2" fill="none" stroke-opacity="0.5"/>
+  <path d="M154 48 L164 68 H144 Z" fill="#3ecf6a" fill-opacity="0.4" stroke="#3ecf6a" stroke-width="1.5"/>
+  <circle cx="154" cy="78" r="8" fill="#3ecf6a" fill-opacity="0.6"/>
+  <!-- Connecting lines -->
+  <line x1="108" y1="192" x2="126" y2="180" stroke="#3ecf6a" stroke-width="1" opacity="0.3"/>
+  <line x1="200" y1="192" x2="182" y2="180" stroke="#3ecf6a" stroke-width="1" opacity="0.3"/>
+  <rect x="20" y="300" width="80" height="2" fill="#3ecf6a" opacity="0.25"/>
+  <rect x="208" y="300" width="80" height="2" fill="#3ecf6a" opacity="0.25"/>
+</svg>

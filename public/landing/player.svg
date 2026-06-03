@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 308 344" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#141c24"/>
+      <stop offset="100%" stop-color="#0c1218"/>
+    </linearGradient>
+    <radialGradient id="spot" cx="50%" cy="75%" r="45%">
+      <stop offset="0%" stop-color="#3ecf6a" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#3ecf6a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="308" height="344" fill="url(#bg)"/>
+  <rect width="308" height="344" fill="url(#spot)"/>
+  <!-- Pitch stripes -->
+  <g opacity="0.12">
+    <rect x="0" y="220" width="308" height="18" fill="#3ecf6a"/>
+    <rect x="0" y="256" width="308" height="18" fill="#3ecf6a"/>
+    <rect x="0" y="292" width="308" height="18" fill="#3ecf6a"/>
+  </g>
+  <ellipse cx="154" cy="300" rx="120" ry="28" stroke="#3d7a4a" stroke-width="1" fill="#1a3020" fill-opacity="0.4"/>
+  <!-- Bat (neon line art) -->
+  <rect x="198" y="72" width="14" height="118" rx="5" stroke="#d4a84b" stroke-width="2" fill="#d4a84b" fill-opacity="0.12" transform="rotate(32 205 131)"/>
+  <rect x="192" y="68" width="26" height="10" rx="2" stroke="#d4a84b" stroke-width="2" fill="#d4a84b" fill-opacity="0.2" transform="rotate(32 205 73)"/>
+  <!-- Ball -->
+  <circle cx="88" cy="100" r="22" stroke="#e85d4c" stroke-width="2" fill="#e85d4c" fill-opacity="0.2"/>
+  <path d="M76 88 Q84 96 76 104" stroke="#f0ebe0" stroke-width="1.5" stroke-opacity="0.5" fill="none"/>
+  <!-- Player figure (minimal broadcast silhouette) -->
+  <circle cx="154" cy="118" r="26" stroke="#3ecf6a" stroke-width="2" fill="#1e2830"/>
+  <path d="M154 144 L154 248" stroke="#3ecf6a" stroke-width="3" stroke-linecap="round"/>
+  <path d="M154 172 L108 128" stroke="#3ecf6a" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M154 168 L210 108" stroke="#3ecf6a" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M154 248 L124 310 M154 248 L184 310" stroke="#3ecf6a" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- UI accent -->
+  <rect x="20" y="24" width="48" height="3" rx="1" fill="#3ecf6a" opacity="0.7"/>
+  <rect x="20" y="32" width="32" height="3" rx="1" fill="#3ecf6a" opacity="0.35"/>
+</svg>
