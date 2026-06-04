@@ -138,7 +138,7 @@ export default function MatchSummary({
           <p className="cricket-display text-base font-semibold text-[var(--cricket-cream)] mb-4">
             {matchState.team1.name}
           </p>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <InningsStat label="Runs" value={innings1Stats.runs} />
             <InningsStat label="Wkts" value={innings1Stats.wickets} />
             <InningsStat label="Balls" value={innings1Stats.balls} />
@@ -153,7 +153,7 @@ export default function MatchSummary({
           <p className="cricket-display text-base font-semibold text-[var(--cricket-cream)] mb-4">
             {matchState.team2.name}
           </p>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <InningsStat label="Runs" value={innings2Stats.runs} />
             <InningsStat label="Wkts" value={innings2Stats.wickets} />
             <InningsStat label="Balls" value={innings2Stats.balls} />

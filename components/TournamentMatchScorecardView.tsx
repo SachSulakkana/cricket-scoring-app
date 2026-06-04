@@ -53,7 +53,7 @@ export default function TournamentMatchScorecardView({
         <CardHeader>
           <CardTitle className="text-white flex justify-between items-center gap-3">
             <span className="truncate">{title}</span>
-            <span className="text-green-400 shrink-0">
+            <span className="text-[var(--cricket-gold)] shrink-0">
               {totals.runs}/{totals.wickets} ({calculateOvers(innings.balls, ballsPerOver)})
             </span>
           </CardTitle>

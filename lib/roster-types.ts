@@ -33,12 +33,19 @@ export interface TournamentFixtureResult {
   scorecard?: TournamentMatchSnapshot;
 }
 
+export type PlayoffMatchKind = "qualifier" | "final";
+
 export interface TournamentFixture {
   id: string;
   teamAId: string;
   teamBId: string;
   played: boolean;
   result?: TournamentFixtureResult;
+  /** 0-based stage index this fixture belongs to. */
+  stageIndex: number;
+  groupId?: string;
+  bracketRound?: number;
+  playoffMatchKind?: PlayoffMatchKind;
 }
 
 export interface SavedTournament {
@@ -52,6 +59,15 @@ export interface SavedTournament {
   selectedTeamIds: string[];
   fixtures: TournamentFixture[];
   createdAt: string;
+  /** Preset format id from tournament-format-presets. */
+  formatPresetId?: string;
+  /** Active stage (0-based). */
+  currentStageIndex?: number;
+  /** teamId -> group letter (A, B, …) for group stages. */
+  groupAssignments?: Record<string, string>;
+  championTeamId?: string;
+  /** Cached per-stage completion flags. */
+  stageComplete?: boolean[];
   /** Saved from Create Tournament — reusable config, not a live competition. */
   isTemplate?: boolean;
   /** Set on play instances cloned from a template. */

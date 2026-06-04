@@ -273,7 +273,7 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
 
               <Button
                 onClick={handleConfigComplete}
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                className="w-full cricket-btn-play cricket-btn-play--quick"
               >
                 {editingFromConfirm === "config"
                   ? "Save Match Config"
@@ -374,7 +374,7 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
 
               <Button
                 onClick={handleConfirmStartMatch}
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                className="w-full cricket-btn-play cricket-btn-play--quick"
               >
                 Start Match
               </Button>

@@ -95,9 +95,11 @@ export default function QuickMatchApp({ onBackToHome }: QuickMatchAppProps) {
           <Button
             variant="ghost"
             onClick={handleBackHome}
-            className="absolute top-4 left-4 z-10 cricket-btn-back rounded-md px-2 py-1.5"
+            aria-label="Go home"
+            title="Go home"
+            className="absolute top-4 left-4 z-10 cricket-btn-back !h-11 !w-11 !min-h-11 !min-w-11 !p-0 inline-flex items-center justify-center text-xl"
           >
-            ← Home
+            <span aria-hidden>←</span>
           </Button>
           <TeamSetup onNext={handleSetupNext} />
         </div>
@@ -116,9 +118,11 @@ export default function QuickMatchApp({ onBackToHome }: QuickMatchAppProps) {
           <Button
             variant="ghost"
             onClick={handleBackHome}
-            className="absolute top-4 left-4 z-10 cricket-btn-back rounded-md px-2 py-1.5"
+            aria-label="Go home"
+            title="Go home"
+            className="absolute top-4 left-4 z-10 cricket-btn-back !h-11 !w-11 !min-h-11 !min-w-11 !p-0 inline-flex items-center justify-center text-xl"
           >
-            ← Home
+            <span aria-hidden>←</span>
           </Button>
           <MatchSummary
             onUseSameTeams={handleUseSameTeams}

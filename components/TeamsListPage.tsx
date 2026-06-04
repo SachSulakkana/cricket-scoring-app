@@ -68,7 +68,7 @@ function TeamCard({
             className="cricket-select-content min-w-[8.5rem] border-[oklch(0.32_0.04_255)] bg-[oklch(0.14_0.025_255)]"
           >
             <DropdownMenuItem
-              className="focus:bg-[oklch(0.22_0.04_145)] cursor-pointer"
+              className="focus:bg-[oklch(0.22_0.04_295)] cursor-pointer"
               onSelect={(e) => {
                 e.preventDefault();
                 onEdit(team.id);
@@ -96,7 +96,7 @@ function TeamCard({
         imageUrl={team.logoUrl}
         alt={team.name}
         variant="team"
-        placeholder={<Users className="h-10 w-10 text-[oklch(0.45_0.1_265)]" />}
+        placeholder={<Users className="h-10 w-10 text-[oklch(0.45_0.1_295)]" />}
       />
       <div className="roster-card__body">
         <h2 className="roster-card__title cricket-display">{team.name}</h2>

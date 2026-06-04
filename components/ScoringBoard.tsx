@@ -202,7 +202,7 @@ export default function ScoringBoard({
               matchState.currentInnings === 1 && "cricket-team-panel--batting"
             )}
           >
-            <p className="cricket-panel-label text-[oklch(0.65_0.08_250)] mb-1">
+            <p className="cricket-panel-label text-[oklch(0.65_0.08_300)] mb-1">
               {matchState.team1.name}
             </p>
             {matchState.innings1 && (
@@ -265,8 +265,8 @@ export default function ScoringBoard({
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+        <div className="cricket-scoring-layout grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="md:col-span-2 min-w-0">
             <BallEntry
               onOverComplete={() => {}}
               lockActionsUntilUndo={lockActionsUntilUndo}
@@ -274,7 +274,7 @@ export default function ScoringBoard({
             />
           </div>
 
-          <div>
+          <div className="min-w-0">
             <Scoresheet innings={currentInnings} />
           </div>
         </div>

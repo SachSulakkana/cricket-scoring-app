@@ -9,6 +9,10 @@ import { appToast } from "@/lib/app-toast";
 import { clearLiveMatchDraftLocal, clearLiveMatchDraftRemote } from "@/lib/live-match-draft";
 import { updateTournament } from "@/lib/roster-storage";
 import {
+  afterMatchUpdate,
+  tryAdvanceStage,
+} from "@/lib/tournament-stage-engine";
+import {
   useRosterHydrated,
   useTeams,
   useTournament,
@@ -66,7 +70,7 @@ export default function PlayTournamentFixturePage() {
       onBack={() => router.push(routes.playCustomTournamentGame(tournament.id))}
       onComplete={(result) => {
         void (async () => {
-          const updated = {
+          let updated = {
             ...tournament,
             fixtures: tournament.fixtures.map((fx) =>
               fx.id === fixture.id
@@ -78,11 +82,20 @@ export default function PlayTournamentFixturePage() {
                 : fx
             ),
           };
+          updated = afterMatchUpdate(updated);
+          const advance = tryAdvanceStage(updated);
+          updated = advance.tournament;
           try {
             await updateTournament(updated);
             clearLiveMatchDraftLocal();
             void clearLiveMatchDraftRemote();
-            appToast.success("Match result saved");
+            if (advance.championTeamId) {
+              appToast.success("Tournament complete — champion crowned!");
+            } else if (advance.advanced && advance.message) {
+              appToast.success(advance.message);
+            } else {
+              appToast.success("Match result saved");
+            }
             router.push(routes.playCustomTournamentGame(tournament.id));
           } catch (err) {
             appToast.error(

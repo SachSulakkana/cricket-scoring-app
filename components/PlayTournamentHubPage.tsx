@@ -1,6 +1,8 @@
 "use client";
 
-import { Plus, Play, Trophy } from "lucide-react";
+import { useState } from "react";
+import { Plus, Play, Trash2, Trophy } from "lucide-react";
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import RefreshRosterButton from "@/components/RefreshRosterButton";
 import {
   CricketAddButton,
@@ -10,7 +12,13 @@ import {
   CricketPage,
   CricketPageHeader,
 } from "@/components/cricket-shell";
-import type { SavedTournament } from "@/lib/roster-storage";
+import { appToast } from "@/lib/app-toast";
+import {
+  clearLiveMatchDraftLocal,
+  clearLiveMatchDraftRemote,
+  loadLiveMatchDraftLocal,
+} from "@/lib/live-match-draft";
+import { deleteTournament, type SavedTournament } from "@/lib/roster-storage";
 import { usePlayTournaments } from "@/lib/store/roster-hooks";
 import {
   getTournamentPlayStatus,
@@ -40,17 +48,40 @@ function statusBadgeClass(status: TournamentPlayStatus): string {
 function OngoingTournamentCard({
   tournament,
   onResume,
+  onDelete,
+  deleting,
 }: {
   tournament: SavedTournament;
   onResume: () => void;
+  onDelete: () => void;
+  deleting?: boolean;
 }) {
   const status = getTournamentPlayStatus(tournament);
   const progress = getTournamentProgressLabel(tournament);
   const isSetup = status === "setup";
 
   return (
-    <CricketBroadcastCard className="tournament-hub-card p-4">
-      <div className="flex items-start justify-between gap-3">
+    <CricketBroadcastCard
+      className={cn(
+        "tournament-hub-card relative overflow-visible p-4",
+        deleting && "opacity-60 pointer-events-none"
+      )}
+    >
+      <button
+        type="button"
+        onClick={onDelete}
+        disabled={deleting}
+        className="roster-card__menu-btn absolute top-3 right-3 z-10 min-h-11 min-w-11 border-[oklch(0.5_0.14_25/0.5)] text-[oklch(0.78_0.12_25)] hover:border-[oklch(0.62_0.18_25)] hover:bg-[oklch(0.28_0.1_25/0.55)] touch-manipulation"
+        aria-label={`Delete ${tournament.name}`}
+        title="Delete tournament"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+
+      <div className="flex items-start gap-3 pr-10">
+        <div className="shrink-0 rounded-xl border border-[oklch(0.55_0.12_75/0.35)] bg-[oklch(0.28_0.08_75/0.35)] p-3">
+          <Trophy className="h-6 w-6 text-[var(--cricket-gold)]" />
+        </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2 mb-1">
             <CricketEyebrow className="mb-0">Tournament</CricketEyebrow>
@@ -79,13 +110,12 @@ function OngoingTournamentCard({
             )}
           </div>
         </div>
-        <div className="shrink-0 rounded-xl border border-[oklch(0.55_0.12_75/0.35)] bg-[oklch(0.28_0.08_75/0.35)] p-3 self-start">
-          <Trophy className="h-6 w-6 text-[var(--cricket-gold)]" />
-        </div>
       </div>
+
       <button
         type="button"
         onClick={onResume}
+        disabled={deleting}
         className={cn(
           "mt-4 w-full cricket-btn-add cricket-btn-add--inline cricket-btn-add--tournament",
           "!min-h-10 justify-center"
@@ -118,6 +148,38 @@ export default function PlayTournamentHubPage({
   onResumeTournament,
 }: PlayTournamentHubPageProps) {
   const tournaments = usePlayTournaments();
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    const { id: tournamentId, name } = deleteTarget;
+    setDeletingId(tournamentId);
+    void (async () => {
+      try {
+        await deleteTournament(tournamentId);
+        const draft = loadLiveMatchDraftLocal();
+        if (
+          draft?.meta?.kind === "tournament" &&
+          draft.meta.tournamentId === tournamentId
+        ) {
+          clearLiveMatchDraftLocal();
+          void clearLiveMatchDraftRemote();
+        }
+        appToast.success(`"${name}" deleted`);
+        setDeleteTarget(null);
+      } catch (err) {
+        appToast.error(
+          err instanceof Error ? err.message : "Could not delete tournament"
+        );
+      } finally {
+        setDeletingId(null);
+      }
+    })();
+  };
 
   const ongoing = tournaments.filter(
     (t) => getTournamentPlayStatus(t) !== "finished"
@@ -147,8 +209,8 @@ export default function PlayTournamentHubPage({
                   Start a fresh competition
                 </h2>
                 <p className="text-[oklch(0.65_0.03_255)] text-sm mt-1 leading-relaxed">
-                  Choose T20, ODI, T10, or a custom template from Create
-                  Tournament — then pick squads and play matches.
+                  Choose T20, ODI, T10, or your custom templates on one screen
+                  — then pick squads and play matches.
                 </p>
               </div>
             </div>
@@ -190,7 +252,14 @@ export default function PlayTournamentHubPage({
                 <OngoingTournamentCard
                   key={tournament.id}
                   tournament={tournament}
+                  deleting={deletingId === tournament.id}
                   onResume={() => onResumeTournament(tournament)}
+                  onDelete={() =>
+                    setDeleteTarget({
+                      id: tournament.id,
+                      name: tournament.name,
+                    })
+                  }
                 />
               ))}
             </div>
@@ -211,13 +280,33 @@ export default function PlayTournamentHubPage({
                 <OngoingTournamentCard
                   key={tournament.id}
                   tournament={tournament}
+                  deleting={deletingId === tournament.id}
                   onResume={() => onResumeTournament(tournament)}
+                  onDelete={() =>
+                    setDeleteTarget({
+                      id: tournament.id,
+                      name: tournament.name,
+                    })
+                  }
                 />
               ))}
             </div>
           </section>
         )}
       </div>
+
+      <ConfirmDeleteDialog
+        open={deleteTarget != null}
+        onOpenChange={(open) => !open && !deletingId && setDeleteTarget(null)}
+        title="Delete tournament?"
+        description={
+          deleteTarget
+            ? `Delete "${deleteTarget.name}"? All match results, fixtures, standings, stats, and progress for this tournament will be permanently lost. This cannot be undone.`
+            : ""
+        }
+        onConfirm={confirmDelete}
+        loading={deletingId != null}
+      />
     </CricketPage>
   );
 }

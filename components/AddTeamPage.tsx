@@ -10,6 +10,7 @@ import {
   CricketEyebrow,
   CricketFormFieldError,
   CricketFormLabel,
+  CricketBackButton,
   CricketPage,
 } from "@/components/cricket-shell";
 import PlayerAssignCombobox from "@/components/PlayerAssignCombobox";
@@ -81,16 +82,14 @@ export default function AddTeamPage({
     assignedPlayerIds.includes(player.id);
 
   const { pending, run } = usePendingAction();
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleSave = () => {
-    if (!teamName.trim()) {
-      appToast.validation("Please enter team name.");
-      return;
-    }
-    if (!ownerName.trim()) {
-      appToast.validation("Please enter owner name.");
-      return;
-    }
+    const errors: Record<string, string> = {};
+    if (!teamName.trim()) errors.teamName = "Enter team name.";
+    if (!ownerName.trim()) errors.ownerName = "Enter owner name.";
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
     const conflicts = findPlayersAlreadyOnOtherTeams(
       assignedPlayerIds,
@@ -133,13 +132,11 @@ export default function AddTeamPage({
   return (
     <CricketPage>
       <div className="max-w-md mx-auto">
-      <button
-        type="button"
+      <CricketBackButton
         onClick={onBack}
-        className="cricket-btn-back mb-5 rounded-md px-2 py-1.5 -ml-2"
-      >
-        ← Back
-      </button>
+        ariaLabel="Go back"
+        className="mb-5 -ml-2"
+      />
 
       <CricketBroadcastCard className="p-5 space-y-5">
         <div className="flex items-center gap-2.5 pb-1">

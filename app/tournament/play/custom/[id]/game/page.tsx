@@ -5,28 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import CustomTournamentGamePage from "@/components/CustomTournamentGamePage";
 import { routes } from "@/lib/app-routes";
 import { Team } from "@/lib/cricket-types";
-import {
-  TournamentFixture,
-  updateTournament,
-} from "@/lib/roster-storage";
+import { updateTournament } from "@/lib/roster-storage";
 import { useRosterHydrated, useTeams, useTournament } from "@/lib/store/roster-hooks";
 import { appToast } from "@/lib/app-toast";
 import { isTournamentTemplate } from "@/lib/tournament-template";
-
-function buildDefaultFixtures(teamIds: string[]): TournamentFixture[] {
-  const fixtures: TournamentFixture[] = [];
-  for (let i = 0; i < teamIds.length; i += 1) {
-    for (let j = i + 1; j < teamIds.length; j += 1) {
-      fixtures.push({
-        id: `${teamIds[i]}-${teamIds[j]}`,
-        teamAId: teamIds[i],
-        teamBId: teamIds[j],
-        played: false,
-      });
-    }
-  }
-  return fixtures;
-}
+import {
+  getSelectedTeamIds,
+  initializeTournamentPlay,
+} from "@/lib/tournament-stage-engine";
 
 export default function PlayCustomTournamentGamePage() {
   const router = useRouter();
@@ -66,26 +52,23 @@ export default function PlayCustomTournamentGamePage() {
   useEffect(() => {
     if (!tournament || syncingFixtures.current) return;
     const validTeamIds = selectedTeams.map((team) => team.id);
-    const generated = buildDefaultFixtures(validTeamIds);
-    if (generated.length === 0) return;
+    if (validTeamIds.length < 2) return;
 
-    const existingById = new Map(tournament.fixtures.map((fx) => [fx.id, fx]));
-    const merged = generated.map((fx) => existingById.get(fx.id) ?? fx);
+    const needsInit =
+      tournament.formatPresetId &&
+      tournament.fixtures.length === 0 &&
+      getSelectedTeamIds(tournament).length >= tournament.teamCount;
 
-    const changed =
-      tournament.fixtures.length !== merged.length ||
-      merged.some((fx, i) => tournament.fixtures[i]?.id !== fx.id);
-
-    if (!changed) return;
+    if (!needsInit) return;
 
     syncingFixtures.current = true;
-    const updated = { ...tournament, fixtures: merged };
+    const updated = initializeTournamentPlay(tournament);
     void updateTournament(updated)
       .catch((err) => {
         appToast.error(
           err instanceof Error
             ? err.message
-            : "Could not update tournament fixtures"
+            : "Could not initialize tournament fixtures"
         );
       })
       .finally(() => {
@@ -105,6 +88,19 @@ export default function PlayCustomTournamentGamePage() {
       onBack={() => router.push(routes.playCustomTournament(tournament.id))}
       onPlayNow={(fixtureId) =>
         router.push(routes.playCustomTournamentMatch(tournament.id, fixtureId))
+      }
+      onAdvanceStage={(next) => updateTournament(next)}
+      onReorderFixtures={(nextFixtures) =>
+        updateTournament({ ...tournament, fixtures: nextFixtures })
+          .then(() => appToast.success("Match order updated"))
+          .catch((err) => {
+            appToast.error(
+              err instanceof Error
+                ? err.message
+                : "Could not update match order"
+            );
+            throw err;
+          })
       }
     />
   );

@@ -37,7 +37,7 @@ function SettingsLinkRow({
   return (
     <Link
       href={href}
-      className="settings-link-row block rounded-md border border-[oklch(0.32_0.04_255)] px-4 py-3 transition-colors hover:border-[oklch(0.5_0.08_145/0.45)] hover:bg-[oklch(0.16_0.03_255/0.6)]"
+      className="settings-link-row block rounded-md border border-[oklch(0.32_0.04_255)] px-4 py-3 transition-colors hover:border-[oklch(0.5_0.08_295/0.45)] hover:bg-[oklch(0.16_0.03_255/0.6)]"
     >
       <p className="text-sm font-semibold text-[var(--cricket-cream)]">{label}</p>
       <p className="text-xs text-[oklch(0.55_0.03_255)] mt-0.5">{description}</p>
@@ -104,7 +104,7 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
         />
         <button
           type="button"
-          className="settings-link-row w-full text-left rounded-md border border-[oklch(0.32_0.04_255)] px-4 py-3 transition-colors hover:border-[oklch(0.5_0.08_145/0.45)] hover:bg-[oklch(0.16_0.03_255/0.6)]"
+          className="settings-link-row w-full text-left rounded-md border border-[oklch(0.32_0.04_255)] px-4 py-3 transition-colors hover:border-[oklch(0.5_0.08_295/0.45)] hover:bg-[oklch(0.16_0.03_255/0.6)]"
           onClick={() => router.push(routes.players)}
         >
           <p className="text-sm font-semibold text-[var(--cricket-cream)]">

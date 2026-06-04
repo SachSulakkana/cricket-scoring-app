@@ -307,7 +307,7 @@ export default function TournamentTeamPicker({
                         alt=""
                         variant="team"
                         placeholder={
-                          <Users className="h-10 w-10 text-[oklch(0.45_0.1_265)]" />
+                          <Users className="h-10 w-10 text-[oklch(0.45_0.1_295)]" />
                         }
                       />
                       <span className="tournament-team-slot__overlay">
@@ -467,7 +467,7 @@ export default function TournamentTeamPicker({
                           alt=""
                           variant="team"
                           placeholder={
-                            <Users className="h-10 w-10 text-[oklch(0.45_0.1_265)]" />
+                            <Users className="h-10 w-10 text-[oklch(0.45_0.1_295)]" />
                           }
                         />
                       </div>

@@ -382,10 +382,10 @@ export default function TournamentMatchApp({
                 <button
                   key={team.id}
                   type="button"
-                  className={`rounded-md border p-3 text-left transition ${
+                  className={`rounded-md border p-3 min-h-11 text-left transition touch-manipulation ${
                     tossWinnerId === team.id
                       ? "border-[oklch(0.6_0.1_85)] bg-[oklch(0.32_0.08_85/0.35)] text-[var(--cricket-cream)]"
-                      : "border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.02_255/0.6)] text-[oklch(0.65_0.03_255)] hover:border-[oklch(0.45_0.08_145/0.5)]"
+                      : "border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.02_255/0.6)] text-[oklch(0.65_0.03_255)] hover:border-[oklch(0.45_0.08_295/0.5)]"
                   }`}
                   onClick={() => setTossWinnerId(team.id)}
                 >
@@ -400,10 +400,10 @@ export default function TournamentMatchApp({
             <div className="grid gap-2 sm:grid-cols-2">
               <button
                 type="button"
-                className={`rounded-md border p-3 text-left transition ${
+                className={`rounded-md border p-3 min-h-11 text-left transition touch-manipulation ${
                   tossDecision === "bat"
                     ? "border-[oklch(0.6_0.1_85)] bg-[oklch(0.32_0.08_85/0.35)] text-[var(--cricket-cream)]"
-                    : "border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.02_255/0.6)] text-[oklch(0.65_0.03_255)] hover:border-[oklch(0.45_0.08_145/0.5)]"
+                    : "border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.02_255/0.6)] text-[oklch(0.65_0.03_255)] hover:border-[oklch(0.45_0.08_295/0.5)]"
                 }`}
                 onClick={() => setTossDecision("bat")}
               >
@@ -411,10 +411,10 @@ export default function TournamentMatchApp({
               </button>
               <button
                 type="button"
-                className={`rounded-md border p-3 text-left transition ${
+                className={`rounded-md border p-3 min-h-11 text-left transition touch-manipulation ${
                   tossDecision === "bowl"
                     ? "border-[oklch(0.6_0.1_85)] bg-[oklch(0.32_0.08_85/0.35)] text-[var(--cricket-cream)]"
-                    : "border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.02_255/0.6)] text-[oklch(0.65_0.03_255)] hover:border-[oklch(0.45_0.08_145/0.5)]"
+                    : "border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.02_255/0.6)] text-[oklch(0.65_0.03_255)] hover:border-[oklch(0.45_0.08_295/0.5)]"
                 }`}
                 onClick={() => setTossDecision("bowl")}
               >

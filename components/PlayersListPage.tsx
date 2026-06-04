@@ -74,7 +74,7 @@ function PlayerCard({
             className="cricket-select-content min-w-[8.5rem] border-[oklch(0.32_0.04_255)] bg-[oklch(0.14_0.025_255)]"
           >
             <DropdownMenuItem
-              className="focus:bg-[oklch(0.22_0.04_145)] cursor-pointer"
+              className="focus:bg-[oklch(0.22_0.04_295)] cursor-pointer"
               onSelect={(e) => {
                 e.preventDefault();
                 onEdit(player.id);
@@ -101,7 +101,7 @@ function PlayerCard({
       <CricketProfileHero
         imageUrl={player.imageUrl}
         alt={player.name}
-        placeholder={<User className="h-10 w-10 text-[oklch(0.45_0.08_145)]" />}
+        placeholder={<User className="h-10 w-10 text-[oklch(0.45_0.08_295)]" />}
       />
       <div className="roster-card__body">
         <h2 className="roster-card__title cricket-display">{player.name}</h2>

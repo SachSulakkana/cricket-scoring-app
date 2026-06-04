@@ -20,6 +20,12 @@ const body = Source_Sans_3({
   weight: ['400', '500', '600', '700'],
 })
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
+
 export const metadata: Metadata = {
   title: 'Cricket Scorer',
   description: 'Ball-by-ball cricket scoring application',
@@ -48,8 +54,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`dark ${display.variable} ${body.variable}`}>
-      <body className="font-sans antialiased">
+    <html
+      lang="en"
+      className={`dark ${display.variable} ${body.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <StoreProvider>
           <CricketProvider>
             <ResumePromptProvider>

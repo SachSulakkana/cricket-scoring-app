@@ -68,9 +68,11 @@ export default function TournamentPlaceholder({
           <button
             type="button"
             onClick={onBack}
-            className="cricket-btn-setup w-full mt-5"
+            className="cricket-btn-back mx-auto mt-5 h-11 w-11 inline-flex items-center justify-center text-xl"
+            aria-label="Go back"
+            title="Go back"
           >
-            Back
+            <span aria-hidden>←</span>
           </button>
         </CricketBroadcastCard>
       </div>

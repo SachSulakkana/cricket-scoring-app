@@ -10,6 +10,7 @@ import {
   CricketEyebrow,
   CricketFormFieldError,
   CricketFormLabel,
+  CricketBackButton,
   CricketPage,
 } from "@/components/cricket-shell";
 import {
@@ -134,13 +135,11 @@ export default function AddPlayerPage({
   return (
     <CricketPage>
       <div className="max-w-md mx-auto">
-      <button
-        type="button"
+      <CricketBackButton
         onClick={onBack}
-        className="cricket-btn-back mb-5 rounded-md px-2 py-1.5 -ml-2"
-      >
-        ← Back
-      </button>
+        ariaLabel="Go back"
+        className="mb-5 -ml-2"
+      />
 
       <CricketBroadcastCard accent className="p-5 space-y-5">
         <div className="flex items-center gap-2.5 pb-1">
@@ -179,7 +178,7 @@ export default function AddPlayerPage({
                   <SelectItem
                     key={opt.value}
                     value={opt.value}
-                    className="focus:bg-[oklch(0.22_0.04_145)]"
+                    className="focus:bg-[oklch(0.22_0.04_295)]"
                   >
                     {opt.label}
                   </SelectItem>
@@ -214,7 +213,7 @@ export default function AddPlayerPage({
                 <SelectItem
                   key={opt.value}
                   value={opt.value}
-                  className="focus:bg-[oklch(0.22_0.04_145)]"
+                  className="focus:bg-[oklch(0.22_0.04_295)]"
                 >
                   {opt.label}
                 </SelectItem>
@@ -242,7 +241,7 @@ export default function AddPlayerPage({
                   <SelectItem
                     key={opt.value}
                     value={opt.value}
-                    className="focus:bg-[oklch(0.22_0.04_145)]"
+                    className="focus:bg-[oklch(0.22_0.04_295)]"
                   >
                     {opt.label}
                   </SelectItem>
@@ -266,7 +265,7 @@ export default function AddPlayerPage({
                   <SelectItem
                     key={opt.value}
                     value={opt.value}
-                    className="focus:bg-[oklch(0.22_0.04_145)]"
+                    className="focus:bg-[oklch(0.22_0.04_295)]"
                   >
                     {opt.label}
                   </SelectItem>

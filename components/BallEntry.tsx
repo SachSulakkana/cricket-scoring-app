@@ -335,7 +335,7 @@ export default function BallEntry({
               </p>
             </div>
             <div className="cricket-non-striker-panel">
-              <p className="cricket-panel-label text-[oklch(0.65_0.08_250)]">
+              <p className="cricket-panel-label text-[oklch(0.65_0.08_300)]">
                 Non-striker
               </p>
               <p className="cricket-score text-xl text-[var(--cricket-cream)] mt-1">
@@ -358,7 +358,7 @@ export default function BallEntry({
 
           <div>
             <p className="cricket-eyebrow mb-2.5">Runs & extras</p>
-            <div className="grid grid-cols-4 gap-2 mb-2">
+            <div className="cricket-run-grid mb-2">
               {[0, 1, 2, 3, 4, 5, 6].map((runs) => (
                 <button
                   key={runs}
@@ -371,7 +371,7 @@ export default function BallEntry({
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="cricket-run-grid cricket-run-grid--extras">
               <button
                 type="button"
                 onClick={() => handleExtraTypeClick("wide")}
@@ -474,7 +474,7 @@ export default function BallEntry({
             <p className="cricket-display text-center text-lg font-semibold text-[var(--cricket-cream)]">
               {pendingExtraType.toUpperCase()} — additional runs?
             </p>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="cricket-run-grid">
               {extraRunOptions.map((runs) => (
                 <button
                   key={runs}

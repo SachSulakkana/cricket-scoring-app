@@ -243,7 +243,7 @@ export default function FullScorecard({
         <CardHeader>
           <CardTitle className="text-white flex justify-between items-center">
             <span>{title}</span>
-            <span className="text-green-400">
+            <span className="text-[var(--cricket-gold)]">
               {totals.runs}/{totals.wickets} ({calculateOvers(innings.balls)})
             </span>
           </CardTitle>
@@ -387,10 +387,12 @@ export default function FullScorecard({
             )}
             <button
               type="button"
-              className="cricket-btn-setup !min-h-9 px-4"
+              className="cricket-btn-back !min-h-9 !w-11 inline-flex items-center justify-center text-lg"
               onClick={onBack}
+              aria-label="Go back"
+              title="Go back"
             >
-              Back
+              <span aria-hidden>←</span>
             </button>
           </div>
         </div>

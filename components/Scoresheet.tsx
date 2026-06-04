@@ -103,7 +103,7 @@ export default function Scoresheet({ innings }: ScoresheetProps) {
                 <p className="cricket-display text-xs font-semibold text-[var(--cricket-gold-dim)] mb-2">
                   Over {overNum}
                 </p>
-                <div className="grid grid-cols-6 gap-1.5">
+                <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6">
                   {balls.map((ball) => (
                     <div
                       key={ball.id}

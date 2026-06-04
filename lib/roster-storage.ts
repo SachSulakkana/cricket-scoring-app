@@ -17,7 +17,13 @@ export type {
   TournamentBestBatting,
   TournamentBestBowling,
 } from "./roster-types";
-import type { SavedTournament, TournamentFixture } from "./roster-types";
+import type {
+  PlayoffMatchKind,
+  SavedTournament,
+  TournamentFixture,
+  TournamentMatchSnapshot,
+} from "./roster-types";
+import { DEFAULT_FORMAT_PRESET_ID } from "./tournament-format-presets";
 
 function dispatch(action: Parameters<ReturnType<typeof getStore>["dispatch"]>[0]) {
   getStore().dispatch(action);
@@ -121,6 +127,22 @@ function normalizeTournament(
       teamAId: fx.teamAId,
       teamBId: fx.teamBId,
       played: Boolean(fx.played),
+      stageIndex:
+        typeof fx.stageIndex === "number" && fx.stageIndex >= 0
+          ? fx.stageIndex
+          : 0,
+      groupId:
+        typeof fx.groupId === "string" && fx.groupId.length > 0
+          ? fx.groupId
+          : undefined,
+      bracketRound:
+        typeof fx.bracketRound === "number" && fx.bracketRound >= 0
+          ? fx.bracketRound
+          : undefined,
+      playoffMatchKind:
+        fx.playoffMatchKind === "qualifier" || fx.playoffMatchKind === "final"
+          ? (fx.playoffMatchKind as PlayoffMatchKind)
+          : undefined,
       result:
         fx.played && fx.result
           ? {
@@ -148,6 +170,22 @@ function normalizeTournament(
           : undefined,
     }));
 
+  const formatPresetId =
+    typeof raw.formatPresetId === "string" && raw.formatPresetId.length > 0
+      ? raw.formatPresetId
+      : raw.isTemplate !== true && fixtures.length > 0
+        ? DEFAULT_FORMAT_PRESET_ID
+        : undefined;
+
+  const groupAssignments =
+    raw.groupAssignments && typeof raw.groupAssignments === "object"
+      ? Object.fromEntries(
+          Object.entries(raw.groupAssignments).filter(
+            ([k, v]) => typeof k === "string" && typeof v === "string"
+          )
+        )
+      : undefined;
+
   return {
     id: raw.id,
     name: raw.name,
@@ -159,6 +197,21 @@ function normalizeTournament(
     selectedTeamIds: buildTeamSelectionSlots(teamCount, savedIds),
     fixtures,
     createdAt: raw.createdAt,
+    formatPresetId,
+    currentStageIndex:
+      typeof raw.currentStageIndex === "number" && raw.currentStageIndex >= 0
+        ? raw.currentStageIndex
+        : fixtures.length > 0
+          ? 0
+          : undefined,
+    groupAssignments,
+    championTeamId:
+      typeof raw.championTeamId === "string" && raw.championTeamId.length > 0
+        ? raw.championTeamId
+        : undefined,
+    stageComplete: Array.isArray(raw.stageComplete)
+      ? raw.stageComplete.map(Boolean)
+      : undefined,
     isTemplate: raw.isTemplate === true,
     templateId:
       typeof raw.templateId === "string" && raw.templateId.length > 0
@@ -267,6 +320,7 @@ export async function initRosterStorage(): Promise<void> {
   if (initPromise) return initPromise;
 
   dispatch(rosterActions.setLoading(true));
+  dispatch(rosterActions.setError(null));
 
   initPromise = (async () => {
     try {
@@ -296,6 +350,7 @@ export async function initRosterStorage(): Promise<void> {
         err instanceof Error ? err.message : "Failed to load roster data";
       dispatch(rosterActions.setError(message));
       dispatch(rosterActions.setLoading(false));
+      initPromise = null;
       throw err;
     }
   })();

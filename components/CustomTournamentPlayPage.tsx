@@ -5,8 +5,8 @@ import CricketLoadingButton from "@/components/CricketLoadingButton";
 import TournamentFlowSteps from "@/components/TournamentFlowSteps";
 import TournamentTeamPicker from "@/components/TournamentTeamPicker";
 import { usePendingAction } from "@/hooks/use-pending-action";
+import { appToast } from "@/lib/app-toast";
 import {
-  CricketAddButton,
   CricketBroadcastCard,
   CricketDetailRow,
   CricketEyebrow,
@@ -22,28 +22,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  buildStageConfigs,
-  canUseGroupStage,
-  formatStageSummary,
-  getDefaultGroupCount,
-  getMaxGroupCount,
-  getSmallestGroupSize,
-  MAX_TOURNAMENT_STAGES,
-  MIN_TEAMS_PER_GROUP,
-  normalizeGroupCount,
-  TOURNAMENT_STAGE_STYLE_OPTIONS,
-  TournamentStageConfig,
-  TournamentStageStyle,
-} from "@/lib/tournament-stage-options";
-import {
   buildTeamSelectionSlots,
   SavedTournament,
   updateTournament,
 } from "@/lib/roster-storage";
 import { useTeams } from "@/lib/store/roster-hooks";
+import { formatStageSummary } from "@/lib/tournament-stage-options";
+import {
+  applyPresetToTournament,
+  DEFAULT_FORMAT_PRESET_ID,
+  presetsByRoundCount,
+  TOURNAMENT_FORMAT_PRESETS,
+  validatePresetForTeams,
+} from "@/lib/tournament-format-presets";
+import { initializeTournamentPlay } from "@/lib/tournament-stage-engine";
 import { cn } from "@/lib/utils";
 import { CricketBatIcon } from "@/components/icons/CricketBatIcon";
-import { Trash2, Trophy } from "lucide-react";
+import { Trophy } from "lucide-react";
 
 interface CustomTournamentPlayPageProps {
   tournament: SavedTournament;
@@ -54,15 +49,6 @@ interface CustomTournamentPlayPageProps {
 const selectTriggerClass =
   "w-full cricket-form-input h-10 data-[placeholder]:text-[oklch(0.5_0.03_255)]";
 
-const STAGE_COUNT_OPTIONS = ["1", "2", "3", "4"] as const;
-
-function initStageCount(tournament: SavedTournament): number {
-  if (tournament.stageCount > 0) {
-    return Math.min(MAX_TOURNAMENT_STAGES, tournament.stageCount);
-  }
-  return 1;
-}
-
 function SetupDivider() {
   return <hr className="tournament-setup-divider" aria-hidden />;
 }
@@ -72,13 +58,8 @@ export default function CustomTournamentPlayPage({
   onBack,
   onStartTournament,
 }: CustomTournamentPlayPageProps) {
-  const [stageCount, setStageCount] = useState(() => initStageCount(tournament));
-  const [stages, setStages] = useState<TournamentStageConfig[]>(() =>
-    buildStageConfigs(
-      initStageCount(tournament),
-      tournament.stages,
-      tournament.teamCount
-    )
+  const [presetId, setPresetId] = useState(
+    () => tournament.formatPresetId ?? DEFAULT_FORMAT_PRESET_ID
   );
   const [teamSlots, setTeamSlots] = useState<string[]>(() =>
     buildTeamSelectionSlots(tournament.teamCount, tournament.selectedTeamIds)
@@ -88,58 +69,16 @@ export default function CustomTournamentPlayPage({
   const [teamPickerAttention, setTeamPickerAttention] = useState(0);
   const [saveShake, setSaveShake] = useState(false);
 
-  const stageCountKey = String(stageCount);
   const teamCount = tournament.teamCount;
-  const maxGroups = getMaxGroupCount(teamCount);
-  const groupStageAllowed = canUseGroupStage(teamCount);
-
-  const handleStageCountChange = (value: string) => {
-    const count = parseInt(value, 10);
-    if (Number.isNaN(count) || count < 1 || count > MAX_TOURNAMENT_STAGES) return;
-    setStageCount(count);
-    setStages((prev) => buildStageConfigs(count, prev, teamCount));
-    setSaved(false);
-  };
-
-  const handleStageStyleChange = (index: number, style: TournamentStageStyle) => {
-    setStages((prev) =>
-      prev.map((stage, i) => {
-        if (i !== index) return stage;
-        if (style === "group-stage" && groupStageAllowed) {
-          return {
-            style,
-            groupCount: getDefaultGroupCount(teamCount),
-          };
-        }
-        return { style };
-      })
-    );
-    setSaved(false);
-  };
-
-  const handleRemoveStage = (index: number) => {
-    if (stages.length <= 1) return;
-    const next = stages.filter((_, i) => i !== index);
-    setStages(next);
-    setStageCount(next.length);
-    setSaved(false);
-  };
-
-  const handleGroupCountChange = (index: number, value: string) => {
-    const groupCount = parseInt(value, 10);
-    if (Number.isNaN(groupCount)) return;
-    setStages((prev) =>
-      prev.map((stage, i) =>
-        i === index && stage.style === "group-stage"
-          ? {
-              style: "group-stage",
-              groupCount: normalizeGroupCount(teamCount, groupCount),
-            }
-          : stage
-      )
-    );
-    setSaved(false);
-  };
+  const preset = useMemo(
+    () => TOURNAMENT_FORMAT_PRESETS.find((p) => p.id === presetId),
+    [presetId]
+  );
+  const presetError = useMemo(
+    () => validatePresetForTeams(presetId, teamCount),
+    [presetId, teamCount]
+  );
+  const presetsByRounds = useMemo(() => presetsByRoundCount(), []);
 
   const handleTeamSlotsChange = (slots: string[]) => {
     setTeamSlots(slots);
@@ -151,6 +90,10 @@ export default function CustomTournamentPlayPage({
   const { pending: starting, run: runStart } = usePendingAction();
 
   const handlePlay = () => {
+    if (presetError) {
+      appToast.validation(presetError);
+      return;
+    }
     if (!allTeamsSelected && savedTeams.length >= tournament.teamCount) {
       setTeamPickerAttention((n) => n + 1);
       setSaveShake(true);
@@ -161,12 +104,21 @@ export default function CustomTournamentPlayPage({
       return;
     }
 
-    const updated: SavedTournament = {
+    const applied = applyPresetToTournament(presetId, teamCount);
+    let updated: SavedTournament = {
       ...tournament,
-      stageCount,
-      stages: buildStageConfigs(stageCount, stages, teamCount),
+      formatPresetId: presetId,
+      stageCount: applied.stageCount,
+      stages: applied.stages,
       selectedTeamIds: buildTeamSelectionSlots(tournament.teamCount, teamSlots),
+      fixtures: [],
+      currentStageIndex: 0,
+      championTeamId: undefined,
+      stageComplete: undefined,
+      groupAssignments: undefined,
     };
+
+    updated = initializeTournamentPlay(updated);
 
     void runStart(
       async () => {
@@ -181,11 +133,6 @@ export default function CustomTournamentPlayPage({
     );
   };
 
-  const stageRows = useMemo(
-    () => stages.map((stage, index) => ({ stage, index })),
-    [stages]
-  );
-
   return (
     <CricketPage extraWide>
       <CricketPageHeader onBack={onBack} title={tournament.name} homeHref="/" />
@@ -193,7 +140,7 @@ export default function CustomTournamentPlayPage({
 
       <CricketBroadcastCard
         accent
-        className="tournament-setup-unified w-full p-5 sm:p-8"
+        className="tournament-setup-unified w-full p-4 sm:p-8 min-w-0"
       >
         <section className="tournament-setup-section">
           <div className="flex items-start gap-2.5">
@@ -218,150 +165,66 @@ export default function CustomTournamentPlayPage({
         <SetupDivider />
 
         <section className="tournament-setup-section">
-          <CricketEyebrow className="mb-1">Tournament structure</CricketEyebrow>
+          <CricketEyebrow className="mb-1">Tournament format</CricketEyebrow>
           <p className="text-[oklch(0.65_0.03_255)] text-sm leading-relaxed mb-4">
-            Choose how many stages to run (up to {MAX_TOURNAMENT_STAGES}), pick a
-            style for each, or remove a stage with the delete button.
+            Choose a competition structure. Stages run in order; standings and NRR
+            decide who advances to playoffs or knockout rounds.
           </p>
 
-          <div className="max-w-xs">
-            <CricketFormLabel htmlFor="stage-count">How many stages</CricketFormLabel>
-            <Select value={stageCountKey} onValueChange={handleStageCountChange}>
-              <SelectTrigger id="stage-count" className={selectTriggerClass}>
-                <SelectValue placeholder="Stages" />
+          <div>
+            <CricketFormLabel htmlFor="format-preset">Format preset</CricketFormLabel>
+            <Select
+              value={presetId}
+              onValueChange={(v) => {
+                setPresetId(v);
+                setSaved(false);
+              }}
+            >
+              <SelectTrigger id="format-preset" className={selectTriggerClass}>
+                <SelectValue placeholder="Select format" />
               </SelectTrigger>
-              <SelectContent className="cricket-select-content">
-                {STAGE_COUNT_OPTIONS.map((n) => (
-                  <SelectItem
-                    key={n}
-                    value={n}
-                    className="focus:bg-[oklch(0.22_0.08_75)]"
-                  >
-                    {n} stage{n === "1" ? "" : "s"}
-                  </SelectItem>
-                ))}
+              <SelectContent className="cricket-select-content max-h-[min(20rem,70vh)]">
+                {[1, 2, 3, 4].map((rounds) => {
+                  const list = presetsByRounds.get(rounds) ?? [];
+                  if (list.length === 0) return null;
+                  return (
+                    <div key={rounds}>
+                      <p className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[oklch(0.5_0.04_288)]">
+                        {rounds} round{rounds === 1 ? "" : "s"}
+                      </p>
+                      {list.map((p) => (
+                        <SelectItem
+                          key={p.id}
+                          value={p.id}
+                          className="focus:bg-[oklch(0.22_0.08_75)]"
+                        >
+                          {p.label}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  );
+                })}
               </SelectContent>
             </Select>
+            {presetError ? (
+              <p className="mt-2 text-xs text-[oklch(0.72_0.12_25)]">{presetError}</p>
+            ) : null}
           </div>
 
-          <div className="tournament-setup-stages mt-4">
-            {stageRows.map(({ stage, index }) => {
-              const isGroupStage = stage.style === "group-stage";
-              const stageGroupCount =
-                stage.groupCount ?? getDefaultGroupCount(teamCount);
-              const groupOptions = Array.from(
-                { length: maxGroups },
-                (_, i) => i + 1
-              );
-
-              return (
-                <div
-                  key={index}
-                  className="tournament-stage-card rounded-md border border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.025_255/0.6)] p-3 space-y-2"
-                >
-                  {stages.length > 1 && (
-                    <button
-                      type="button"
-                      className="tournament-stage-card__remove"
-                      onClick={() => handleRemoveStage(index)}
-                      aria-label={`Remove stage ${index + 1}`}
-                      title="Remove stage"
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden />
-                    </button>
-                  )}
-                  <p className="cricket-display text-sm font-semibold text-[var(--cricket-cream)] tournament-stage-card__title">
+          {preset && (
+            <ul className="tournament-setup-format-chips mt-4">
+              {preset.stages.map((stage, index) => (
+                <li key={index} className="tournament-setup-format-chip">
+                  <span className="tournament-setup-format-chip__stage">
                     Stage {index + 1}
-                  </p>
-                  <div>
-                    <CricketFormLabel htmlFor={`stage-style-${index}`}>
-                      Style
-                    </CricketFormLabel>
-                    <Select
-                      value={stage.style}
-                      onValueChange={(v) =>
-                        handleStageStyleChange(index, v as TournamentStageStyle)
-                      }
-                    >
-                      <SelectTrigger
-                        id={`stage-style-${index}`}
-                        className={selectTriggerClass}
-                      >
-                        <SelectValue placeholder="Select style" />
-                      </SelectTrigger>
-                      <SelectContent className="cricket-select-content">
-                        {TOURNAMENT_STAGE_STYLE_OPTIONS.map((opt) => (
-                          <SelectItem
-                            key={opt.value}
-                            value={opt.value}
-                            disabled={
-                              opt.value === "group-stage" && !groupStageAllowed
-                            }
-                            className="focus:bg-[oklch(0.22_0.08_75)] data-[disabled]:opacity-50"
-                          >
-                            {opt.label}
-                            {opt.value === "group-stage" && !groupStageAllowed
-                              ? ` (need ${MIN_TEAMS_PER_GROUP}+ teams)`
-                              : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {isGroupStage && (
-                    <div className="space-y-2 pt-1 border-t border-[oklch(0.28_0.04_255/0.8)]">
-                      {groupStageAllowed ? (
-                        <>
-                          <div>
-                            <CricketFormLabel htmlFor={`stage-groups-${index}`}>
-                              How many groups
-                            </CricketFormLabel>
-                            <Select
-                              value={String(stageGroupCount)}
-                              onValueChange={(v) =>
-                                handleGroupCountChange(index, v)
-                              }
-                            >
-                              <SelectTrigger
-                                id={`stage-groups-${index}`}
-                                className={selectTriggerClass}
-                              >
-                                <SelectValue placeholder="Groups" />
-                              </SelectTrigger>
-                              <SelectContent className="cricket-select-content">
-                                {groupOptions.map((n) => (
-                                  <SelectItem
-                                    key={n}
-                                    value={String(n)}
-                                    className="focus:bg-[oklch(0.22_0.08_75)]"
-                                  >
-                                    {n} group{n === 1 ? "" : "s"} (
-                                    {getSmallestGroupSize(teamCount, n)}–
-                                    {Math.ceil(teamCount / n)} teams each)
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <p className="text-[oklch(0.55_0.03_255)] text-xs leading-relaxed">
-                            At least {MIN_TEAMS_PER_GROUP} teams per group. With{" "}
-                            {teamCount} teams you can use up to {maxGroups} group
-                            {maxGroups === 1 ? "" : "s"}.
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-[oklch(0.72_0.1_75)] text-xs leading-relaxed">
-                          Group stage needs at least {MIN_TEAMS_PER_GROUP} teams in
-                          this tournament (you have {teamCount}).
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                  </span>
+                  <span className="tournament-setup-format-chip__style">
+                    {formatStageSummary(stage, teamCount)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         <SetupDivider />
@@ -378,27 +241,6 @@ export default function CustomTournamentPlayPage({
           />
         </section>
 
-        {stageCount > 0 && stages.length > 0 && (
-          <>
-            <SetupDivider />
-            <section className="tournament-setup-section">
-              <CricketEyebrow className="mb-2">Format summary</CricketEyebrow>
-              <ul className="tournament-setup-format-chips">
-                {stages.map((stage, index) => (
-                  <li key={index} className="tournament-setup-format-chip">
-                    <span className="tournament-setup-format-chip__stage">
-                      Stage {index + 1}
-                    </span>
-                    <span className="tournament-setup-format-chip__style">
-                      {formatStageSummary(stage, teamCount)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          </>
-        )}
-
         <SetupDivider />
 
         <footer
@@ -409,8 +251,8 @@ export default function CustomTournamentPlayPage({
         >
           <div className="tournament-setup-footer__status">
             {saved && (
-              <span className="text-[oklch(0.65_0.12_145)] text-sm font-medium flex items-center gap-1.5">
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[oklch(0.35_0.1_145)] text-[oklch(0.85_0.12_145)]">
+              <span className="text-[oklch(0.65_0.12_295)] text-sm font-medium flex items-center gap-1.5">
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[oklch(0.35_0.1_295)] text-[oklch(0.85_0.12_295)]">
                   ✓
                 </span>
                 Ready to play
@@ -429,6 +271,7 @@ export default function CustomTournamentPlayPage({
             loading={starting}
             loadingLabel="Starting…"
             onClick={handlePlay}
+            disabled={Boolean(presetError)}
             className="tournament-setup-footer__play"
           >
             <CricketBatIcon className="h-4 w-4" />

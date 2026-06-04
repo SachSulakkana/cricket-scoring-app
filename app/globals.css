@@ -6,38 +6,58 @@
 :root {
   color-scheme: dark;
 
-  --cricket-pitch: oklch(0.42 0.11 145);
-  --cricket-pitch-deep: oklch(0.22 0.06 150);
-  --cricket-night: oklch(0.1 0.02 258);
-  --cricket-night-elevated: oklch(0.15 0.025 255);
+  /* Black & purple — true black bases, violet UI, lavender highlights */
+  --cricket-black: oklch(0.04 0.012 295);
+  --cricket-black-soft: oklch(0.07 0.02 295);
+  --cricket-surface: oklch(0.1 0.035 295);
+  --cricket-navy: var(--cricket-black);
+  --cricket-navy-elevated: var(--cricket-surface);
+  --cricket-blue: oklch(0.55 0.16 295);
+  --cricket-blue-deep: oklch(0.42 0.14 292);
+  --cricket-blue-soft: oklch(0.48 0.12 295);
+  --cricket-sky: oklch(0.72 0.18 300);
+  --cricket-sky-bright: oklch(0.8 0.16 305);
+  --cricket-sky-dim: oklch(0.52 0.12 295);
+  --cricket-cyan: oklch(0.68 0.14 310);
+  --cricket-violet: oklch(0.6 0.15 288);
+
+  /* Highlight aliases (used in components as --cricket-gold) */
+  --cricket-gold: var(--cricket-sky);
+  --cricket-gold-bright: var(--cricket-sky-bright);
+  --cricket-gold-dim: var(--cricket-sky-dim);
+
+  --cricket-pitch: var(--cricket-blue-deep);
+  --cricket-pitch-deep: oklch(0.22 0.1 292);
+  --cricket-night: var(--cricket-black);
+  --cricket-night-elevated: var(--cricket-surface);
   --cricket-cream: oklch(0.94 0.02 95);
-  --cricket-gold: oklch(0.78 0.14 82);
-  --cricket-gold-dim: oklch(0.55 0.1 82);
   --cricket-live: oklch(0.58 0.24 25);
-  --cricket-score: oklch(0.82 0.16 145);
-  --cricket-chase: oklch(0.75 0.12 165);
-  --cricket-team-a: oklch(0.45 0.12 250);
+  --cricket-score: var(--cricket-sky-bright);
+  --cricket-chase: oklch(0.68 0.13 300);
+  --cricket-team-a: oklch(0.5 0.14 295);
   --cricket-team-b: oklch(0.48 0.14 45);
+  --cricket-accent: var(--cricket-blue);
+  --cricket-accent-muted: oklch(0.12 0.04 295);
 
   --background: var(--cricket-night);
   --foreground: var(--cricket-cream);
   --card: var(--cricket-night-elevated);
   --card-foreground: var(--cricket-cream);
-  --popover: oklch(0.13 0.025 255);
+  --popover: oklch(0.08 0.025 295);
   --popover-foreground: var(--cricket-cream);
-  --primary: var(--cricket-pitch);
+  --primary: var(--cricket-blue-deep);
   --primary-foreground: var(--cricket-cream);
-  --secondary: oklch(0.2 0.03 255);
+  --secondary: oklch(0.1 0.03 295);
   --secondary-foreground: var(--cricket-cream);
-  --muted: oklch(0.2 0.025 255);
-  --muted-foreground: oklch(0.62 0.03 255);
-  --accent: oklch(0.24 0.04 145);
+  --muted: oklch(0.1 0.03 295);
+  --muted-foreground: oklch(0.58 0.05 295);
+  --accent: var(--cricket-accent-muted);
   --accent-foreground: var(--cricket-cream);
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: var(--cricket-cream);
-  --border: oklch(0.28 0.03 255);
-  --input: oklch(0.2 0.03 255);
-  --ring: var(--cricket-gold);
+  --border: oklch(0.28 0.07 295);
+  --input: oklch(0.09 0.03 295);
+  --ring: var(--cricket-sky);
   --radius: 0.5rem;
 
   --roster-card-ratio: 320 / 440;
@@ -82,6 +102,7 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: 'kern' 1, 'liga' 1;
+    background-color: var(--cricket-black);
   }
 }
 
@@ -90,9 +111,9 @@
     position: relative;
     min-height: 100dvh;
     background:
-      radial-gradient(ellipse 90% 55% at 50% -8%, oklch(0.32 0.09 145 / 0.35), transparent 58%),
-      radial-gradient(ellipse 70% 40% at 100% 50%, oklch(0.2 0.06 250 / 0.2), transparent 50%),
-      linear-gradient(175deg, oklch(0.11 0.025 258) 0%, oklch(0.07 0.02 265) 45%, oklch(0.06 0.03 150 / 0.5) 100%);
+      radial-gradient(ellipse 90% 50% at 50% -10%, oklch(0.38 0.14 295 / 0.22), transparent 55%),
+      radial-gradient(ellipse 55% 40% at 100% 60%, oklch(0.25 0.1 300 / 0.1), transparent 50%),
+      linear-gradient(180deg, var(--cricket-black) 0%, oklch(0.03 0.01 295) 100%);
   }
 
   .cricket-page::before {
@@ -171,10 +192,10 @@
   .cricket-broadcast-card {
     background: linear-gradient(
       155deg,
-      oklch(0.17 0.03 255 / 0.95) 0%,
-      oklch(0.12 0.025 260 / 0.98) 100%
+      oklch(0.1 0.035 295 / 0.98) 0%,
+      oklch(0.06 0.02 295 / 1) 100%
     );
-    border: 1px solid oklch(0.35 0.04 255 / 0.45);
+    border: 1px solid oklch(0.35 0.04 288 / 0.45);
     border-radius: var(--radius-lg);
     box-shadow:
       0 1px 0 oklch(1 0 0 / 0.04) inset,
@@ -182,10 +203,10 @@
   }
 
   .cricket-broadcast-card--accent {
-    border-color: oklch(0.45 0.1 145 / 0.5);
+    border-color: oklch(0.45 0.1 295 / 0.5);
     box-shadow:
-      0 1px 0 oklch(0.82 0.16 145 / 0.08) inset,
-      0 0 0 1px oklch(0.45 0.1 145 / 0.15),
+      0 1px 0 oklch(0.82 0.16 295 / 0.08) inset,
+      0 0 0 1px oklch(0.45 0.1 295 / 0.15),
       0 16px 48px oklch(0 0 0 / 0.4);
   }
 
@@ -195,7 +216,7 @@
     justify-content: space-between;
     gap: 0.75rem;
     padding: 0.55rem 0;
-    border-bottom: 1px solid oklch(0.3 0.03 255 / 0.35);
+    border-bottom: 1px solid oklch(0.3 0.03 288 / 0.35);
   }
 
   .cricket-detail-row:last-child {
@@ -207,7 +228,7 @@
     font-weight: 700;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: oklch(0.55 0.04 255);
+    color: oklch(0.55 0.04 288);
     flex-shrink: 0;
   }
 
@@ -224,11 +245,11 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    border-bottom: 1px solid oklch(0.3 0.04 255 / 0.5);
+    border-bottom: 1px solid oklch(0.3 0.04 288 / 0.5);
     background: linear-gradient(
       180deg,
-      oklch(0.25 0.06 145 / 0.5) 0%,
-      oklch(0.12 0.03 255) 100%
+      oklch(0.25 0.06 295 / 0.5) 0%,
+      oklch(0.12 0.03 288) 100%
     );
   }
 
@@ -239,8 +260,8 @@
   .cricket-profile-hero--team {
     background: linear-gradient(
       180deg,
-      oklch(0.28 0.08 265 / 0.55) 0%,
-      oklch(0.12 0.03 255) 100%
+      oklch(0.28 0.08 295 / 0.55) 0%,
+      oklch(0.12 0.03 288) 100%
     );
   }
 
@@ -347,14 +368,14 @@
   .tournament-list-row:focus-within,
   .tournament-list-row:has([data-state="open"]) {
     transform: translateY(-1px);
-    border-color: oklch(0.55 0.08 145 / 0.45);
+    border-color: oklch(0.55 0.08 295 / 0.45);
     background: linear-gradient(
       180deg,
-      oklch(0.18 0.03 255 / 0.96) 0%,
-      oklch(0.14 0.03 255 / 0.96) 100%
+      oklch(0.18 0.03 288 / 0.96) 0%,
+      oklch(0.14 0.03 288 / 0.96) 100%
     );
     box-shadow:
-      0 0 0 1px oklch(0.55 0.08 145 / 0.18),
+      0 0 0 1px oklch(0.55 0.08 295 / 0.18),
       0 10px 24px oklch(0 0 0 / 0.28);
   }
 
@@ -385,8 +406,8 @@
     width: 1.75rem;
     height: 1.75rem;
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.4 0.04 255 / 0.55);
-    background: oklch(0.08 0.02 255 / 0.82);
+    border: 1px solid oklch(0.4 0.04 288 / 0.55);
+    background: oklch(0.08 0.02 288 / 0.82);
     color: var(--cricket-cream);
     cursor: pointer;
     backdrop-filter: blur(6px);
@@ -396,15 +417,15 @@
   }
 
   .roster-card__menu-btn:hover {
-    background: oklch(0.18 0.03 255 / 0.95);
-    border-color: oklch(0.55 0.08 145 / 0.5);
+    background: oklch(0.1 0.035 295 / 0.95);
+    border-color: oklch(0.55 0.08 295 / 0.5);
   }
 
   .roster-card .cricket-profile-hero {
     flex-shrink: 0;
     width: 100%;
     height: 9rem;
-    border-bottom: 1px solid oklch(0.3 0.04 255 / 0.5);
+    border-bottom: 1px solid oklch(0.3 0.04 288 / 0.5);
   }
 
   .roster-card-grid--players .roster-card .cricket-profile-hero {
@@ -514,10 +535,10 @@
   @keyframes tournament-slot-pulse {
     0%,
     100% {
-      box-shadow: 0 0 0 0 oklch(0.55 0.1 75 / 0.35);
+      box-shadow: 0 0 0 0 oklch(0.55 0.1 300 / 0.35);
     }
     50% {
-      box-shadow: 0 0 0 6px oklch(0.55 0.1 75 / 0);
+      box-shadow: 0 0 0 6px oklch(0.55 0.1 300 / 0);
     }
   }
 
@@ -548,7 +569,7 @@
 
   .tournament-setup-divider {
     border: none;
-    border-top: 1px solid oklch(0.28 0.04 255 / 0.85);
+    border-top: 1px solid oklch(0.28 0.04 288 / 0.85);
     margin: -0.25rem 0;
   }
 
@@ -631,13 +652,13 @@
     gap: 0.15rem;
     padding: 0.45rem 0.65rem;
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.32 0.04 255);
-    background: oklch(0.12 0.025 255 / 0.65);
+    border: 1px solid oklch(0.32 0.04 288);
+    background: oklch(0.12 0.025 288 / 0.65);
     font-size: 0.75rem;
   }
 
   .tournament-setup-format-chip__stage {
-    color: oklch(0.55 0.03 255);
+    color: oklch(0.55 0.03 288);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -685,15 +706,15 @@
     padding: 0.75rem;
     margin: -0.75rem;
     border-radius: var(--radius-md);
-    background: oklch(0.14 0.03 75 / 0.2);
-    box-shadow: 0 0 0 2px oklch(0.55 0.12 75 / 0.4);
+    background: oklch(0.14 0.03 300 / 0.2);
+    box-shadow: 0 0 0 2px oklch(0.55 0.12 300 / 0.4);
   }
 
   .tournament-team-picker-panel--attention:not(
       .tournament-team-picker-panel--embedded
     ) {
     box-shadow:
-      0 0 0 2px oklch(0.55 0.12 75 / 0.45),
+      0 0 0 2px oklch(0.55 0.12 300 / 0.45),
       0 8px 24px oklch(0 0 0 / 0.25);
   }
 
@@ -737,11 +758,11 @@
     gap: 0.35rem;
     font-size: 0.8125rem;
     font-weight: 600;
-    color: oklch(0.7 0.08 75);
+    color: oklch(0.7 0.08 300);
   }
 
   .tournament-team-picker-progress__count--done {
-    color: oklch(0.72 0.14 145);
+    color: var(--cricket-gold);
   }
 
   .tournament-team-picker-progress__next {
@@ -763,7 +784,7 @@
   .tournament-team-picker-progress__track {
     height: 0.35rem;
     border-radius: 999px;
-    background: oklch(0.2 0.03 255);
+    background: oklch(0.08 0.03 295);
     overflow: hidden;
   }
 
@@ -772,8 +793,8 @@
     border-radius: inherit;
     background: linear-gradient(
       90deg,
-      oklch(0.55 0.12 75),
-      oklch(0.68 0.14 85)
+      oklch(0.55 0.12 300),
+      oklch(0.68 0.14 300)
     );
     transition: width 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
   }
@@ -782,8 +803,8 @@
     .tournament-team-picker-progress__fill {
     background: linear-gradient(
       90deg,
-      oklch(0.5 0.12 145),
-      oklch(0.62 0.14 145)
+      oklch(0.5 0.12 295),
+      oklch(0.62 0.14 295)
     );
   }
 
@@ -794,7 +815,7 @@
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
     font-weight: 600;
-    color: oklch(0.18 0.04 85);
+    color: var(--cricket-cream);
     background: var(--cricket-gold);
     border-radius: var(--radius-md);
     transition: filter 0.15s ease, transform 0.12s ease;
@@ -812,9 +833,9 @@
     gap: 0.5rem;
     padding: 0.5rem 0.75rem;
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.32 0.04 255);
-    background: oklch(0.1 0.02 255);
-    color: oklch(0.55 0.03 255);
+    border: 1px solid oklch(0.32 0.04 288);
+    background: oklch(0.1 0.02 288);
+    color: oklch(0.55 0.03 288);
   }
 
   .roster-search__input,
@@ -830,7 +851,7 @@
 
   .roster-search__input::placeholder,
   .tournament-team-picker-search__input::placeholder {
-    color: oklch(0.45 0.03 255);
+    color: oklch(0.45 0.03 288);
   }
 
   .tournament-team-slots--shake {
@@ -842,7 +863,7 @@
   }
 
   .tournament-team-picker-empty {
-    border: 1px dashed oklch(0.35 0.04 255);
+    border: 1px dashed oklch(0.35 0.04 288);
     border-radius: var(--radius-md);
     padding: 2rem 1.25rem;
     text-align: center;
@@ -854,8 +875,8 @@
 
   .tournament-team-picker-empty--warn {
     border-style: solid;
-    border-color: oklch(0.32 0.04 255);
-    background: oklch(0.12 0.025 255 / 0.6);
+    border-color: oklch(0.32 0.04 288);
+    background: oklch(0.12 0.025 288 / 0.6);
   }
 
   .tournament-team-slots {
@@ -879,9 +900,9 @@
     aspect-ratio: 1 / 1;
     padding: 0;
     border-radius: var(--radius-md);
-    border: 2px dashed oklch(0.38 0.05 255 / 0.85);
-    background: oklch(0.1 0.02 255 / 0.55);
-    color: oklch(0.55 0.03 255);
+    border: 2px dashed oklch(0.38 0.05 288 / 0.85);
+    background: oklch(0.1 0.02 288 / 0.55);
+    color: oklch(0.55 0.03 288);
     cursor: pointer;
     transition:
       border-color 0.15s ease,
@@ -893,32 +914,32 @@
 
   .tournament-team-slot:hover,
   .tournament-team-slot:focus-visible {
-    border-color: oklch(0.55 0.1 75 / 0.75);
-    background: oklch(0.14 0.03 75 / 0.25);
+    border-color: oklch(0.55 0.1 300 / 0.75);
+    background: oklch(0.14 0.03 300 / 0.25);
     color: var(--cricket-cream);
     outline: none;
-    box-shadow: 0 0 0 2px oklch(0.55 0.1 75 / 0.2);
+    box-shadow: 0 0 0 2px oklch(0.55 0.1 300 / 0.2);
   }
 
   .tournament-team-slot--filled {
     border-style: solid;
-    border-color: oklch(0.35 0.06 265 / 0.9);
-    background: oklch(0.13 0.03 265 / 0.7);
+    border-color: oklch(0.35 0.06 295 / 0.9);
+    background: oklch(0.13 0.03 295 / 0.7);
     color: var(--cricket-cream);
   }
 
   .tournament-team-slot--next {
     animation: tournament-slot-pulse 2.2s ease-in-out infinite;
-    border-color: oklch(0.55 0.1 75 / 0.65);
+    border-color: oklch(0.55 0.1 300 / 0.65);
   }
 
   .tournament-team-slot--picked {
     animation: tournament-slot-pop 0.55s cubic-bezier(0.34, 1.3, 0.64, 1);
-    border-color: oklch(0.55 0.12 145 / 0.85);
+    border-color: oklch(0.55 0.12 295 / 0.85);
   }
 
   .tournament-team-slot--nudge:not(.tournament-team-slot--filled) {
-    border-color: oklch(0.65 0.12 75 / 0.9);
+    border-color: oklch(0.65 0.12 300 / 0.9);
   }
 
   .tournament-team-slot__badge {
@@ -936,14 +957,14 @@
     font-weight: 700;
     line-height: 1;
     border-radius: 999px;
-    background: oklch(0.12 0.02 255 / 0.85);
-    border: 1px solid oklch(0.35 0.04 255);
+    background: oklch(0.12 0.02 288 / 0.85);
+    border: 1px solid oklch(0.35 0.04 288);
     color: oklch(0.75 0.04 95);
   }
 
   .tournament-team-slot--filled .tournament-team-slot__badge {
-    background: oklch(0.45 0.1 145 / 0.9);
-    border-color: oklch(0.55 0.12 145);
+    background: oklch(0.45 0.1 295 / 0.9);
+    border-color: oklch(0.55 0.12 295);
     color: oklch(0.95 0.02 95);
   }
 
@@ -952,7 +973,7 @@
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: oklch(0.5 0.05 255);
+    color: oklch(0.5 0.05 288);
     margin-top: -0.25rem;
   }
 
@@ -973,7 +994,7 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--cricket-cream);
-    background: oklch(0.08 0.02 255 / 0.72);
+    background: oklch(0.08 0.02 288 / 0.72);
     opacity: 0;
     transition: opacity 0.15s ease;
     pointer-events: none;
@@ -995,9 +1016,9 @@
     width: 1.6rem;
     height: 1.6rem;
     border-radius: 999px;
-    border: 1px solid oklch(0.4 0.05 255);
-    background: oklch(0.12 0.02 255 / 0.9);
-    color: oklch(0.7 0.03 255);
+    border: 1px solid oklch(0.4 0.05 288);
+    background: oklch(0.12 0.02 288 / 0.9);
+    color: oklch(0.7 0.03 288);
     opacity: 0;
     transition:
       opacity 0.15s ease,
@@ -1026,7 +1047,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: oklch(0.45 0.05 255);
+    color: oklch(0.45 0.05 288);
   }
 
   .tournament-team-slot:hover .tournament-team-slot__placeholder-icon {
@@ -1065,8 +1086,8 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    border-top: 1px solid oklch(0.3 0.04 255 / 0.5);
-    background: oklch(0.1 0.02 255 / 0.65);
+    border-top: 1px solid oklch(0.3 0.04 288 / 0.5);
+    background: oklch(0.1 0.02 288 / 0.65);
   }
 
   .tournament-team-choices {
@@ -1090,8 +1111,8 @@
     aspect-ratio: 1 / 1;
     padding: 0;
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.32 0.04 255);
-    background: oklch(0.14 0.025 255);
+    border: 1px solid oklch(0.32 0.04 288);
+    background: oklch(0.14 0.025 288);
     color: var(--cricket-cream);
     cursor: pointer;
     overflow: hidden;
@@ -1103,19 +1124,19 @@
   }
 
   .tournament-team-choice-card:hover:not(:disabled) {
-    border-color: oklch(0.55 0.1 75 / 0.8);
+    border-color: oklch(0.55 0.1 300 / 0.8);
     transform: translateY(-2px);
     box-shadow: 0 6px 16px oklch(0 0 0 / 0.35);
   }
 
   .tournament-team-choice-card:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px oklch(0.55 0.1 75 / 0.45);
+    box-shadow: 0 0 0 2px oklch(0.55 0.1 300 / 0.45);
   }
 
   .tournament-team-choice-card--current {
     border-color: var(--cricket-gold);
-    box-shadow: 0 0 0 2px oklch(0.72 0.12 85 / 0.4);
+    box-shadow: 0 0 0 2px oklch(0.72 0.12 300 / 0.4);
   }
 
   .tournament-team-choice-card--disabled {
@@ -1138,7 +1159,7 @@
     height: 1.35rem;
     border-radius: 999px;
     background: var(--cricket-gold);
-    color: oklch(0.18 0.04 85);
+    color: var(--cricket-cream);
   }
 
   .tournament-team-choice-card__taken {
@@ -1155,9 +1176,9 @@
     letter-spacing: 0.04em;
     text-transform: uppercase;
     border-radius: 999px;
-    background: oklch(0.12 0.02 255 / 0.9);
-    border: 1px solid oklch(0.35 0.04 255);
-    color: oklch(0.6 0.03 255);
+    background: oklch(0.12 0.02 288 / 0.9);
+    border: 1px solid oklch(0.35 0.04 288);
+    color: oklch(0.6 0.03 288);
   }
 
   .tournament-team-choice-card {
@@ -1199,12 +1220,12 @@
     flex-shrink: 0;
     padding: 0.15rem 0.4rem 0.4rem;
     font-size: 0.65rem;
-    color: oklch(0.55 0.03 255);
+    color: oklch(0.55 0.03 288);
     line-height: 1.2;
   }
 
   .tournament-team-picker-dialog [data-slot="dialog-close"] {
-    color: oklch(0.65 0.03 255);
+    color: oklch(0.65 0.03 288);
     top: 1rem;
     right: 1rem;
   }
@@ -1214,7 +1235,7 @@
   }
 
   .tournament-game-panel {
-    border: 1px solid oklch(0.3 0.04 255 / 0.85);
+    border: 1px solid oklch(0.3 0.04 288 / 0.85);
   }
 
   .tournament-game-tabs-list {
@@ -1229,9 +1250,10 @@
 
   .tournament-game-section-head {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: 0.5rem 0.75rem;
   }
 
   .tournament-game-pill {
@@ -1239,8 +1261,8 @@
     align-items: center;
     padding: 0.2rem 0.55rem;
     border-radius: 999px;
-    border: 1px solid oklch(0.45 0.06 255 / 0.45);
-    background: oklch(0.16 0.03 255 / 0.85);
+    border: 1px solid oklch(0.45 0.06 288 / 0.45);
+    background: oklch(0.16 0.03 288 / 0.85);
     color: oklch(0.7 0.03 95);
     font-size: 0.68rem;
     font-weight: 700;
@@ -1258,7 +1280,7 @@
 
   .tournament-game-row:hover {
     transform: translateY(-1px);
-    border-color: oklch(0.48 0.08 145 / 0.45);
+    border-color: oklch(0.48 0.08 295 / 0.45);
     box-shadow: 0 8px 18px oklch(0 0 0 / 0.2);
   }
 
@@ -1288,8 +1310,8 @@
   .cricket-form-input {
     width: 100%;
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.32 0.04 255);
-    background: oklch(0.14 0.025 255);
+    border: 1px solid oklch(0.32 0.04 288);
+    background: oklch(0.14 0.025 288);
     color: var(--cricket-cream);
     padding: 0.55rem 0.75rem;
     font-size: 0.9375rem;
@@ -1297,13 +1319,13 @@
   }
 
   .cricket-form-input::placeholder {
-    color: oklch(0.5 0.03 255);
+    color: oklch(0.5 0.03 288);
   }
 
   .cricket-form-input:focus-visible {
     outline: none;
-    border-color: oklch(0.55 0.1 145);
-    box-shadow: 0 0 0 3px oklch(0.45 0.1 145 / 0.25);
+    border-color: oklch(0.55 0.1 295);
+    box-shadow: 0 0 0 3px oklch(0.45 0.1 295 / 0.25);
   }
 
   .cricket-form-input--error {
@@ -1323,24 +1345,24 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: oklch(0.65 0.03 255);
+    color: oklch(0.65 0.03 288);
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.32 0.04 255);
+    border: 1px solid oklch(0.32 0.04 288);
     text-decoration: none;
     transition: color 0.15s, border-color 0.15s;
   }
 
   .cricket-btn-home-link:hover {
     color: var(--cricket-cream);
-    border-color: oklch(0.5 0.08 145);
+    border-color: oklch(0.5 0.08 295);
   }
 
   .cricket-upload-zone {
     width: 100%;
     height: 13rem;
     border-radius: var(--radius-lg);
-    border: 2px dashed oklch(0.38 0.05 255);
-    background: oklch(0.12 0.025 255 / 0.8);
+    border: 2px dashed oklch(0.38 0.05 288);
+    background: oklch(0.12 0.025 288 / 0.8);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1351,25 +1373,25 @@
   }
 
   .cricket-upload-zone:hover {
-    border-color: oklch(0.55 0.1 145);
-    background: oklch(0.15 0.03 145 / 0.2);
+    border-color: oklch(0.55 0.1 295);
+    background: oklch(0.15 0.03 295 / 0.2);
   }
 
   .cricket-upload-zone--dragover {
-    border-color: oklch(0.65 0.12 145);
-    background: oklch(0.18 0.05 145 / 0.35);
-    box-shadow: 0 0 0 2px oklch(0.55 0.1 145 / 0.25);
+    border-color: oklch(0.65 0.12 295);
+    background: oklch(0.18 0.05 295 / 0.35);
+    box-shadow: 0 0 0 2px oklch(0.55 0.1 295 / 0.25);
   }
 
   .cricket-btn-back {
-    color: oklch(0.72 0.03 255);
+    color: oklch(0.72 0.03 288);
     font-size: 0.875rem;
     font-weight: 600;
   }
 
   .cricket-btn-back:hover {
     color: var(--cricket-cream);
-    background: oklch(0.2 0.03 255 / 0.6);
+    background: oklch(0.1 0.03 295 / 0.7);
   }
 
   .cricket-btn-play {
@@ -1391,12 +1413,12 @@
   }
 
   .cricket-btn-play--tournament {
-    background: linear-gradient(135deg, oklch(0.62 0.16 75), oklch(0.5 0.14 65));
-    color: oklch(0.12 0.02 75);
+    background: linear-gradient(135deg, oklch(0.52 0.14 300), oklch(0.38 0.12 295));
+    color: var(--cricket-cream);
   }
 
   .cricket-btn-play--quick {
-    background: linear-gradient(135deg, oklch(0.52 0.14 145), oklch(0.38 0.1 150));
+    background: linear-gradient(135deg, oklch(0.55 0.14 300), oklch(0.4 0.12 295));
     color: var(--cricket-cream);
   }
 
@@ -1460,44 +1482,44 @@
   }
 
   .cricket-btn-add--player {
-    background: linear-gradient(135deg, oklch(0.52 0.14 145), oklch(0.38 0.1 150));
+    background: linear-gradient(135deg, oklch(0.48 0.12 295), oklch(0.36 0.09 288));
     color: var(--cricket-cream);
   }
 
   .cricket-btn-add--player:hover:not(:disabled) {
-    background: linear-gradient(135deg, oklch(0.58 0.16 145), oklch(0.45 0.12 150));
-    border-color: oklch(0.72 0.14 145 / 0.45);
-    box-shadow: 0 6px 22px oklch(0.38 0.1 150 / 0.5);
+    background: linear-gradient(135deg, oklch(0.54 0.14 295), oklch(0.42 0.11 288));
+    border-color: oklch(0.62 0.14 300 / 0.5);
+    box-shadow: 0 6px 22px oklch(0.35 0.12 295 / 0.5);
   }
 
   .cricket-btn-add--team {
-    background: linear-gradient(135deg, oklch(0.42 0.12 265), oklch(0.32 0.1 270));
+    background: linear-gradient(135deg, oklch(0.42 0.12 295), oklch(0.32 0.1 270));
     color: var(--cricket-cream);
   }
 
   .cricket-btn-add--team:hover:not(:disabled) {
-    background: linear-gradient(135deg, oklch(0.48 0.14 265), oklch(0.38 0.11 270));
-    border-color: oklch(0.58 0.14 265 / 0.5);
+    background: linear-gradient(135deg, oklch(0.48 0.14 295), oklch(0.38 0.11 270));
+    border-color: oklch(0.58 0.14 295 / 0.5);
     box-shadow: 0 6px 22px oklch(0.32 0.1 270 / 0.5);
   }
 
   .cricket-btn-add--tournament {
-    background: linear-gradient(135deg, oklch(0.62 0.16 75), oklch(0.5 0.14 65));
-    color: oklch(0.12 0.02 75);
+    background: linear-gradient(135deg, oklch(0.52 0.14 300), oklch(0.38 0.12 295));
+    color: var(--cricket-cream);
   }
 
   .cricket-btn-add--tournament:hover:not(:disabled) {
-    background: linear-gradient(135deg, oklch(0.7 0.18 75), oklch(0.56 0.15 65));
-    border-color: oklch(0.82 0.16 75 / 0.55);
-    box-shadow: 0 6px 22px oklch(0.5 0.14 65 / 0.45);
+    background: linear-gradient(135deg, oklch(0.58 0.16 300), oklch(0.44 0.14 295));
+    border-color: oklch(0.7 0.14 300 / 0.55);
+    box-shadow: 0 6px 22px oklch(0.38 0.12 295 / 0.5);
   }
 
   .cricket-btn-setup {
     width: 100%;
     min-height: 2.85rem;
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.35 0.04 255);
-    background: oklch(0.14 0.025 255 / 0.9);
+    border: 1px solid oklch(0.32 0.06 295);
+    background: oklch(0.08 0.03 295 / 0.95);
     color: oklch(0.88 0.02 95);
     font-weight: 600;
     letter-spacing: 0.04em;
@@ -1505,8 +1527,8 @@
   }
 
   .cricket-btn-setup:hover {
-    background: oklch(0.2 0.03 255);
-    border-color: oklch(0.45 0.06 145);
+    background: oklch(0.12 0.04 295);
+    border-color: oklch(0.5 0.1 295);
     color: var(--cricket-cream);
   }
 
@@ -1515,9 +1537,9 @@
     background: linear-gradient(
       90deg,
       transparent,
-      oklch(0.4 0.05 255 / 0.6) 20%,
+      oklch(0.4 0.05 288 / 0.6) 20%,
       oklch(0.5 0.08 82 / 0.4) 50%,
-      oklch(0.4 0.05 255 / 0.6) 80%,
+      oklch(0.4 0.05 288 / 0.6) 80%,
       transparent
     );
   }
@@ -1536,48 +1558,48 @@
     border-bottom: 3px solid var(--cricket-gold);
     background: linear-gradient(
       90deg,
-      oklch(0.14 0.03 255) 0%,
-      oklch(0.18 0.04 145 / 0.35) 50%,
-      oklch(0.14 0.03 255) 100%
+      oklch(0.14 0.03 288) 0%,
+      oklch(0.18 0.04 295 / 0.35) 50%,
+      oklch(0.14 0.03 288) 100%
     );
   }
 
   .cricket-team-panel {
     padding: 1rem 1.15rem;
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.32 0.04 255);
-    background: oklch(0.13 0.025 255 / 0.9);
+    border: 1px solid oklch(0.32 0.04 288);
+    background: oklch(0.13 0.025 288 / 0.9);
   }
 
   .cricket-team-panel--batting {
-    border-color: oklch(0.5 0.12 145 / 0.55);
+    border-color: oklch(0.5 0.12 295 / 0.55);
     background: linear-gradient(
       135deg,
-      oklch(0.18 0.06 145 / 0.45) 0%,
-      oklch(0.12 0.03 255) 100%
+      oklch(0.18 0.06 295 / 0.45) 0%,
+      oklch(0.12 0.03 288) 100%
     );
-    box-shadow: 0 0 24px oklch(0.45 0.1 145 / 0.15);
+    box-shadow: 0 0 24px oklch(0.45 0.1 295 / 0.15);
   }
 
   .cricket-striker-panel {
     padding: 0.85rem 1rem;
     border-radius: var(--radius-md);
     border-left: 3px solid var(--cricket-score);
-    background: oklch(0.16 0.05 145 / 0.35);
+    background: oklch(0.16 0.05 295 / 0.35);
   }
 
   .cricket-non-striker-panel {
     padding: 0.85rem 1rem;
     border-radius: var(--radius-md);
-    border-left: 3px solid oklch(0.55 0.1 250);
-    background: oklch(0.16 0.04 250 / 0.3);
+    border-left: 3px solid oklch(0.55 0.1 300);
+    background: oklch(0.16 0.04 300 / 0.3);
   }
 
   .cricket-bowler-panel {
     padding: 0.85rem 1rem;
     border-radius: var(--radius-md);
     border-left: 3px solid var(--cricket-gold);
-    background: oklch(0.18 0.06 75 / 0.2);
+    background: oklch(0.18 0.06 300 / 0.2);
   }
 
   .cricket-panel-label {
@@ -1596,8 +1618,8 @@
     margin-bottom: 0.25rem;
     background: linear-gradient(
       180deg,
-      oklch(0.1 0.02 258) 0%,
-      oklch(0.1 0.02 258 / 0.92) 85%,
+      oklch(0.1 0.02 288) 0%,
+      oklch(0.1 0.02 288 / 0.92) 85%,
       transparent 100%
     );
   }
@@ -1608,15 +1630,15 @@
     font-size: 1.35rem;
     font-weight: 700;
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.35 0.04 255);
-    background: oklch(0.18 0.03 255);
+    border: 1px solid oklch(0.35 0.04 288);
+    background: oklch(0.18 0.03 288);
     color: var(--cricket-cream);
     transition: transform 0.1s, background 0.1s;
   }
 
   .cricket-run-btn:hover:not(:disabled) {
-    background: oklch(0.24 0.04 255);
-    border-color: oklch(0.5 0.08 145);
+    background: oklch(0.24 0.04 288);
+    border-color: oklch(0.5 0.08 295);
   }
 
   .cricket-run-btn:active:not(:disabled) {
@@ -1625,8 +1647,8 @@
 
   .cricket-ball-chip {
     border-radius: var(--radius-sm);
-    border: 1px solid oklch(0.32 0.04 255);
-    background: oklch(0.16 0.025 255);
+    border: 1px solid oklch(0.32 0.04 288);
+    background: oklch(0.16 0.025 288);
     padding: 0.35rem 0.25rem;
     text-align: center;
   }
@@ -1637,19 +1659,19 @@
   }
 
   .cricket-ball-chip--extra {
-    border-color: oklch(0.65 0.14 85 / 0.5);
+    border-color: oklch(0.65 0.14 300 / 0.5);
   }
 
   .cricket-chase-banner {
     padding: 1rem 1.15rem;
     text-align: center;
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.5 0.1 145 / 0.45);
+    border: 1px solid oklch(0.5 0.1 295 / 0.45);
     background: linear-gradient(
       90deg,
-      oklch(0.14 0.04 145 / 0.5) 0%,
-      oklch(0.18 0.06 145 / 0.35) 50%,
-      oklch(0.14 0.04 145 / 0.5) 100%
+      oklch(0.14 0.04 295 / 0.5) 0%,
+      oklch(0.18 0.06 295 / 0.35) 50%,
+      oklch(0.14 0.04 295 / 0.5) 100%
     );
     font-family: var(--font-display), sans-serif;
     font-size: 1rem;
@@ -1663,8 +1685,8 @@
     padding: 0.2rem;
     gap: 0.15rem;
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.32 0.04 255);
-    background: oklch(0.1 0.02 255 / 0.9);
+    border: 1px solid oklch(0.32 0.04 288);
+    background: oklch(0.1 0.02 288 / 0.9);
   }
 
   .cricket-tab {
@@ -1674,36 +1696,36 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     border-radius: calc(var(--radius-md) - 2px);
-    color: oklch(0.6 0.03 255);
+    color: oklch(0.6 0.03 288);
     transition: background 0.15s, color 0.15s;
   }
 
   .cricket-tab--active {
-    background: oklch(0.45 0.1 145);
+    background: oklch(0.45 0.1 295);
     color: var(--cricket-cream);
-    box-shadow: 0 2px 12px oklch(0.35 0.08 145 / 0.4);
+    box-shadow: 0 2px 12px oklch(0.35 0.08 295 / 0.4);
   }
 
   .cricket-modal-overlay {
-    background: oklch(0.05 0.02 255 / 0.88);
+    background: oklch(0.05 0.02 288 / 0.88);
     -webkit-backdrop-filter: blur(6px);
     backdrop-filter: blur(6px);
   }
 
   .cricket-modal {
-    border: 1px solid oklch(0.38 0.05 255);
+    border: 1px solid oklch(0.38 0.05 288);
     border-radius: var(--radius-lg);
     background: linear-gradient(
       180deg,
-      oklch(0.16 0.03 255) 0%,
-      oklch(0.11 0.025 260) 100%
+      oklch(0.16 0.03 288) 0%,
+      oklch(0.11 0.025 290) 100%
     );
     box-shadow: 0 24px 64px oklch(0 0 0 / 0.55);
   }
 
   .cricket-select-content {
-    border: 1px solid oklch(0.35 0.04 255);
-    background: oklch(0.13 0.025 255);
+    border: 1px solid oklch(0.35 0.04 288);
+    background: oklch(0.13 0.025 288);
     color: var(--cricket-cream);
   }
 
@@ -1714,14 +1736,159 @@
     gap: 0.5rem;
     padding: 0.55rem 0.75rem;
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.32 0.04 255);
-    background: oklch(0.12 0.025 255);
+    border: 1px solid oklch(0.32 0.04 288);
+    background: oklch(0.12 0.025 288);
+  }
+
+  /* Splash — uses global professional palette */
+  @keyframes splash-reveal-up {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes splash-ring-pulse {
+    0%, 100% { opacity: 0.35; transform: scale(1); }
+    50% { opacity: 0.85; transform: scale(1.04); }
+  }
+  @keyframes splash-orb-drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(12px, -18px) scale(1.08); }
+  }
+  @keyframes splash-shimmer {
+    0% { transform: translateX(-120%); }
+    100% { transform: translateX(220%); }
+  }
+  @keyframes splash-live-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 oklch(0.75 0.12 300 / 0.5); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 6px oklch(0.75 0.12 300 / 0); }
+  }
+  @keyframes splash-step-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
+
+  .splash-screen {
+    --splash-glass: oklch(0.09 0.04 295 / 0.88);
+    position: relative;
+    z-index: 1;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1.25rem, 4vw, 2.5rem);
+    background: var(--cricket-black);
+    overflow: hidden;
+  }
+  .splash-screen__backdrop { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .splash-screen__mesh {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 85% 55% at 50% -5%, oklch(0.4 0.14 295 / 0.35), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 100% 40%, oklch(0.28 0.1 300 / 0.15), transparent 55%),
+      linear-gradient(180deg, var(--cricket-black) 0%, oklch(0.02 0.008 295) 100%);
+  }
+  .splash-screen__grid {
+    position: absolute; inset: 0; opacity: 0.18;
+    background-image: linear-gradient(oklch(0.55 0.04 295 / 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(0.55 0.04 295 / 0.1) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 20%, transparent 75%);
+  }
+  .splash-screen__orb { position: absolute; border-radius: 50%; filter: blur(40px); animation: splash-orb-drift 9s ease-in-out infinite; }
+  .splash-screen__orb--a { width: 280px; height: 280px; top: 8%; left: -8%; background: oklch(0.45 0.14 295 / 0.3); animation-duration: 11s; }
+  .splash-screen__orb--b { width: 220px; height: 220px; right: -6%; bottom: 18%; background: oklch(0.4 0.12 300 / 0.22); animation-delay: -3s; animation-duration: 13s; }
+  .splash-screen__orb--c { width: 160px; height: 160px; left: 42%; bottom: 6%; background: oklch(0.35 0.1 288 / 0.18); animation-delay: -5s; }
+  .splash-screen__pitch { position: absolute; left: 50%; bottom: -12%; width: min(92vw, 520px); aspect-ratio: 2.2 / 1; transform: translateX(-50%); opacity: 0.35; }
+  .splash-screen__pitch-line { position: absolute; inset: 18% 8% 42%; border: 1px solid oklch(0.48 0.08 295 / 0.35); border-radius: 50% 50% 42% 42% / 38% 38% 58% 58%; }
+  .splash-screen__pitch-circle { position: absolute; left: 50%; top: 38%; width: 18%; aspect-ratio: 1; transform: translate(-50%, -50%); border: 1px solid oklch(0.55 0.09 300 / 0.35); border-radius: 50%; }
+  .splash-screen__shell { position: relative; z-index: 2; width: min(100%, 26rem); display: flex; flex-direction: column; align-items: center; gap: clamp(1.25rem, 4vw, 1.75rem); }
+  .splash-screen__reveal { animation: splash-reveal-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .splash-screen__reveal--1 { animation-delay: 0.05s; }
+  .splash-screen__reveal--2 { animation-delay: 0.18s; }
+  .splash-screen__reveal--3 { animation-delay: 0.32s; }
+  .splash-screen__badge {
+    display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.85rem 0.35rem 0.65rem;
+    border-radius: 999px; border: 1px solid oklch(0.42 0.08 295 / 0.6); background: oklch(0.08 0.035 295 / 0.85);
+    backdrop-filter: blur(12px); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: oklch(0.68 0.06 300);
+  }
+  .splash-screen__live-dot { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--cricket-gold); animation: splash-live-pulse 1.8s ease-in-out infinite; }
+  .splash-screen__hero { display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; }
+  .splash-screen__emblem { position: relative; width: 6.5rem; height: 6.5rem; margin-bottom: 1.1rem; display: flex; align-items: center; justify-content: center; }
+  .splash-screen__ring { position: absolute; inset: 0; border-radius: 50%; border: 1px solid oklch(0.45 0.08 295 / 0.55); }
+  .splash-screen__ring--outer { animation: splash-ring-pulse 2.8s ease-in-out infinite; }
+  .splash-screen__ring--inner { inset: 10px; border-color: oklch(0.62 0.1 300 / 0.4); animation: splash-ring-pulse 2.8s ease-in-out infinite reverse; }
+  .splash-screen__emblem-core {
+    position: relative; z-index: 1; display: flex; align-items: center; justify-content: center;
+    width: 4.75rem; height: 4.75rem; border-radius: 50%; color: var(--cricket-gold);
+    background: linear-gradient(145deg, oklch(0.2 0.04 295) 0%, oklch(0.12 0.03 288) 100%);
+    border: 1px solid oklch(0.45 0.08 295 / 0.6);
+    box-shadow: 0 0 32px oklch(0.38 0.1 295 / 0.45), 0 0 48px oklch(0.35 0.09 300 / 0.2);
+  }
+  .splash-screen__title { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 0.1rem; font-family: var(--font-display), ui-sans-serif, sans-serif; line-height: 0.95; }
+  .splash-screen__title-line { font-size: clamp(2rem, 8vw, 2.65rem); font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cricket-cream); }
+  .splash-screen__title-accent {
+    font-size: clamp(2.35rem, 9vw, 3.1rem); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    background: linear-gradient(105deg, var(--cricket-sky-bright) 0%, var(--cricket-sky) 50%, var(--cricket-blue) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .splash-screen__tagline { margin: 0.85rem 0 0; max-width: 18rem; font-size: 0.88rem; line-height: 1.5; color: oklch(0.68 0.03 295); font-weight: 500; }
+  .splash-screen__chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.45rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+  .splash-screen__chips li {
+    padding: 0.28rem 0.65rem; border-radius: 999px; border: 1px solid oklch(0.35 0.05 295 / 0.55);
+    background: oklch(0.08 0.035 295 / 0.65); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: oklch(0.78 0.06 300);
+  }
+  .splash-screen__panel {
+    width: 100%; padding: 1.1rem 1.15rem 1rem; border-radius: 14px; border: 1px solid oklch(0.32 0.05 295 / 0.7);
+    background: var(--splash-glass); backdrop-filter: blur(16px);
+    box-shadow: 0 4px 28px oklch(0.05 0.02 295 / 0.6), inset 0 1px 0 oklch(0.55 0.05 300 / 0.15);
+  }
+  .splash-screen__progress-meta { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.65rem; }
+  .splash-screen__progress-label { font-size: 0.72rem; font-weight: 600; color: oklch(0.78 0.03 295); line-height: 1.35; }
+  .splash-screen__progress-pct { font-family: var(--font-display), ui-sans-serif, sans-serif; font-size: 0.95rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--cricket-gold); }
+  .splash-screen__track { position: relative; height: 6px; border-radius: 999px; background: oklch(0.08 0.03 295); overflow: hidden; }
+  .splash-screen__fill {
+    width: var(--splash-progress, 0%); position: relative; height: 100%; min-width: 0; border-radius: inherit; overflow: hidden;
+    background: linear-gradient(90deg, var(--cricket-blue-deep) 0%, var(--cricket-blue) 55%, var(--cricket-sky) 100%);
+    transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 0 16px oklch(0.45 0.1 295 / 0.45);
+  }
+  .splash-screen__fill-glow {
+    position: absolute; inset: 0; width: 50%;
+    background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.4), transparent);
+    animation: splash-shimmer 1.6s ease-in-out infinite; pointer-events: none;
+  }
+  .splash-screen__steps { margin: 0.95rem 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.45rem; }
+  .splash-screen__step { display: flex; align-items: center; gap: 0.55rem; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: oklch(0.48 0.03 295); }
+  .splash-screen__step-dot { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: oklch(0.28 0.03 295); flex-shrink: 0; }
+  .splash-screen__step--done { color: oklch(0.68 0.05 295); }
+  .splash-screen__step--done .splash-screen__step-dot { background: var(--cricket-blue); box-shadow: 0 0 8px oklch(0.45 0.1 295 / 0.55); }
+  .splash-screen__step--active { color: var(--cricket-cream); }
+  .splash-screen__step--active .splash-screen__step-dot { background: var(--cricket-gold); box-shadow: 0 0 10px oklch(0.7 0.11 300 / 0.55); animation: splash-step-pulse 1.2s ease-in-out infinite; }
+  .splash-screen__panel--error { text-align: center; }
+  .splash-screen__error-icon { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; margin: 0 auto 0.65rem; border-radius: 50%; background: oklch(0.22 0.08 45 / 0.35); color: oklch(0.72 0.14 45); }
+  .splash-screen__error-title { margin: 0 0 0.35rem; font-family: var(--font-display), ui-sans-serif, sans-serif; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cricket-cream); }
+  .splash-screen__error-msg { margin: 0; font-size: 0.8rem; line-height: 1.45; color: oklch(0.68 0.06 300); }
+  .splash-screen__retry {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; margin-top: 0.9rem; padding: 0.55rem 1.15rem;
+    border: 1px solid oklch(0.5 0.08 295 / 0.7); border-radius: 8px;
+    background: linear-gradient(180deg, oklch(0.22 0.05 295 / 0.65) 0%, oklch(0.15 0.04 288 / 0.5) 100%);
+    font-family: var(--font-display), ui-sans-serif, sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cricket-gold); cursor: pointer;
+  }
+  .splash-screen__retry:hover { transform: translateY(-1px); border-color: var(--cricket-gold); color: var(--cricket-cream); }
+  .splash-screen__footer { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; width: 100%; }
+  .splash-screen__footer-line { width: 3rem; height: 1px; background: linear-gradient(90deg, transparent, oklch(0.5 0.08 300 / 0.55), transparent); }
+  .splash-screen__footer p { margin: 0; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: oklch(0.48 0.03 295); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .splash-screen__reveal, .splash-screen__ring--outer, .splash-screen__ring--inner, .splash-screen__orb,
+    .splash-screen__live-dot, .splash-screen__fill-glow, .splash-screen__step--active .splash-screen__step-dot { animation: none; }
+    .splash-screen__fill { transition: none; }
   }
 
   /* Landing — 4×2 grid; max tile 308×344 (top) / 308×164 (bottom), scales down on mobile */
   .landing-wireframe {
-    --landing-neon: oklch(0.78 0.22 145);
-    --landing-bg: oklch(0.1 0.02 258);
+    --landing-neon: var(--cricket-sky-bright);
+    --landing-glow: var(--cricket-blue);
+    --landing-bg: var(--cricket-navy);
     --landing-gap: clamp(6px, 1.5vw, 12px);
     --landing-tile-w-max: 308px;
     --landing-tile-tall-h-max: 344px;
@@ -1772,8 +1939,8 @@
   }
 
   .landing-home-tab:hover {
-    border-color: oklch(0.88 0.24 145);
-    box-shadow: 0 0 20px oklch(0.65 0.2 145 / 0.45);
+    border-color: var(--cricket-gold-bright);
+    box-shadow: 0 0 20px oklch(0.55 0.12 300 / 0.4);
     transform: translateY(-2px);
   }
 
@@ -1785,9 +1952,15 @@
 
   .landing-row {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--landing-gap);
     width: 100%;
+  }
+
+  @media (min-width: 1024px) {
+    .landing-row {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
   }
 
   .landing-tile {
@@ -1805,7 +1978,7 @@
     padding: 0;
     border: 1px solid var(--landing-neon);
     border-radius: clamp(4px, 1.2cqw, 8px);
-    background: oklch(0.2 0.02 260);
+    background: oklch(0.06 0.025 295);
     font-family: var(--font-display), ui-sans-serif, sans-serif;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -1871,9 +2044,9 @@
     pointer-events: none;
     background: linear-gradient(
       180deg,
-      oklch(0.08 0.02 260 / 0.2) 0%,
-      oklch(0.06 0.03 260 / 0.55) 45%,
-      oklch(0.05 0.04 145 / 0.82) 100%
+      oklch(0.08 0.02 290 / 0.2) 0%,
+      oklch(0.06 0.03 290 / 0.55) 45%,
+      oklch(0.05 0.04 295 / 0.82) 100%
     );
     transition: background 0.45s ease;
   }
@@ -1918,7 +2091,7 @@
     opacity: 0;
     background: radial-gradient(
       circle at 50% 100%,
-      oklch(0.7 0.22 145 / 0.5) 0%,
+      oklch(0.65 0.14 300 / 0.45) 0%,
       transparent 68%
     );
     pointer-events: none;
@@ -1962,7 +2135,7 @@
     letter-spacing: 0.06em;
     line-height: 1.25;
     text-transform: none;
-    color: oklch(0.72 0.12 145 / 0.9);
+    color: oklch(0.75 0.06 300 / 0.9);
     opacity: 0.95;
   }
 
@@ -2002,11 +2175,11 @@
 
   .landing-tile:hover:not(:disabled) {
     transform: translateY(-10px) scale(1.03);
-    border-color: oklch(0.92 0.28 145);
+    border-color: var(--cricket-gold-bright);
     box-shadow:
-      0 0 0 1px oklch(0.8 0.24 145 / 0.55),
+      0 0 0 1px oklch(0.75 0.12 300 / 0.5),
       0 20px 50px oklch(0 0 0 / 0.55),
-      0 0 48px oklch(0.62 0.22 145 / 0.4);
+      0 0 48px oklch(0.5 0.14 300 / 0.35);
     animation: landing-ring-spin 2.5s linear infinite;
   }
 
@@ -2028,9 +2201,9 @@
   .landing-tile:hover:not(:disabled) .landing-tile__overlay {
     background: linear-gradient(
       180deg,
-      oklch(0.12 0.04 145 / 0.25) 0%,
-      oklch(0.08 0.05 145 / 0.55) 50%,
-      oklch(0.06 0.06 145 / 0.72) 100%
+      oklch(0.12 0.04 295 / 0.25) 0%,
+      oklch(0.08 0.05 295 / 0.55) 50%,
+      oklch(0.06 0.06 295 / 0.72) 100%
     );
   }
 
@@ -2044,14 +2217,14 @@
 
   .landing-tile:hover:not(:disabled) .landing-tile__content {
     transform: scale(1.06) translateY(-4px);
-    background: oklch(0.15 0.06 145 / 0.45);
+    background: oklch(0.15 0.05 295 / 0.45);
   }
 
   .landing-tile:hover:not(:disabled) .landing-tile__label {
     letter-spacing: 0.12em;
-    color: oklch(0.98 0.02 145);
+    color: var(--cricket-cream);
     text-shadow:
-      0 0 28px oklch(0.7 0.24 145 / 0.7),
+      0 0 28px oklch(0.65 0.14 300 / 0.65),
       0 2px 8px oklch(0 0 0 / 0.8);
   }
 
@@ -2066,51 +2239,51 @@
   }
 
   .landing-tile--hero {
-    border-color: oklch(0.82 0.24 145);
+    border-color: var(--cricket-gold);
     animation: landing-hero-pulse 3s ease-in-out infinite;
   }
 
   @keyframes landing-hero-pulse {
     0%,
     100% {
-      box-shadow: 0 0 0 0 oklch(0.6 0.2 145 / 0);
+      box-shadow: 0 0 0 0 oklch(0.55 0.12 300 / 0);
     }
     50% {
-      box-shadow: 0 0 28px oklch(0.55 0.2 145 / 0.35);
+      box-shadow: 0 0 28px oklch(0.5 0.14 300 / 0.35);
     }
   }
 
   .landing-tile--hero:hover:not(:disabled) {
     box-shadow:
-      0 0 0 1px oklch(0.8 0.24 145 / 0.5),
+      0 0 0 1px oklch(0.75 0.12 300 / 0.5),
       0 20px 48px oklch(0 0 0 / 0.5),
-      0 0 52px oklch(0.65 0.22 145 / 0.45);
+      0 0 52px oklch(0.55 0.14 300 / 0.4);
   }
 
   .landing-tile--quick .landing-tile__glow {
     background: radial-gradient(
       circle at 50% 100%,
-      oklch(0.75 0.18 85 / 0.45) 0%,
+      oklch(0.6 0.16 300 / 0.45) 0%,
       transparent 68%
     );
   }
 
   .landing-tile--quick:hover:not(:disabled) {
-    border-color: oklch(0.88 0.2 85);
-    background: oklch(0.32 0.06 85 / 0.2);
+    border-color: oklch(0.82 0.16 300);
+    background: oklch(0.28 0.08 300 / 0.2);
     box-shadow:
-      0 0 0 1px oklch(0.75 0.18 85 / 0.45),
+      0 0 0 1px oklch(0.65 0.14 300 / 0.45),
       0 16px 40px oklch(0 0 0 / 0.45),
-      0 0 36px oklch(0.65 0.16 85 / 0.35);
+      0 0 36px oklch(0.5 0.14 300 / 0.35);
   }
 
   .landing-tile--quick:hover:not(:disabled) .landing-tile__label {
-    text-shadow: 0 0 24px oklch(0.78 0.16 85 / 0.55);
+    text-shadow: 0 0 24px oklch(0.65 0.14 300 / 0.55);
   }
 
   .landing-tile--disabled {
     cursor: not-allowed;
-    color: oklch(0.55 0.02 260);
+    color: oklch(0.55 0.02 290);
   }
 
   .landing-tile--disabled .landing-tile__media {
@@ -2119,7 +2292,7 @@
   }
 
   .landing-tile--disabled .landing-tile__overlay {
-    background: oklch(0.1 0.02 260 / 0.82);
+    background: oklch(0.1 0.02 290 / 0.82);
   }
 
   .landing-tile--disabled .landing-tile__content {
@@ -2175,7 +2348,7 @@
     align-items: center;
     gap: 0.5rem;
     font-size: 0.8125rem;
-    color: oklch(0.65 0.08 145);
+    color: oklch(0.65 0.08 295);
     text-decoration: underline;
     text-underline-offset: 2px;
   }
@@ -2191,25 +2364,25 @@
     width: 100%;
     padding: 0.85rem 1rem;
     border-radius: var(--radius-md);
-    border: 1px dashed oklch(0.38 0.04 255);
-    background: oklch(0.1 0.02 255 / 0.6);
-    color: oklch(0.7 0.03 255);
+    border: 1px dashed oklch(0.38 0.04 288);
+    background: oklch(0.1 0.02 288 / 0.6);
+    color: oklch(0.7 0.03 288);
     font-size: 0.875rem;
     text-align: left;
     transition: border-color 0.15s, background 0.15s;
   }
 
   .csv-import-file-btn:hover {
-    border-color: oklch(0.55 0.08 145 / 0.5);
-    background: oklch(0.14 0.03 255 / 0.8);
+    border-color: oklch(0.55 0.08 295 / 0.5);
+    background: oklch(0.14 0.03 288 / 0.8);
     color: var(--cricket-cream);
   }
 
   .csv-import-summary {
     padding: 0.75rem;
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.3 0.04 255);
-    background: oklch(0.1 0.02 255 / 0.5);
+    border: 1px solid oklch(0.3 0.04 288);
+    background: oklch(0.1 0.02 288 / 0.5);
   }
 
   .roster-header-actions {
@@ -2263,7 +2436,7 @@
     gap: 0.25rem;
     flex: 1;
     max-width: 7rem;
-    color: oklch(0.5 0.03 255);
+    color: oklch(0.5 0.03 288);
     font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -2277,14 +2450,14 @@
 
   .tournament-flow-steps__item--active .tournament-flow-steps__dot {
     border-color: var(--cricket-gold);
-    background: oklch(0.32 0.1 145 / 0.5);
+    background: oklch(0.32 0.1 295 / 0.5);
     color: var(--cricket-gold);
   }
 
   .tournament-flow-steps__item--done .tournament-flow-steps__dot {
-    border-color: oklch(0.55 0.1 145);
-    background: oklch(0.28 0.08 145 / 0.45);
-    color: oklch(0.78 0.14 145);
+    border-color: oklch(0.55 0.1 295);
+    background: oklch(0.28 0.08 295 / 0.45);
+    color: oklch(0.78 0.14 295);
   }
 
   .tournament-flow-steps__dot {
@@ -2294,8 +2467,8 @@
     width: 1.65rem;
     height: 1.65rem;
     border-radius: 999px;
-    border: 1px solid oklch(0.35 0.04 255);
-    background: oklch(0.14 0.025 255);
+    border: 1px solid oklch(0.35 0.04 288);
+    background: oklch(0.14 0.025 288);
     font-size: 0.7rem;
   }
 
@@ -2305,12 +2478,12 @@
     left: calc(50% + 1rem);
     width: calc(100% - 2rem);
     height: 1px;
-    background: oklch(0.32 0.04 255);
+    background: oklch(0.32 0.04 288);
     pointer-events: none;
   }
 
   .tournament-flow-steps__item--done .tournament-flow-steps__connector {
-    background: oklch(0.5 0.1 145 / 0.55);
+    background: oklch(0.5 0.1 295 / 0.55);
   }
 
   .cricket-btn-import {
@@ -2323,14 +2496,14 @@
     letter-spacing: 0.04em;
     text-transform: uppercase;
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.38 0.04 255);
-    background: oklch(0.12 0.02 255 / 0.8);
+    border: 1px solid oklch(0.38 0.04 288);
+    background: oklch(0.12 0.02 288 / 0.8);
     color: oklch(0.75 0.02 95);
     white-space: nowrap;
   }
 
   .cricket-btn-import:hover {
-    border-color: oklch(0.55 0.08 145 / 0.45);
+    border-color: oklch(0.55 0.08 295 / 0.45);
     color: var(--cricket-cream);
   }
 
@@ -2343,7 +2516,7 @@
   }
 
   .player-assign-combobox-command [data-slot="command-input-wrapper"] {
-    border-color: oklch(0.28 0.04 255);
+    border-color: oklch(0.28 0.04 288);
   }
 
   .player-assign-combobox-command [data-slot="command-input"] {
@@ -2351,11 +2524,11 @@
   }
 
   .player-assign-combobox-command [data-slot="command-input"]::placeholder {
-    color: oklch(0.45 0.03 255);
+    color: oklch(0.45 0.03 288);
   }
 
   .player-assign-combobox-command [data-slot="command-item"][data-selected="true"] {
-    background: oklch(0.22 0.04 265);
+    background: oklch(0.08 0.03 295);
   }
 
   .tournament-hub-badge {
@@ -2370,32 +2543,113 @@
   }
 
   .tournament-hub-badge--setup {
-    border: 1px solid oklch(0.55 0.08 265 / 0.45);
-    background: oklch(0.22 0.05 265 / 0.5);
-    color: oklch(0.75 0.05 265);
+    border: 1px solid oklch(0.55 0.08 295 / 0.45);
+    background: oklch(0.1 0.04 295 / 0.6);
+    color: oklch(0.75 0.05 295);
   }
 
   .tournament-hub-badge--live {
-    border: 1px solid oklch(0.62 0.12 85 / 0.55);
-    background: oklch(0.34 0.09 85 / 0.35);
-    color: oklch(0.85 0.12 85);
+    border: 1px solid oklch(0.62 0.12 300 / 0.55);
+    background: oklch(0.34 0.09 300 / 0.35);
+    color: oklch(0.85 0.12 300);
   }
 
   .tournament-hub-badge--done {
-    border: 1px solid oklch(0.55 0.1 145 / 0.45);
-    background: oklch(0.22 0.06 145 / 0.4);
-    color: oklch(0.78 0.1 145);
+    border: 1px solid oklch(0.55 0.1 295 / 0.45);
+    background: oklch(0.1 0.04 295 / 0.5);
+    color: oklch(0.78 0.1 295);
   }
 
   .tournament-hub-card {
     transition:
-      border-color 0.16s ease,
-      box-shadow 0.16s ease;
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      filter 0.2s ease;
+  }
+
+  /* Clickable tournament format / template cards */
+  .tournament-pick-btn {
+    width: 100%;
+    text-align: left;
+    border-radius: var(--radius-lg);
+    transition: transform 0.22s cubic-bezier(0.34, 1.2, 0.64, 1);
+  }
+
+  .tournament-pick-btn:not(:disabled):hover {
+    transform: translateY(-3px);
+  }
+
+  .tournament-pick-btn:not(:disabled):active {
+    transform: translateY(-1px);
+  }
+
+  .tournament-pick-btn:not(:disabled):hover .tournament-hub-card,
+  .tournament-pick-btn:not(:disabled):focus-visible .tournament-hub-card {
+    border-color: oklch(0.58 0.14 300 / 0.55);
+    box-shadow:
+      0 1px 0 oklch(1 0 0 / 0.06) inset,
+      0 0 0 1px oklch(0.5 0.12 300 / 0.4),
+      0 14px 36px oklch(0 0 0 / 0.5),
+      0 0 32px oklch(0.42 0.14 295 / 0.22);
+    filter: brightness(1.1);
+  }
+
+  .tournament-pick-btn--custom:not(:disabled):hover .tournament-hub-card {
+    border-color: oklch(0.55 0.12 295 / 0.6);
+    box-shadow:
+      0 1px 0 oklch(1 0 0 / 0.05) inset,
+      0 0 0 1px oklch(0.48 0.11 295 / 0.45),
+      0 14px 36px oklch(0 0 0 / 0.5),
+      0 0 28px oklch(0.4 0.12 295 / 0.28);
+  }
+
+  .tournament-pick-btn:focus-visible {
+    outline: none;
+  }
+
+  .tournament-pick-btn:focus-visible .tournament-hub-card {
+    outline: 2px solid var(--cricket-sky);
+    outline-offset: 3px;
+  }
+
+  .tournament-resume-btn {
+    transition:
+      transform 0.18s ease,
+      border-color 0.18s ease,
+      background 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .tournament-resume-btn:not(:disabled):hover {
+    transform: translateX(3px);
+    border-color: oklch(0.62 0.14 300 / 0.55);
+    background: oklch(0.18 0.06 295 / 0.55);
+    box-shadow: 0 4px 16px oklch(0 0 0 / 0.35);
+  }
+
+  .tournament-resume-btn:not(:disabled):active {
+    transform: translateX(1px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tournament-pick-btn,
+    .tournament-resume-btn {
+      transition: none;
+    }
+
+    .tournament-pick-btn:not(:disabled):hover,
+    .tournament-pick-btn:not(:disabled):active {
+      transform: none;
+    }
+
+    .tournament-resume-btn:not(:disabled):hover {
+      transform: none;
+    }
   }
 
   .cricket-toast {
-    border: 1px solid oklch(0.35 0.04 255) !important;
-    background: oklch(0.14 0.025 255) !important;
+    border: 1px solid oklch(0.35 0.04 288) !important;
+    background: oklch(0.14 0.025 288) !important;
     color: var(--cricket-cream) !important;
     font-family: var(--font-body), sans-serif !important;
     box-shadow: 0 8px 24px oklch(0 0 0 / 0.35) !important;
@@ -2406,7 +2660,7 @@
   }
 
   .cricket-toast__description {
-    color: oklch(0.7 0.03 255) !important;
+    color: oklch(0.7 0.03 288) !important;
   }
 
   .settings-clear-btn {
@@ -2439,6 +2693,164 @@
   .settings-clear-btn--full:hover:not(:disabled) {
     border-color: oklch(0.62 0.18 25);
     background: oklch(0.28 0.1 25 / 0.55);
+  }
+
+  /* --- Mobile & touch-friendly layout --- */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  .cricket-page {
+    overflow-x: clip;
+  }
+
+  .tournament-points-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -0.25rem;
+    padding: 0 0.25rem;
+  }
+
+  .tournament-points-table-inner {
+    min-width: min(100%, 18.5rem);
+  }
+
+  .cricket-run-grid {
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  @media (max-width: 380px) {
+    .cricket-run-grid--extras .cricket-run-btn {
+      font-size: 0.65rem;
+      letter-spacing: 0;
+    }
+  }
+
+  @media (max-width: 639px) {
+    .cricket-run-btn {
+      min-height: 2.75rem;
+      font-size: 1.15rem;
+    }
+
+    .landing-tile__label {
+      font-size: clamp(0.62rem, 3.2vw, 0.9rem);
+    }
+
+    .landing-tile__subtitle {
+      font-size: clamp(0.55rem, 2.8vw, 0.65rem);
+    }
+
+    .landing-home-tab {
+      min-height: 2.75rem;
+      padding: 0.5rem 1rem;
+    }
+
+    .tournament-setup-footer {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+
+    .tournament-setup-footer__status {
+      margin-right: 0;
+      justify-content: center;
+    }
+
+    .tournament-setup-footer__play {
+      width: 100%;
+    }
+
+    .tournament-setup-footer__play .cricket-btn-play,
+    .tournament-setup-footer__play button {
+      width: 100%;
+    }
+
+    .roster-card-grid {
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    }
+
+    .roster-card__menu-btn,
+    .tournament-stage-card__remove,
+    .tournament-team-slot__clear {
+      min-width: 2.75rem;
+      min-height: 2.75rem;
+    }
+
+    .tournament-team-slot__clear {
+      opacity: 1;
+    }
+
+    .cricket-score-strip {
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    .cricket-score-strip__block {
+      flex: 1 1 8rem;
+      min-width: 0;
+      text-align: center;
+    }
+
+    .cricket-tab {
+      min-height: 2.75rem;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.8125rem;
+    }
+
+    .cricket-modal-overlay {
+      padding: 0.75rem;
+      align-items: flex-end;
+    }
+
+    .cricket-modal-overlay > * {
+      max-height: min(92dvh, 640px);
+      overflow-y: auto;
+    }
+
+    .tournament-game-panel {
+      padding: 1rem !important;
+    }
+
+    .tournament-next-match-hero {
+      padding: 1.25rem !important;
+    }
+
+    .cricket-broadcast-card.p-5 {
+      padding: 1rem;
+    }
+
+
+    .tournament-list-row.roster-card--list-item {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+
+    .tournament-list-row .roster-card__menu {
+      opacity: 1;
+      pointer-events: auto;
+      align-self: flex-end;
+    }
+  }
+
+  @media (max-width: 399px) {
+    .landing-row,
+    .landing-row--bottom {
+      grid-template-columns: 1fr;
+    }
+
+    .landing-tile {
+      max-width: 100%;
+    }
+  }
+
+  @media (min-width: 640px) and (max-width: 1023px) {
+    .cricket-scoring-layout {
+      grid-template-columns: 1fr 1fr;
+    }
   }
 
 }

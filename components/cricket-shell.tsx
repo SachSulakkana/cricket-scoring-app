@@ -21,7 +21,7 @@ export function CricketPage({
     <div className={cn("cricket-page", className)}>
       <div
         className={cn(
-          "relative z-10 mx-auto w-full px-4 pb-10 pt-5",
+          "relative z-10 mx-auto w-full min-w-0 max-w-full px-3 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(2.5rem,env(safe-area-inset-bottom))] sm:px-4 sm:pt-5 sm:pb-10",
           roster
             ? "max-w-7xl"
             : extraWide
@@ -37,45 +37,73 @@ export function CricketPage({
   );
 }
 
+/** Icon-only back control; `ariaLabel` is for screen readers (not shown on screen). */
+export function CricketBackButton({
+  onClick,
+  ariaLabel = "Go back",
+  className,
+}: {
+  onClick: () => void;
+  ariaLabel?: string;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      title={ariaLabel}
+      className={cn(
+        "cricket-btn-back inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-xl leading-none touch-manipulation",
+        className
+      )}
+    >
+      <span aria-hidden>←</span>
+    </button>
+  );
+}
+
 export function CricketPageHeader({
   onBack,
   title,
   action,
-  backLabel = "← Back",
+  backLabel = "Go back",
   homeHref,
 }: {
   onBack: () => void;
   title: string;
   action?: React.ReactNode;
+  /** Accessible label for the back button (icon only). */
   backLabel?: string;
   /** Optional link to home (shown beside back). */
   homeHref?: string;
 }) {
   return (
-    <header className="cricket-page-header flex items-center gap-2 sm:gap-3 mb-7">
+    <header className="cricket-page-header flex items-center gap-2 sm:gap-3 mb-5 sm:mb-7 min-w-0">
       <div className="flex shrink-0 items-center gap-1 min-w-0">
-        <button
-          type="button"
+        <CricketBackButton
           onClick={onBack}
-          className="cricket-btn-back rounded-md px-2 py-1.5 -ml-2"
-        >
-          {backLabel}
-        </button>
+          ariaLabel={backLabel}
+          className="-ml-1 sm:-ml-2"
+        />
         {homeHref ? (
-          <a href={homeHref} className="cricket-btn-home-link hidden sm:inline">
+          <a
+            href={homeHref}
+            className="cricket-btn-home-link hidden sm:inline min-h-11 items-center"
+          >
             Home
           </a>
         ) : null}
       </div>
-      <h1 className="cricket-display flex-1 text-center text-base sm:text-lg font-semibold text-[var(--cricket-cream)] tracking-wide truncate px-1">
+      <h1 className="cricket-display flex-1 min-w-0 text-center text-sm sm:text-lg font-semibold text-[var(--cricket-cream)] tracking-wide truncate px-0.5 sm:px-1">
         {title}
       </h1>
       {action ? (
-        <div className="flex shrink-0 items-center justify-end max-w-[55%] sm:max-w-none">
+        <div className="flex shrink-0 items-center justify-end min-w-0 max-w-[42%] sm:max-w-none overflow-x-auto">
           {action}
         </div>
       ) : (
-        <div className="w-12 sm:w-[4.5rem] shrink-0" aria-hidden />
+        <div className="w-11 shrink-0" aria-hidden />
       )}
     </header>
   );

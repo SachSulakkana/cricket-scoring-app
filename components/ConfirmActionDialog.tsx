@@ -59,7 +59,7 @@ export default function ConfirmActionDialog({
             className={
               variant === "destructive"
                 ? "bg-[oklch(0.45_0.14_25)] hover:bg-[oklch(0.5_0.16_25)]"
-                : "bg-[oklch(0.42_0.1_145)] hover:bg-[oklch(0.48_0.12_145)]"
+                : "bg-[oklch(0.42_0.1_295)] hover:bg-[oklch(0.48_0.12_295)]"
             }
           >
             {loading ? "Please wait…" : confirmLabel}
