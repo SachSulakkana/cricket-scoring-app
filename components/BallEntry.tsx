@@ -2,7 +2,12 @@
 
 import { useState, useMemo } from "react";
 import { useCricket } from "@/lib/cricket-context";
-import { DismissalType, ExtraType } from "@/lib/cricket-types";
+import {
+  countsAsBowlerWicket,
+  countsAsWicket,
+  DismissalType,
+  ExtraType,
+} from "@/lib/cricket-types";
 import DismissalModal from "./DismissalModal";
 import ReplacementBatsmanModal from "./ReplacementBatsmanModal";
 import BowlerSelectorModal from "./BowlerSelectorModal";
@@ -38,6 +43,7 @@ export default function BallEntry({
   } | null>(null);
   const [showBowlerSelector, setShowBowlerSelector] = useState(false);
   const [pendingExtraType, setPendingExtraType] = useState<ExtraType | null>(null);
+  const [overthrowBatRuns, setOverthrowBatRuns] = useState<number | null>(null);
 
   if (!currentInnings) return null;
 
@@ -68,7 +74,9 @@ export default function BallEntry({
       // For no-ball, only additional runs count to batsman (exclude penalty +1).
       const noBallRuns =
         ball.extra === "no-ball" ? Math.max(ball.extraRuns - 1, 0) : 0;
-      return total + ball.runs + noBallRuns;
+      const overthrowRuns =
+        ball.extra === "overthrow" ? ball.extraRuns : 0;
+      return total + ball.runs + noBallRuns + overthrowRuns;
     }, 0);
   };
 
@@ -81,11 +89,14 @@ export default function BallEntry({
 
         const concededFromExtra =
           ball.extra === "wide" || ball.extra === "no-ball" ? ball.extraRuns : 0;
-        const isBowlerWicket =
-          ball.dismissal !== "none" && ball.dismissal !== "run-out";
+        const isBowlerWicket = countsAsBowlerWicket(ball.dismissal);
+
+        const overthrowConceded =
+          ball.extra === "overthrow" ? ball.extraRuns : 0;
 
         return {
-          runsConceded: stats.runsConceded + ball.runs + concededFromExtra,
+          runsConceded:
+            stats.runsConceded + ball.runs + concededFromExtra + overthrowConceded,
           wickets: stats.wickets + (isBowlerWicket ? 1 : 0),
         };
       },
@@ -106,7 +117,7 @@ export default function BallEntry({
 
     const dismissedPlayerNames = new Set(
       currentInnings.balls
-        .filter((ball) => ball.dismissal !== "none" && ball.dismissedPlayer)
+        .filter((ball) => countsAsWicket(ball.dismissal) && ball.dismissedPlayer)
         .map((ball) => ball.dismissedPlayer as string)
     );
 
@@ -136,10 +147,13 @@ export default function BallEntry({
     return (currentLegalBallCount % matchState.config.ballsPerOver) + 1;
   }, [currentLegalBallCount, matchState.config]);
 
-  const isOverComplete = useMemo(() => {
+  const overJustFinished = useMemo(() => {
     if (!matchState.config) return false;
-    return ballsInCurrentOver === matchState.config.ballsPerOver;
-  }, [ballsInCurrentOver, matchState.config]);
+    return (
+      currentLegalBallCount > 0 &&
+      currentLegalBallCount % matchState.config.ballsPerOver === 0
+    );
+  }, [currentLegalBallCount, matchState.config]);
 
   const isInningsComplete = useMemo(() => {
     if (!matchState.config) return false;
@@ -147,7 +161,7 @@ export default function BallEntry({
     const legalBalls = currentInnings.balls.filter(
       (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
     ).length;
-    const wickets = currentInnings.balls.filter((ball) => ball.dismissal !== "none").length;
+    const wickets = currentInnings.balls.filter((ball) => countsAsWicket(ball.dismissal)).length;
     const maxWickets = Math.max(battingTeam.players.length - 1, 0);
     const maxLegalBalls = matchState.config.totalOvers * matchState.config.ballsPerOver;
 
@@ -175,7 +189,7 @@ export default function BallEntry({
     const newBall = {
       id: `${currentInnings.teamId}-${currentBallNumber}`,
       runs,
-      extra: extra as "wide" | "no-ball" | "bye" | "leg-bye" | "none",
+      extra: extra as ExtraType,
       extraRuns,
       dismissal: "none" as DismissalType,
       dismissedPlayer: undefined,
@@ -189,7 +203,12 @@ export default function BallEntry({
 
     // Auto-change striker/non-striker based on delivery outcome.
     // For extras, rotate strike using extra runs scored on that ball.
-    const strikeRotationRuns = extra === "none" ? runs : extraRuns;
+    const strikeRotationRuns =
+      extra === "none"
+        ? runs
+        : extra === "overthrow"
+          ? runs + extraRuns
+          : extraRuns;
     if (strikeRotationRuns % 2 === 1) {
       // Odd runs: change strike
       swapStrike();
@@ -265,12 +284,12 @@ export default function BallEntry({
 
   const handleReplacementConfirm = (playerId: string) => {
     if (!dismissedPlayerInfo) return;
-    setNextBatsman(playerId, true); // Replacement always becomes striker
+    setNextBatsman(playerId, dismissedPlayerInfo.isStriker);
     setShowReplacementModal(false);
     setDismissedPlayerInfo(null);
 
-    // If over is complete, show bowler selector
-    if (isOverComplete) {
+    if (overJustFinished) {
+      swapStrike();
       setShowBowlerSelector(true);
     }
   };
@@ -282,7 +301,22 @@ export default function BallEntry({
 
   const handleExtraTypeClick = (extraType: ExtraType) => {
     if (scoringLocked) return;
+    setOverthrowBatRuns(null);
     setPendingExtraType(extraType);
+  };
+
+  const handleOverthrowBatRunsSelect = (batRuns: number) => {
+    if (scoringLocked) return;
+    setOverthrowBatRuns(batRuns);
+  };
+
+  const handleOverthrowConfirm = (overthrowRuns: number) => {
+    if (scoringLocked) return;
+    if (overthrowBatRuns === null) return;
+
+    recordBall(overthrowBatRuns, "overthrow", overthrowRuns);
+    setPendingExtraType(null);
+    setOverthrowBatRuns(null);
   };
 
   const handleExtraRunsSelect = (selectedRuns: number) => {
@@ -301,6 +335,9 @@ export default function BallEntry({
 
   const extraRunOptions = useMemo(() => {
     if (pendingExtraType === "bye" || pendingExtraType === "leg-bye") {
+      return [1, 2, 3, 4, 5, 6];
+    }
+    if (pendingExtraType === "overthrow") {
       return [1, 2, 3, 4, 5, 6];
     }
     return [0, 1, 2, 3, 4, 5, 6];
@@ -412,6 +449,14 @@ export default function BallEntry({
               >
                 Leg bye
               </button>
+              <button
+                type="button"
+                onClick={() => handleExtraTypeClick("overthrow")}
+                disabled={scoringLocked}
+                className="cricket-run-btn !min-h-11 !text-xs !font-bold"
+              >
+                Overthrow
+              </button>
             </div>
           </div>
 
@@ -472,14 +517,31 @@ export default function BallEntry({
         <div className="cricket-modal-overlay fixed inset-0 flex items-center justify-center z-50 p-4">
           <div className="cricket-modal w-full max-w-md p-5 space-y-4">
             <p className="cricket-display text-center text-lg font-semibold text-[var(--cricket-cream)]">
-              {pendingExtraType.toUpperCase()} — additional runs?
+              {pendingExtraType === "overthrow"
+                ? overthrowBatRuns === null
+                  ? "Overthrow — runs off the bat?"
+                  : `Overthrow — additional runs?${overthrowBatRuns > 0 ? ` (${overthrowBatRuns} off bat)` : ""}`
+                : `${pendingExtraType.toUpperCase()} — additional runs?`}
             </p>
             <div className="cricket-run-grid">
-              {extraRunOptions.map((runs) => (
+              {(pendingExtraType === "overthrow" && overthrowBatRuns === null
+                ? [0, 1, 2, 3, 4, 5, 6]
+                : extraRunOptions
+              ).map((runs) => (
                 <button
                   key={runs}
                   type="button"
-                  onClick={() => handleExtraRunsSelect(runs)}
+                  onClick={() => {
+                    if (pendingExtraType === "overthrow") {
+                      if (overthrowBatRuns === null) {
+                        handleOverthrowBatRunsSelect(runs);
+                      } else {
+                        handleOverthrowConfirm(runs);
+                      }
+                    } else {
+                      handleExtraRunsSelect(runs);
+                    }
+                  }}
                   className="cricket-run-btn"
                 >
                   {runs}
@@ -489,9 +551,18 @@ export default function BallEntry({
             <button
               type="button"
               className="cricket-btn-setup w-full"
-              onClick={() => setPendingExtraType(null)}
+              onClick={() => {
+                if (pendingExtraType === "overthrow" && overthrowBatRuns !== null) {
+                  setOverthrowBatRuns(null);
+                  return;
+                }
+                setPendingExtraType(null);
+                setOverthrowBatRuns(null);
+              }}
             >
-              Cancel
+              {pendingExtraType === "overthrow" && overthrowBatRuns !== null
+                ? "Back"
+                : "Cancel"}
             </button>
           </div>
         </div>

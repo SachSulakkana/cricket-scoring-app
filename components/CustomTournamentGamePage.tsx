@@ -143,6 +143,7 @@ function buildPointsTable(
     }
     if (
       !fx.played ||
+      fx.fixture.result?.abandoned ||
       fx.runsA == null ||
       fx.runsB == null ||
       fx.wicketsA == null ||
@@ -323,11 +324,13 @@ function StageFixtureResultsPanel({
             </div>
             {fx.played ? (
               <p className="text-xs text-[oklch(0.72_0.1_75)] mt-2">
-                {fx.winnerId
-                  ? `Winner: ${
-                      fx.winnerId === fx.teamA.id ? fx.teamA.name : teamBName
-                    }`
-                  : "Match tied"}
+                {fx.fixture.result?.abandoned
+                  ? "Abandoned (rain) — no points"
+                  : fx.winnerId
+                    ? `Winner: ${
+                        fx.winnerId === fx.teamA.id ? fx.teamA.name : teamBName
+                      }`
+                    : "Match tied"}
               </p>
             ) : (
               <p className="text-xs text-[oklch(0.55_0.03_255)] mt-2">Not played</p>

@@ -54,6 +54,7 @@ export function computeStandings(
     if (filter?.groupId != null && fx.groupId !== filter.groupId) return;
     if (
       !fx.played ||
+      fx.result?.abandoned ||
       fx.result?.runsA == null ||
       fx.result?.runsB == null
     ) {

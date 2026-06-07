@@ -32,27 +32,32 @@ export default function BatsmanSelector({
   const isSubmitEnabled = striker && nonStriker && striker !== nonStriker;
 
   const getPlayerCard = (player: Player) => {
-    const isSelected = striker === player.id || nonStriker === player.id;
     const isStriker = striker === player.id;
     const isNonStriker = nonStriker === player.id;
+    const isSelected = isStriker || isNonStriker;
 
     return (
       <button
         key={player.id}
+        type="button"
         onClick={() => togglePlayerSelection(player.id)}
-        className={`p-4 rounded-lg border-2 transition-all ${
-          isStriker
-            ? "bg-slate-600 border-slate-500 text-white font-bold"
-            : isNonStriker
-            ? "bg-slate-600 border-slate-500 text-white font-bold"
-            : isSelected
-            ? "bg-slate-600 border-slate-500 text-white"
-            : "bg-slate-700 border-slate-600 text-slate-200 hover:border-slate-400 hover:bg-slate-600"
+        className={`w-full p-4 rounded-lg border-2 transition-all flex items-center justify-between gap-3 text-left ${
+          isSelected
+            ? "border-[oklch(0.55_0.12_300)] bg-[oklch(0.2_0.06_300/0.35)] text-[var(--cricket-cream)]"
+            : "border-[oklch(0.32_0.04_255)] bg-[oklch(0.16_0.025_255)] text-[oklch(0.85_0.02_95)] hover:border-[oklch(0.55_0.12_300/0.5)]"
         }`}
       >
         <div className="font-semibold">{player.name}</div>
-        {isStriker && <div className="text-xs mt-1">STRIKER</div>}
-        {isNonStriker && <div className="text-xs mt-1">NON-STRIKER</div>}
+        {isStriker && (
+          <span className="text-xs font-bold tracking-wide text-[oklch(0.75_0.12_300)] shrink-0">
+            STRIKER
+          </span>
+        )}
+        {isNonStriker && (
+          <span className="text-xs font-bold tracking-wide text-[oklch(0.75_0.12_300)] shrink-0">
+            NON-STRIKER
+          </span>
+        )}
       </button>
     );
   };
@@ -96,8 +101,8 @@ export default function BatsmanSelector({
           </div>
         )}
 
-        {/* Player Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {/* Player list — one per row */}
+        <div className="flex flex-col gap-3">
           {players.map((player) => getPlayerCard(player))}
         </div>
 

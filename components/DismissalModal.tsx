@@ -22,7 +22,18 @@ const DISMISSAL_TYPES: DismissalType[] = [
   "caught",
   "stumped",
   "run-out",
+  "retired-hurt",
 ];
+
+const DISMISSAL_LABELS: Record<DismissalType, string> = {
+  bowled: "Bowled",
+  lbw: "LBW",
+  caught: "Caught",
+  stumped: "Stumped",
+  "run-out": "Run out",
+  "retired-hurt": "Retired hurt",
+  none: "None",
+};
 
 export default function DismissalModal({
   batsmen,
@@ -64,13 +75,13 @@ export default function DismissalModal({
                       setSelectedFielder(null);
                     }
                   }}
-                  className={`p-3 rounded-lg border-2 transition-all capitalize ${
+                  className={`p-3 rounded-lg border-2 transition-all ${
                     selectedType === type
                       ? "bg-[oklch(0.4_0.14_25)] border-[oklch(0.55_0.2_25)] text-white font-semibold"
                       : "bg-[oklch(0.16_0.025_255)] border-[oklch(0.32_0.04_255)] text-[oklch(0.85_0.02_95)] hover:border-[oklch(0.55_0.2_25)]"
                   }`}
                 >
-                  {type}
+                  {DISMISSAL_LABELS[type]}
                 </button>
               ))}
             </div>

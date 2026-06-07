@@ -147,7 +147,9 @@ export default function TournamentScheduleList({
                   </p>
                   {fx.played ? (
                     <p className="text-sm text-[oklch(0.65_0.03_255)]">
-                      {formatScore(fx.runsA ?? 0, fx.wicketsA ?? 0)}
+                      {fx.fixture.result?.abandoned
+                        ? "Abandoned"
+                        : formatScore(fx.runsA ?? 0, fx.wicketsA ?? 0)}
                     </p>
                   ) : (
                     <p className="text-sm text-[oklch(0.55_0.03_255)]">Not played</p>
@@ -160,7 +162,9 @@ export default function TournamentScheduleList({
                   </p>
                   {fx.played ? (
                     <p className="text-sm text-[oklch(0.65_0.03_255)]">
-                      {formatScore(fx.runsB ?? 0, fx.wicketsB ?? 0)}
+                      {fx.fixture.result?.abandoned
+                        ? "Abandoned"
+                        : formatScore(fx.runsB ?? 0, fx.wicketsB ?? 0)}
                     </p>
                   ) : (
                     <p className="text-sm text-[oklch(0.55_0.03_255)]">Not played</p>
@@ -170,9 +174,11 @@ export default function TournamentScheduleList({
               {fx.played ? (
                 <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                   <p className="text-xs text-[oklch(0.72_0.1_75)]">
-                    {fx.winnerId
-                      ? `${fx.winnerId === fx.teamA.id ? fx.teamA.name : fx.teamB.name} won`
-                      : "Match tied"}
+                    {fx.fixture.result?.abandoned
+                      ? "Abandoned due to rain — no points"
+                      : fx.winnerId
+                        ? `${fx.winnerId === fx.teamA.id ? fx.teamA.name : fx.teamB.name} won`
+                        : "Match tied"}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <button

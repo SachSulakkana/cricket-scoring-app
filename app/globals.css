@@ -1584,22 +1584,23 @@
   .cricket-striker-panel {
     padding: 0.85rem 1rem;
     border-radius: var(--radius-md);
-    border-left: 3px solid var(--cricket-score);
-    background: oklch(0.16 0.05 295 / 0.35);
+    border: 2px solid oklch(0.55 0.12 300);
+    background: oklch(0.2 0.06 300 / 0.35);
+    box-shadow: 0 0 0 1px oklch(0.55 0.12 300 / 0.15);
   }
 
   .cricket-non-striker-panel {
     padding: 0.85rem 1rem;
     border-radius: var(--radius-md);
-    border-left: 3px solid oklch(0.55 0.1 300);
-    background: oklch(0.16 0.04 300 / 0.3);
+    border: 2px solid oklch(0.32 0.04 255);
+    background: oklch(0.16 0.025 255);
   }
 
   .cricket-bowler-panel {
     padding: 0.85rem 1rem;
     border-radius: var(--radius-md);
-    border-left: 3px solid var(--cricket-gold);
-    background: oklch(0.18 0.06 300 / 0.2);
+    border: 2px solid oklch(0.32 0.04 255);
+    background: oklch(0.16 0.025 255);
   }
 
   .cricket-panel-label {

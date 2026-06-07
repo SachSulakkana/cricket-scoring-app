@@ -68,11 +68,13 @@ export default function TournamentMatchSummaryDialog({
               <CricketDetailRow
                 label="Outcome"
                 value={
-                  result.winnerTeamId
-                    ? result.winnerTeamId === teamA.id
-                      ? `${teamA.name} won`
-                      : `${teamB.name} won`
-                    : "Match tied"
+                  result.abandoned
+                    ? "Abandoned (rain) — no points awarded"
+                    : result.winnerTeamId
+                      ? result.winnerTeamId === teamA.id
+                        ? `${teamA.name} won`
+                        : `${teamB.name} won`
+                      : "Match tied"
                 }
               />
               {result.bestBatting && (

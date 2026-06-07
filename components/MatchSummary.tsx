@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Database } from "lucide-react";
 import { useCricket } from "@/lib/cricket-context";
+import { countsAsWicket } from "@/lib/cricket-types";
 import { Spinner } from "@/components/ui/spinner";
 import { appToast } from "@/lib/app-toast";
 import { saveQuickMatchToDatabase } from "@/lib/save-quick-match";
@@ -69,7 +70,7 @@ export default function MatchSummary({
 
     innings.balls.forEach((ball) => {
       runs += ball.runs + (ball.extra !== "none" ? ball.extraRuns : 0);
-      if (ball.dismissal !== "none") wickets++;
+      if (countsAsWicket(ball.dismissal)) wickets++;
       if (ball.extra !== "wide" && ball.extra !== "no-ball") legalBalls++;
     });
 

@@ -1,4 +1,5 @@
 import type { InningsData } from "./cricket-types";
+import { countsAsWicket } from "./cricket-types";
 import type { TournamentFixtureResult, TournamentMatchSnapshot } from "./roster-types";
 
 export interface TeamNrrTotals {
@@ -28,7 +29,7 @@ function getInningsRuns(innings: InningsData): number {
 }
 
 function getInningsWickets(innings: InningsData): number {
-  return innings.balls.filter((ball) => ball.dismissal !== "none").length;
+  return innings.balls.filter((ball) => countsAsWicket(ball.dismissal)).length;
 }
 
 function getOversFacedForNrr(

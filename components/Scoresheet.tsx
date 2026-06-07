@@ -1,7 +1,7 @@
 "use client";
 
 import { useCricket } from "@/lib/cricket-context";
-import { InningsData, BallData } from "@/lib/cricket-types";
+import { InningsData, BallData, countsAsWicket } from "@/lib/cricket-types";
 import {
   CricketBroadcastCard,
   CricketEyebrow,
@@ -25,7 +25,7 @@ export default function Scoresheet({ innings }: ScoresheetProps) {
 
     innings.balls.forEach((ball) => {
       totalRuns += ball.runs + (ball.extra !== "none" ? ball.extraRuns : 0);
-      if (ball.dismissal !== "none") wickets++;
+      if (countsAsWicket(ball.dismissal)) wickets++;
       if (ball.extra !== "wide" && ball.extra !== "no-ball") legalBalls++;
     });
 
@@ -59,6 +59,7 @@ export default function Scoresheet({ innings }: ScoresheetProps) {
       caught: "c",
       stumped: "st",
       "run-out": "run out",
+      "retired-hurt": "retired hurt",
     };
     return `${dismissalMap[ball.dismissal]} ${ball.dismissedPlayer || ""}`;
   };
@@ -109,12 +110,14 @@ export default function Scoresheet({ innings }: ScoresheetProps) {
                       key={ball.id}
                       className={cn(
                         "cricket-ball-chip",
-                        ball.dismissal !== "none" && "cricket-ball-chip--wicket",
+                        countsAsWicket(ball.dismissal) && "cricket-ball-chip--wicket",
                         ball.extra !== "none" && "cricket-ball-chip--extra"
                       )}
                     >
                       <div className="cricket-score text-base text-[var(--cricket-cream)]">
-                        {ball.runs}
+                        {ball.extra === "overthrow"
+                          ? ball.runs + ball.extraRuns
+                          : ball.runs}
                       </div>
                       {ball.extra !== "none" && (
                         <div className="text-[0.6rem] font-bold text-[var(--cricket-gold)]">
@@ -124,7 +127,9 @@ export default function Scoresheet({ innings }: ScoresheetProps) {
                               ? "NB"
                               : ball.extra === "bye"
                                 ? "B"
-                                : "LB"}
+                                : ball.extra === "overthrow"
+                                  ? "OT"
+                                  : "LB"}
                         </div>
                       )}
                       {ball.dismissal !== "none" && (

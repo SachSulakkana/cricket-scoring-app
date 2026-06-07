@@ -1,4 +1,8 @@
 import type { BallData, InningsData, MatchConfig, Team } from "./cricket-types";
+import {
+  countsAsBowlerWicket,
+  countsAsWicket,
+} from "./cricket-types";
 
 export interface BattingRow {
   name: string;
@@ -27,7 +31,7 @@ export function calculateInningsTotal(innings: InningsData | null) {
     (total, ball) => total + ball.runs + (ball.extra !== "none" ? ball.extraRuns : 0),
     0
   );
-  const wickets = innings.balls.filter((ball) => ball.dismissal !== "none").length;
+  const wickets = innings.balls.filter((ball) => countsAsWicket(ball.dismissal)).length;
   return { runs, wickets };
 }
 
@@ -52,7 +56,9 @@ export function calculateBatting(innings: InningsData | null, battingTeam: Team)
       if (ball.batsmanName !== player.name) return;
       const noBallBatRuns =
         ball.extra === "no-ball" ? Math.max(ball.extraRuns - 1, 0) : 0;
-      const batterRuns = ball.runs + noBallBatRuns;
+      const overthrowRuns =
+        ball.extra === "overthrow" ? ball.extraRuns : 0;
+      const batterRuns = ball.runs + noBallBatRuns + overthrowRuns;
       runs += batterRuns;
       if (ball.extra !== "wide" && ball.extra !== "no-ball") balls++;
       if (batterRuns === 4) fours++;
@@ -73,6 +79,8 @@ export function calculateBatting(innings: InningsData | null, battingTeam: Team)
         dismissal = `Caught by ${dismissalBall.fielderName || "Unknown"}, bowled by ${dismissalBall.bowlerName}`;
       else if (dismissalBall.dismissal === "stumped")
         dismissal = `Stumped by ${dismissalBall.fielderName || "Unknown"}, bowled by ${dismissalBall.bowlerName}`;
+      else if (dismissalBall.dismissal === "retired-hurt")
+        dismissal = "Retired hurt";
       else dismissal = `Run out by ${dismissalBall.fielderName || "Unknown"}`;
     }
 
@@ -118,10 +126,12 @@ export function calculateBowling(
       }
       const concededFromExtra =
         ball.extra === "wide" || ball.extra === "no-ball" ? ball.extraRuns : 0;
-      runs += ball.runs + concededFromExtra;
+      const overthrowConceded =
+        ball.extra === "overthrow" ? ball.extraRuns : 0;
+      runs += ball.runs + concededFromExtra + overthrowConceded;
       if (ball.extra === "no-ball") noBalls += ball.extraRuns;
       if (ball.extra === "wide") wides += ball.extraRuns;
-      if (ball.dismissal !== "none" && ball.dismissal !== "run-out") wickets++;
+      if (countsAsBowlerWicket(ball.dismissal)) wickets++;
     });
 
     const maidens = Object.values(byOver).filter((overRuns) => overRuns === 0).length;
@@ -157,11 +167,13 @@ export function getBowlerBallByBall(innings: InningsData, bowlerName: string) {
   return innings.balls
     .filter((ball) => ball.bowlerName === bowlerName)
     .map((ball) => {
-      if (ball.dismissal !== "none") return "W";
+      if (countsAsWicket(ball.dismissal)) return "W";
+      if (ball.dismissal === "retired-hurt") return "RH";
       if (ball.extra === "wide") return `${ball.extraRuns}Wd`;
       if (ball.extra === "no-ball") return `${ball.extraRuns}Nb`;
       if (ball.extra === "bye") return `${ball.extraRuns}B`;
       if (ball.extra === "leg-bye") return `${ball.extraRuns}Lb`;
+      if (ball.extra === "overthrow") return `${ball.runs + ball.extraRuns}OT`;
       return `${ball.runs}`;
     });
 }

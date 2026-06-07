@@ -4,9 +4,18 @@ export type DismissalType =
   | "caught"
   | "stumped"
   | "run-out"
+  | "retired-hurt"
   | "none";
 
-export type ExtraType = "wide" | "no-ball" | "bye" | "leg-bye" | "none";
+export function countsAsWicket(dismissal: DismissalType): boolean {
+  return dismissal !== "none" && dismissal !== "retired-hurt";
+}
+
+export function countsAsBowlerWicket(dismissal: DismissalType): boolean {
+  return countsAsWicket(dismissal) && dismissal !== "run-out";
+}
+
+export type ExtraType = "wide" | "no-ball" | "bye" | "leg-bye" | "overthrow" | "none";
 
 export type TournamentPreset = "T20" | "ODI" | "T10";
 

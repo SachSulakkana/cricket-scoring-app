@@ -93,6 +93,8 @@ export default function PlayTournamentFixturePage() {
               appToast.success("Tournament complete — champion crowned!");
             } else if (advance.advanced && advance.message) {
               appToast.success(advance.message);
+            } else if (result.abandoned) {
+              appToast.success("Match abandoned due to rain — no points awarded");
             } else {
               appToast.success("Match result saved");
             }

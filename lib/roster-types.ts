@@ -31,6 +31,9 @@ export interface TournamentFixtureResult {
   bestBatting?: TournamentBestBatting;
   bestBowling?: TournamentBestBowling;
   scorecard?: TournamentMatchSnapshot;
+  /** Match ended without a result — excluded from points table. */
+  abandoned?: boolean;
+  abandonedReason?: string;
 }
 
 export type PlayoffMatchKind = "qualifier" | "final";

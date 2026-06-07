@@ -7,11 +7,13 @@ import {
   CricketScoreDisplay,
 } from "@/components/cricket-shell";
 import { useCricket } from "@/lib/cricket-context";
+import { countsAsWicket } from "@/lib/cricket-types";
 import { cn } from "@/lib/utils";
 import BallEntry from "./BallEntry";
 import Scoresheet from "./Scoresheet";
 import BatsmanSelector from "./BatsmanSelector";
 import BowlerSelector from "./BowlerSelector";
+import ConfirmActionDialog from "./ConfirmActionDialog";
 
 interface ScoringBoardProps {
   onMatchEnd: () => void;
@@ -19,6 +21,8 @@ interface ScoringBoardProps {
   onInnings1AutoEnd: () => void;
   lockActionsUntilUndo?: boolean;
   onUnlockAfterUndo?: () => void;
+  /** When set, shows a rain-abandon control (tournament matches). */
+  onEndDueToRain?: () => void;
   /** Optional content above the score header (e.g. flow stepper). */
   banner?: ReactNode;
 }
@@ -29,6 +33,7 @@ export default function ScoringBoard({
   onInnings1AutoEnd,
   lockActionsUntilUndo = false,
   onUnlockAfterUndo,
+  onEndDueToRain,
   banner,
 }: ScoringBoardProps) {
   const { matchState, setOpeningBatsmen, setOpeningBowler } = useCricket();
@@ -37,6 +42,7 @@ export default function ScoringBoard({
 
   const [step, setStep] = useState<"batsmen" | "bowler" | "scoring">("batsmen");
   const [hasAutoEnded, setHasAutoEnded] = useState(false);
+  const [showRainConfirm, setShowRainConfirm] = useState(false);
 
   if (!matchState.matchStarted || !currentInnings) return null;
 
@@ -88,7 +94,7 @@ export default function ScoringBoard({
     const legalBalls = currentInnings.balls.filter(
       (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
     ).length;
-    const wickets = currentInnings.balls.filter((ball) => ball.dismissal !== "none").length;
+    const wickets = currentInnings.balls.filter((ball) => countsAsWicket(ball.dismissal)).length;
     const maxWickets = Math.max(getBattingTeam().players.length - 1, 0);
     const maxLegalBalls = matchState.config.totalOvers * matchState.config.ballsPerOver;
     const innings1Runs = getInningsRuns(matchState.innings1);
@@ -212,7 +218,7 @@ export default function ScoringBoard({
                     matchState.innings1.balls.forEach((b) => {
                       runs += b.runs + (b.extra !== "none" ? b.extraRuns : 0);
                     });
-                    return `${runs}/${matchState.innings1.balls.filter((b) => b.dismissal !== "none").length}`;
+                    return `${runs}/${matchState.innings1.balls.filter((b) => countsAsWicket(b.dismissal)).length}`;
                   })()}
               </CricketScoreDisplay>
             )}
@@ -234,7 +240,7 @@ export default function ScoringBoard({
                     matchState.innings2.balls.forEach((b) => {
                       runs += b.runs + (b.extra !== "none" ? b.extraRuns : 0);
                     });
-                    return `${runs}/${matchState.innings2.balls.filter((b) => b.dismissal !== "none").length}`;
+                    return `${runs}/${matchState.innings2.balls.filter((b) => countsAsWicket(b.dismissal)).length}`;
                   })()}
               </CricketScoreDisplay>
             )}
@@ -279,7 +285,31 @@ export default function ScoringBoard({
           </div>
         </div>
 
+        {onEndDueToRain && (
+          <button
+            type="button"
+            onClick={() => setShowRainConfirm(true)}
+            disabled={lockActionsUntilUndo}
+            className="w-full rounded-md border border-[oklch(0.45_0.08_240)] bg-[oklch(0.18_0.05_240/0.45)] py-3 text-sm font-bold text-[oklch(0.82_0.06_240)] hover:brightness-110 disabled:opacity-50"
+          >
+            End match due to rain
+          </button>
+        )}
       </div>
+
+      <ConfirmActionDialog
+        open={showRainConfirm}
+        onOpenChange={setShowRainConfirm}
+        title="End match due to rain?"
+        description="The match will be marked as abandoned. No points will be added to the tournament table."
+        confirmLabel="End match"
+        cancelLabel="Keep playing"
+        variant="destructive"
+        onConfirm={() => {
+          setShowRainConfirm(false);
+          onEndDueToRain?.();
+        }}
+      />
     </CricketPage>
   );
 }

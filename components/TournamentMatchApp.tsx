@@ -13,7 +13,7 @@ import {
   CricketPage,
   CricketPageHeader,
 } from "@/components/cricket-shell";
-import { MatchState, Team } from "@/lib/cricket-types";
+import { MatchState, Team, countsAsBowlerWicket, countsAsWicket } from "@/lib/cricket-types";
 import {
   TournamentFixture,
   TournamentFixtureResult,
@@ -55,7 +55,9 @@ function getTopBatting(
       if (ball.batsmanName !== player.name) return sum;
       const noBallBatRuns =
         ball.extra === "no-ball" ? Math.max(ball.extraRuns - 1, 0) : 0;
-      return sum + ball.runs + noBallBatRuns;
+      const overthrowRuns =
+        ball.extra === "overthrow" ? ball.extraRuns : 0;
+      return sum + ball.runs + noBallBatRuns + overthrowRuns;
     }, 0);
 
     if (playerRuns > bestRuns) {
@@ -79,7 +81,7 @@ function getTopBowling(
   bowlingTeam.players.forEach((player) => {
     const wickets = innings.balls.reduce((sum, ball) => {
       if (ball.bowlerName !== player.name) return sum;
-      if (ball.dismissal !== "none" && ball.dismissal !== "run-out") {
+      if (countsAsBowlerWicket(ball.dismissal)) {
         return sum + 1;
       }
       return sum;
@@ -125,7 +127,7 @@ function getTeamInningsTotals(
   if (!batting) return { runs: 0, wickets: 0 };
   return {
     runs: getInningsRuns(batting),
-    wickets: batting.balls.filter((ball) => ball.dismissal !== "none").length,
+    wickets: batting.balls.filter((ball) => countsAsWicket(ball.dismissal)).length,
   };
 }
 
@@ -193,6 +195,34 @@ function extractFixtureResult(
     bestBatting,
     bestBowling,
     scorecard,
+  };
+}
+
+function createRainAbandonedResult(
+  matchState: MatchState,
+  teamA: Team,
+  teamB: Team,
+  matchConfig: { totalOvers: number; ballsPerOver: number }
+): TournamentFixtureResult {
+  const totalsA = getTeamInningsTotals(matchState, teamA);
+  const totalsB = getTeamInningsTotals(matchState, teamB);
+
+  const scorecard: TournamentMatchSnapshot = {
+    team1: matchState.team1,
+    team2: matchState.team2,
+    config: matchState.config ?? matchConfig,
+    innings1: matchState.innings1,
+    innings2: matchState.innings2,
+  };
+
+  return {
+    runsA: totalsA.runs,
+    wicketsA: totalsA.wickets,
+    runsB: totalsB.runs,
+    wicketsB: totalsB.wickets,
+    scorecard,
+    abandoned: true,
+    abandonedReason: "rain",
   };
 }
 
@@ -317,6 +347,17 @@ export default function TournamentMatchApp({
       )?.name ?? "—"
     );
   }, [bowlingFirstTeam, matchState.innings1?.currentBowlerPlayerId]);
+
+  const handleRainAbandon = () => {
+    if (submitted) return;
+    setSubmitted(true);
+    onComplete(
+      createRainAbandonedResult(matchState, teamA, teamB, {
+        totalOvers: overs,
+        ballsPerOver,
+      })
+    );
+  };
 
   const handleMatchEnd = () => {
     setPage("finished");
@@ -533,6 +574,7 @@ export default function TournamentMatchApp({
         onInnings1AutoEnd={handleInnings1AutoEnd}
         lockActionsUntilUndo={requireUndoAfterInningsBreak}
         onUnlockAfterUndo={handleUnlockAfterUndo}
+        onEndDueToRain={handleRainAbandon}
       />
     );
   }
