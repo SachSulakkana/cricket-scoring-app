@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { CricketBroadcastCard, CricketEyebrow } from "@/components/cricket-shell";
 import type { Team } from "@/lib/cricket-types";
 import { CheckCircle2, Play } from "lucide-react";
@@ -9,6 +10,10 @@ interface TournamentNextMatchHeroProps {
   teamB: Team;
   matchNumber: number;
   onPlayNow: () => void;
+  /** Renders inside the schedule list instead of as a standalone dashboard card */
+  embedded?: boolean;
+  /** Optional prefix in the header row (e.g. drag handle) */
+  headerPrefix?: ReactNode;
 }
 
 interface TournamentCompleteHeroProps {
@@ -21,22 +26,24 @@ export function TournamentNextMatchHero({
   teamB,
   matchNumber,
   onPlayNow,
+  embedded = false,
+  headerPrefix,
 }: TournamentNextMatchHeroProps) {
-  return (
-    <CricketBroadcastCard
-      accent
-      className="tournament-next-match-hero relative overflow-hidden p-6 sm:p-8"
-    >
+  const content = (
+    <>
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,oklch(0.45_0.14_295/0.28),transparent_65%)]"
         aria-hidden
       />
       <div className="relative z-10 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CricketEyebrow className="mb-0 text-[var(--cricket-gold)]">
-            Up next · Match {matchNumber}
-          </CricketEyebrow>
-          <span className="inline-flex items-center rounded-full border border-[oklch(0.55_0.12_295/0.55)] bg-[oklch(0.22_0.06_295/0.5)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--cricket-gold)]">
+          <div className="flex min-w-0 items-center gap-2">
+            {headerPrefix}
+            <CricketEyebrow className="mb-0 text-[var(--cricket-gold)]">
+              Up next · Match {matchNumber}
+            </CricketEyebrow>
+          </div>
+          <span className="inline-flex shrink-0 items-center rounded-full border border-[oklch(0.55_0.12_295/0.55)] bg-[oklch(0.22_0.06_295/0.5)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--cricket-gold)]">
             Next in schedule
           </span>
         </div>
@@ -59,6 +66,7 @@ export function TournamentNextMatchHero({
 
         <button
           type="button"
+          draggable={false}
           onClick={onPlayNow}
           className="cricket-btn-play cricket-btn-play--tournament flex w-full min-h-[3.25rem] items-center justify-center gap-2.5 text-base font-bold sm:min-h-[3.5rem] sm:text-lg"
         >
@@ -66,6 +74,23 @@ export function TournamentNextMatchHero({
           Play this match
         </button>
       </div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="tournament-next-match-hero relative overflow-hidden p-5 sm:p-6">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <CricketBroadcastCard
+      accent
+      className="tournament-next-match-hero relative overflow-hidden p-6 sm:p-8"
+    >
+      {content}
     </CricketBroadcastCard>
   );
 }

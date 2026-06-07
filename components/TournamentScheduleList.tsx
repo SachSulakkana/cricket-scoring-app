@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CricketEyebrow } from "@/components/cricket-shell";
+import { TournamentNextMatchHero } from "@/components/TournamentNextMatchHero";
 import type { Team } from "@/lib/cricket-types";
 import type { TournamentFixture } from "@/lib/roster-storage";
 import { reorderTournamentFixtures } from "@/lib/tournament-fixtures";
@@ -85,60 +86,85 @@ export default function TournamentScheduleList({
         <span className="tournament-game-pill">Drag to reorder</span>
       </div>
       <p className="text-xs text-[oklch(0.55_0.03_255)]">
-        Drag matches to set play order. The first unplayed match is up next.
+        Drag matches to set play order. The highlighted match in the list is up next.
       </p>
       <div className="space-y-2">
         {orderedRows.map((fx, idx) => {
           const isDragging = dragId === fx.id;
           const isOver = overId === fx.id && dragId !== fx.id;
-          return (
-            <div
-              key={fx.id}
-              draggable
-              onDragStart={(e) => {
-                e.dataTransfer.effectAllowed = "move";
-                e.dataTransfer.setData("text/plain", fx.id);
-                handleDragStart(fx.id);
-              }}
-              onDragEnd={handleDragEnd}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = "move";
-                setOverId(fx.id);
-              }}
-              onDragLeave={() => {
-                if (overId === fx.id) setOverId(null);
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                if (dragId) finishReorder(dragId, fx.id);
-                setDragId(null);
-                setOverId(null);
-              }}
-              className={cn(
-                "tournament-game-row rounded-md border bg-[oklch(0.12_0.02_255/0.6)] p-3 transition-[border-color,box-shadow,opacity,transform]",
-                isDragging && "opacity-50 scale-[0.99]",
-                isOver
-                  ? "border-[oklch(0.55_0.12_295/0.75)] shadow-[0_0_0_1px_oklch(0.55_0.12_295/0.35)]"
-                  : "border-[oklch(0.32_0.04_255)]"
-              )}
+          const isNextMatch = !fx.played && fx.id === nextFixtureId;
+
+          const dragHandle = (
+            <span
+              className="flex h-11 w-11 shrink-0 cursor-grab touch-manipulation items-center justify-center rounded border border-[oklch(0.35_0.05_295/0.5)] bg-[oklch(0.16_0.03_295/0.4)] text-[oklch(0.55_0.04_288)] active:cursor-grabbing"
+              aria-hidden
+              title="Drag to reorder"
             >
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-2">
-                  <span
-                    className="flex h-11 w-11 shrink-0 cursor-grab touch-manipulation items-center justify-center rounded border border-[oklch(0.35_0.05_295/0.5)] bg-[oklch(0.16_0.03_295/0.4)] text-[oklch(0.55_0.04_288)] active:cursor-grabbing"
-                    aria-hidden
-                    title="Drag to reorder"
-                  >
-                    <GripVertical className="h-4 w-4" />
-                  </span>
-                  <p className="text-xs text-[oklch(0.55_0.03_255)]">Match {idx + 1}</p>
-                </div>
-                {!fx.played && fx.id === nextFixtureId && (
-                  <span className="inline-flex shrink-0 items-center rounded-full border border-[oklch(0.62_0.12_85/0.55)] bg-[oklch(0.34_0.09_85/0.35)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[oklch(0.82_0.12_85)]">
-                    Next match
-                  </span>
-                )}
+              <GripVertical className="h-4 w-4" />
+            </span>
+          );
+
+          const rowProps = {
+            key: fx.id,
+            draggable: true as const,
+            onDragStart: (e: React.DragEvent) => {
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData("text/plain", fx.id);
+              handleDragStart(fx.id);
+            },
+            onDragEnd: handleDragEnd,
+            onDragOver: (e: React.DragEvent) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              setOverId(fx.id);
+            },
+            onDragLeave: () => {
+              if (overId === fx.id) setOverId(null);
+            },
+            onDrop: (e: React.DragEvent) => {
+              e.preventDefault();
+              if (dragId) finishReorder(dragId, fx.id);
+              setDragId(null);
+              setOverId(null);
+            },
+            className: cn(
+              "rounded-md border transition-[border-color,box-shadow,opacity,transform]",
+              isDragging && "opacity-50 scale-[0.99]",
+              isNextMatch
+                ? cn(
+                    "border-[oklch(0.55_0.12_295/0.65)] bg-[oklch(0.12_0.02_255/0.6)] shadow-[0_0_0_1px_oklch(0.55_0.12_295/0.35)]",
+                    isOver &&
+                      "border-[oklch(0.55_0.12_295/0.85)] shadow-[0_0_0_2px_oklch(0.55_0.12_295/0.45)]"
+                  )
+                : cn(
+                    "tournament-game-row bg-[oklch(0.12_0.02_255/0.6)] p-3",
+                    isOver
+                      ? "border-[oklch(0.55_0.12_295/0.75)] shadow-[0_0_0_1px_oklch(0.55_0.12_295/0.35)]"
+                      : "border-[oklch(0.32_0.04_255)]"
+                  )
+            ),
+          };
+
+          if (isNextMatch) {
+            return (
+              <div {...rowProps}>
+                <TournamentNextMatchHero
+                  embedded
+                  teamA={fx.teamA}
+                  teamB={fx.teamB}
+                  matchNumber={idx + 1}
+                  onPlayNow={() => onPlayNow(fx.id)}
+                  headerPrefix={dragHandle}
+                />
+              </div>
+            );
+          }
+
+          return (
+            <div {...rowProps}>
+              <div className="mb-2 flex items-center gap-2">
+                {dragHandle}
+                <p className="text-xs text-[oklch(0.55_0.03_255)]">Match {idx + 1}</p>
               </div>
               <div className="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
                 <div className="min-w-0">
@@ -200,16 +226,8 @@ export default function TournamentScheduleList({
                   </div>
                 </div>
               ) : (
-                <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <div className="mt-2">
                   <p className="text-xs text-[oklch(0.55_0.03_255)]">Awaiting play</p>
-                  <button
-                    type="button"
-                    draggable={false}
-                    className="cricket-btn-add cricket-btn-add--inline cricket-btn-add--tournament w-full px-3 sm:!w-auto min-h-11"
-                    onClick={() => onPlayNow(fx.id)}
-                  >
-                    Play now
-                  </button>
                 </div>
               )}
             </div>

@@ -9,7 +9,7 @@ interface ExportPdfButtonProps {
   loading?: boolean;
   label?: string;
   className?: string;
-  variant?: "setup" | "tournament";
+  variant?: "setup" | "tournament" | "outline";
 }
 
 export default function ExportPdfButton({
@@ -27,8 +27,11 @@ export default function ExportPdfButton({
       className={cn(
         variant === "tournament"
           ? "cricket-btn-add cricket-btn-add--tournament"
-          : "cricket-btn-setup",
-        "w-full !min-h-11 inline-flex items-center justify-center gap-2 text-sm font-bold",
+          : variant === "outline"
+            ? "cricket-btn-setup !w-auto !min-h-9 px-3 text-xs font-semibold"
+            : "cricket-btn-setup",
+        variant !== "outline" && "w-full !min-h-11",
+        "inline-flex items-center justify-center gap-1.5 text-sm font-bold",
         className
       )}
     >

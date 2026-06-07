@@ -16,7 +16,6 @@ import ExportPdfButton from "@/components/ExportPdfButton";
 import {
   TournamentChampionHero,
   TournamentCompleteHero,
-  TournamentNextMatchHero,
 } from "@/components/TournamentNextMatchHero";
 import {
   getActiveStageIndex,
@@ -636,9 +635,6 @@ export default function CustomTournamentGamePage({
   );
   const nextFixture = activeMapped.find((fx) => !fx.played);
   const nextFixtureId = nextFixture?.id;
-  const nextMatchNumber = nextFixture
-    ? activeMapped.findIndex((fx) => fx.id === nextFixture.id) + 1
-    : 0;
   const championTeam = tournament.championTeamId
     ? teams.find((t) => t.id === tournament.championTeamId)
     : undefined;
@@ -696,6 +692,15 @@ export default function CustomTournamentGamePage({
                 {tournament.name}
               </h2>
             </div>
+            {playedFixtures.length > 0 && (
+              <ExportPdfButton
+                onClick={handleExportFullResultsPdf}
+                loading={exportingPdf}
+                label="Export PDF"
+                variant="outline"
+                className="shrink-0"
+              />
+            )}
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <CricketDetailRow
@@ -713,33 +718,12 @@ export default function CustomTournamentGamePage({
             <CricketDetailRow label="Teams" value={String(teams.length)} />
             <CricketDetailRow label="Overs / Match" value={String(tournament.totalOvers)} />
           </div>
-          {playedFixtures.length > 0 && (
-            <div className="mt-4">
-              <ExportPdfButton
-                onClick={handleExportFullResultsPdf}
-                loading={exportingPdf}
-                label={
-                  championTeam
-                    ? "Export full results PDF"
-                    : "Export results PDF"
-                }
-                variant="tournament"
-              />
-            </div>
-          )}
         </CricketBroadcastCard>
 
         {championTeam ? (
           <TournamentChampionHero
             championName={championTeam.name}
             tournamentName={tournament.name}
-          />
-        ) : nextFixture ? (
-          <TournamentNextMatchHero
-            teamA={nextFixture.teamA}
-            teamB={nextFixture.teamB}
-            matchNumber={nextMatchNumber}
-            onPlayNow={() => onPlayNow(nextFixture.id)}
           />
         ) : needsAdvance ? (
           <CricketBroadcastCard className="p-5 border border-[oklch(0.55_0.12_295/0.5)]">
