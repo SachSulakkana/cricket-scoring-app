@@ -12,6 +12,7 @@ import {
 } from "@/components/cricket-shell";
 import TournamentMatchSummaryDialog from "@/components/TournamentMatchSummaryDialog";
 import TournamentScheduleList from "@/components/TournamentScheduleList";
+import ExportPdfButton from "@/components/ExportPdfButton";
 import {
   TournamentChampionHero,
   TournamentCompleteHero,
@@ -31,6 +32,7 @@ import {
   type TournamentStageStyle,
 } from "@/lib/tournament-stage-options";
 import { appToast } from "@/lib/app-toast";
+import { exportTournamentFullResultsPdf } from "@/lib/pdf-export";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Team } from "@/lib/cricket-types";
 import { SavedTournament, TournamentFixture } from "@/lib/roster-storage";
@@ -574,6 +576,7 @@ export default function CustomTournamentGamePage({
   onAdvanceStage,
 }: CustomTournamentGamePageProps) {
   const [advancing, setAdvancing] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const [summaryFixtureId, setSummaryFixtureId] = useState<string | null>(null);
   const [replayTarget, setReplayTarget] = useState<{
     id: string;
@@ -653,6 +656,18 @@ export default function CustomTournamentGamePage({
   const playedFixtures = mappedFixtures.filter((fx) => fx.played);
   const stats = buildStats(playedFixtures);
 
+  const handleExportFullResultsPdf = () => {
+    setExportingPdf(true);
+    void exportTournamentFullResultsPdf({ tournament, teams })
+      .then(() => appToast.success("Tournament results PDF downloaded"))
+      .catch((err) =>
+        appToast.error(
+          err instanceof Error ? err.message : "Could not export PDF"
+        )
+      )
+      .finally(() => setExportingPdf(false));
+  };
+
   const activeFixtures = fixtures.filter(
     (fx) => fx.stageIndex === activeStageIndex
   );
@@ -698,6 +713,20 @@ export default function CustomTournamentGamePage({
             <CricketDetailRow label="Teams" value={String(teams.length)} />
             <CricketDetailRow label="Overs / Match" value={String(tournament.totalOvers)} />
           </div>
+          {playedFixtures.length > 0 && (
+            <div className="mt-4">
+              <ExportPdfButton
+                onClick={handleExportFullResultsPdf}
+                loading={exportingPdf}
+                label={
+                  championTeam
+                    ? "Export full results PDF"
+                    : "Export results PDF"
+                }
+                variant="tournament"
+              />
+            </div>
+          )}
         </CricketBroadcastCard>
 
         {championTeam ? (
@@ -908,6 +937,7 @@ export default function CustomTournamentGamePage({
           fixture={summaryFx.fixture}
           teamA={summaryFx.teamA}
           teamB={summaryFx.teamB}
+          tournamentName={tournament.name}
         />
       )}
 

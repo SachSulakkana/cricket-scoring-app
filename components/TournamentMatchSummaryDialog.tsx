@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import {
   CricketBroadcastCard,
   CricketDetailRow,
   CricketEyebrow,
 } from "@/components/cricket-shell";
+import ExportPdfButton from "@/components/ExportPdfButton";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +15,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import TournamentMatchScorecardView from "@/components/TournamentMatchScorecardView";
+import { appToast } from "@/lib/app-toast";
 import type { Team } from "@/lib/cricket-types";
+import { exportTournamentMatchPdf } from "@/lib/pdf-export";
 import type { TournamentFixture } from "@/lib/roster-storage";
 
 interface TournamentMatchSummaryDialogProps {
@@ -22,6 +26,7 @@ interface TournamentMatchSummaryDialogProps {
   fixture: TournamentFixture;
   teamA: Team;
   teamB: Team;
+  tournamentName: string;
 }
 
 function formatScore(runs: number, wickets: number) {
@@ -34,9 +39,30 @@ export default function TournamentMatchSummaryDialog({
   fixture,
   teamA,
   teamB,
+  tournamentName,
 }: TournamentMatchSummaryDialogProps) {
   const result = fixture.result;
   const hasScorecard = Boolean(result?.scorecard);
+  const [exportingPdf, setExportingPdf] = useState(false);
+
+  const handleExportPdf = () => {
+    if (!result?.scorecard) return;
+    setExportingPdf(true);
+    void exportTournamentMatchPdf({
+      tournamentName,
+      teamA,
+      teamB,
+      result,
+      config: result.scorecard.config,
+    })
+      .then(() => appToast.success("Match scorecard PDF downloaded"))
+      .catch((err) =>
+        appToast.error(
+          err instanceof Error ? err.message : "Could not export PDF"
+        )
+      )
+      .finally(() => setExportingPdf(false));
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -90,6 +116,15 @@ export default function TournamentMatchSummaryDialog({
                 />
               )}
             </CricketBroadcastCard>
+          )}
+
+          {result?.scorecard && (
+            <ExportPdfButton
+              onClick={handleExportPdf}
+              loading={exportingPdf}
+              label="Export match PDF"
+              variant="tournament"
+            />
           )}
 
           {hasScorecard && result?.scorecard ? (

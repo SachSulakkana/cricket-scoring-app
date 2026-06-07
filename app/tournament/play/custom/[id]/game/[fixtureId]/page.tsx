@@ -67,6 +67,7 @@ export default function PlayTournamentFixturePage() {
       overs={tournament.totalOvers}
       ballsPerOver={tournament.ballsPerOver}
       tournamentId={tournament.id}
+      tournamentName={tournament.name}
       onBack={() => router.push(routes.playCustomTournamentGame(tournament.id))}
       onComplete={(result) => {
         void (async () => {

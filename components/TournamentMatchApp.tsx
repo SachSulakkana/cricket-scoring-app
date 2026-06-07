@@ -22,6 +22,9 @@ import {
 import { useCricket } from "@/lib/cricket-context";
 import { useOfferLiveMatchRestore } from "@/hooks/use-offer-live-match-restore";
 import TournamentFlowSteps from "@/components/TournamentFlowSteps";
+import ExportPdfButton from "@/components/ExportPdfButton";
+import { appToast } from "@/lib/app-toast";
+import { exportTournamentMatchPdf } from "@/lib/pdf-export";
 import type { LiveMatchMeta } from "@/lib/store/match-slice";
 
 interface TournamentMatchAppProps {
@@ -31,6 +34,7 @@ interface TournamentMatchAppProps {
   overs: number;
   ballsPerOver: number;
   tournamentId: string;
+  tournamentName?: string;
   onBack: () => void;
   onComplete: (result: TournamentFixtureResult) => void;
 }
@@ -233,6 +237,7 @@ export default function TournamentMatchApp({
   overs,
   ballsPerOver,
   tournamentId,
+  tournamentName,
   onBack,
   onComplete,
 }: TournamentMatchAppProps) {
@@ -273,6 +278,7 @@ export default function TournamentMatchApp({
   const [requireUndoAfterInningsBreak, setRequireUndoAfterInningsBreak] =
     useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   useEffect(() => {
     resetMatch();
@@ -378,6 +384,24 @@ export default function TournamentMatchApp({
 
   const handleUnlockAfterUndo = () => {
     setRequireUndoAfterInningsBreak(false);
+  };
+
+  const handleExportPdf = () => {
+    setExportingPdf(true);
+    void exportTournamentMatchPdf({
+      tournamentName: tournamentName ?? `${teamA.name} vs ${teamB.name}`,
+      teamA,
+      teamB,
+      result: resultPreview,
+      config: { totalOvers: overs, ballsPerOver },
+    })
+      .then(() => appToast.success("Match scorecard PDF downloaded"))
+      .catch((err) =>
+        appToast.error(
+          err instanceof Error ? err.message : "Could not export PDF"
+        )
+      )
+      .finally(() => setExportingPdf(false));
   };
 
   const submitResult = () => {
@@ -624,6 +648,13 @@ export default function TournamentMatchApp({
           />
         </div>
         <div className="flex flex-wrap gap-2">
+          <ExportPdfButton
+            onClick={handleExportPdf}
+            loading={exportingPdf}
+            label="Export PDF"
+            variant="tournament"
+            className="!w-auto px-4"
+          />
           <CricketAddButton
             type="button"
             variant="tournament"

@@ -7,6 +7,8 @@ import { useCricket } from "@/lib/cricket-context";
 import { countsAsWicket } from "@/lib/cricket-types";
 import { Spinner } from "@/components/ui/spinner";
 import { appToast } from "@/lib/app-toast";
+import { exportQuickMatchPdf } from "@/lib/pdf-export";
+import ExportPdfButton from "@/components/ExportPdfButton";
 import { saveQuickMatchToDatabase } from "@/lib/save-quick-match";
 import { clearLiveMatchDraftLocal, clearLiveMatchDraftRemote } from "@/lib/live-match-draft";
 import { routes } from "@/lib/app-routes";
@@ -42,6 +44,19 @@ export default function MatchSummary({
 }: MatchSummaryProps) {
   const { matchState } = useCricket();
   const [saving, setSaving] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+
+  const handleExportPdf = () => {
+    setExportingPdf(true);
+    void exportQuickMatchPdf(matchState)
+      .then(() => appToast.success("Scorecard PDF downloaded"))
+      .catch((err) =>
+        appToast.error(
+          err instanceof Error ? err.message : "Could not export PDF"
+        )
+      )
+      .finally(() => setExportingPdf(false));
+  };
 
   const handleSaveToDatabase = () => {
     setSaving(true);
@@ -206,6 +221,13 @@ export default function MatchSummary({
           View saved quick matches
         </Link>
       </CricketBroadcastCard>
+
+      <ExportPdfButton
+        onClick={handleExportPdf}
+        loading={exportingPdf}
+        label="Export scorecard PDF"
+        className="mb-3"
+      />
 
       <div className="space-y-3">
         <button
