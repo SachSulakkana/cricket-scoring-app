@@ -1,11 +1,16 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BallData, InningsData, Team, countsAsBowlerWicket, countsAsWicket } from "@/lib/cricket-types";
+import {
+  BallData,
+  InningsData,
+  Team,
+  countsAsBowlerWicket,
+  countsAsWicket,
+} from "@/lib/cricket-types";
 import { useCricket } from "@/lib/cricket-context";
+import { cn } from "@/lib/utils";
 
 interface FullScorecardProps {
   onBack: () => void;
@@ -14,6 +19,7 @@ interface FullScorecardProps {
 }
 
 interface BattingRow {
+  playerId: string;
   name: string;
   runs: number;
   balls: number;
@@ -34,23 +40,58 @@ interface BowlingRow {
   economy: string;
 }
 
+function abbreviateTeamName(name: string): string {
+  const letters = name.replace(/[^a-zA-Z]/g, "");
+  if (letters.length >= 3) return letters.slice(0, 3).toUpperCase();
+  return name.slice(0, 3).toUpperCase();
+}
+
+function formatDismissalShort(ball: BallData): string {
+  if (ball.dismissal === "bowled") return `b ${ball.bowlerName}`;
+  if (ball.dismissal === "lbw") return `lbw b ${ball.bowlerName}`;
+  if (ball.dismissal === "caught")
+    return `c ${ball.fielderName || "?"} b ${ball.bowlerName}`;
+  if (ball.dismissal === "stumped")
+    return `st ${ball.fielderName || "?"} b ${ball.bowlerName}`;
+  if (ball.dismissal === "run-out")
+    return `run out (${ball.fielderName || "?"})`;
+  if (ball.dismissal === "retired-hurt") return "retired hurt";
+  return ball.dismissal;
+}
+
 export default function FullScorecard({
   onBack,
   showStartSecondInnings = false,
   onStartSecondInnings,
 }: FullScorecardProps) {
   const { matchState } = useCricket();
-  const [expandedBowlerKeys, setExpandedBowlerKeys] = useState<Record<string, boolean>>(
-    {}
+  const [expandedBowlerKeys, setExpandedBowlerKeys] = useState<
+    Record<string, boolean>
+  >({});
+  const innings2Available = Boolean(matchState.innings2);
+  const [activeInningsTab, setActiveInningsTab] = useState<1 | 2>(() =>
+    matchState.currentInnings === 2 && matchState.innings2 ? 2 : 1
   );
+
+  useEffect(() => {
+    if (matchState.currentInnings === 2 && matchState.innings2) {
+      setActiveInningsTab(2);
+    }
+  }, [matchState.currentInnings, matchState.innings2]);
+
+  const ballsPerOver = matchState.config?.ballsPerOver || 6;
 
   const calculateInningsTotal = (innings: InningsData | null) => {
     if (!innings) return { runs: 0, wickets: 0 };
 
-    const runs = innings.balls.reduce((total, ball) => {
-      return total + ball.runs + (ball.extra !== "none" ? ball.extraRuns : 0);
-    }, 0);
-    const wickets = innings.balls.filter((ball) => countsAsWicket(ball.dismissal)).length;
+    const runs = innings.balls.reduce(
+      (total, ball) =>
+        total + ball.runs + (ball.extra !== "none" ? ball.extraRuns : 0),
+      0
+    );
+    const wickets = innings.balls.filter((ball) =>
+      countsAsWicket(ball.dismissal)
+    ).length;
 
     return { runs, wickets };
   };
@@ -59,19 +100,29 @@ export default function FullScorecard({
     const legalBalls = balls.filter(
       (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
     ).length;
-    const ballsPerOver = matchState.config?.ballsPerOver || 6;
     return `${Math.floor(legalBalls / ballsPerOver)}.${legalBalls % ballsPerOver}`;
   };
 
-  const calculateBatting = (innings: InningsData | null, battingTeam: Team) => {
-    if (!innings) return [] as BattingRow[];
+  const getLegalBallCount = (balls: BallData[]) =>
+    balls.filter(
+      (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
+    ).length;
 
-    const rows = battingTeam.players.map((player) => {
+  const calculateRunRate = (balls: BallData[], runs: number) => {
+    const legalBalls = getLegalBallCount(balls);
+    if (legalBalls === 0) return "0.00";
+    return (runs / (legalBalls / ballsPerOver)).toFixed(2);
+  };
+
+  const buildBattingRows = (
+    innings: InningsData,
+    battingTeam: Team
+  ): BattingRow[] => {
+    return battingTeam.players.map((player) => {
       let runs = 0;
       let balls = 0;
       let fours = 0;
       let sixes = 0;
-      let strikeRate = "0.00";
       let dismissal = "not out";
 
       innings.balls.forEach((ball) => {
@@ -89,10 +140,9 @@ export default function FullScorecard({
         if (batterRuns === 6) sixes++;
       });
 
-      strikeRate = balls > 0 ? ((runs * 100) / balls).toFixed(2) : "0.00";
-
       const dismissalBall = innings.balls.find(
-        (ball) => ball.dismissal !== "none" && ball.dismissedPlayer === player.name
+        (ball) =>
+          ball.dismissal !== "none" && ball.dismissedPlayer === player.name
       );
       if (dismissalBall) {
         if (dismissalBall.dismissal === "bowled")
@@ -108,7 +158,11 @@ export default function FullScorecard({
         else dismissal = `Run out by ${dismissalBall.fielderName || "Unknown"}`;
       }
 
+      const strikeRate =
+        balls > 0 ? ((runs * 100) / balls).toFixed(2) : "0.00";
+
       return {
+        playerId: player.id,
         name: player.name,
         runs,
         balls,
@@ -118,8 +172,32 @@ export default function FullScorecard({
         dismissal,
       };
     });
+  };
 
-    return rows.filter((row) => row.runs > 0 || row.balls > 0 || row.dismissal !== "not out");
+  const getBattingDisplay = (innings: InningsData, battingTeam: Team) => {
+    const allRows = buildBattingRows(innings, battingTeam);
+    const atCrease = new Set([
+      innings.strikerPlayerId,
+      innings.nonStrikerPlayerId,
+    ]);
+
+    const displayed = allRows.filter(
+      (row) =>
+        row.balls > 0 ||
+        row.dismissal !== "not out" ||
+        atCrease.has(row.playerId)
+    );
+
+    const yetToBat = allRows
+      .filter(
+        (row) =>
+          row.balls === 0 &&
+          row.dismissal === "not out" &&
+          !atCrease.has(row.playerId)
+      )
+      .map((row) => row.name);
+
+    return { displayed, yetToBat, atCrease };
   };
 
   const calculateBowling = (innings: InningsData | null, bowlingTeam: Team) => {
@@ -141,7 +219,8 @@ export default function FullScorecard({
           balls++;
           byOver[ball.overNumber] = (byOver[ball.overNumber] || 0) + ball.runs;
         } else {
-          byOver[ball.overNumber] = (byOver[ball.overNumber] || 0) + ball.extraRuns;
+          byOver[ball.overNumber] =
+            (byOver[ball.overNumber] || 0) + ball.extraRuns;
         }
 
         const concededFromExtra =
@@ -155,8 +234,9 @@ export default function FullScorecard({
         if (countsAsBowlerWicket(ball.dismissal)) wickets++;
       });
 
-      const maidens = Object.values(byOver).filter((overRuns) => overRuns === 0).length;
-      const ballsPerOver = matchState.config?.ballsPerOver || 6;
+      const maidens = Object.values(byOver).filter(
+        (overRuns) => overRuns === 0
+      ).length;
       const economy =
         balls > 0 ? (runs / (balls / ballsPerOver)).toFixed(2) : "0.00";
 
@@ -199,13 +279,14 @@ export default function FullScorecard({
     return innings.balls
       .filter((ball) => ball.bowlerName === bowlerName)
       .map((ball) => {
-        if (countsAsWicket(ball.dismissal)) return `W`;
+        if (countsAsWicket(ball.dismissal)) return "W";
         if (ball.dismissal === "retired-hurt") return "RH";
         if (ball.extra === "wide") return `${ball.extraRuns}Wd`;
         if (ball.extra === "no-ball") return `${ball.extraRuns}Nb`;
         if (ball.extra === "bye") return `${ball.extraRuns}B`;
         if (ball.extra === "leg-bye") return `${ball.extraRuns}Lb`;
-        if (ball.extra === "overthrow") return `${ball.runs + ball.extraRuns}OT`;
+        if (ball.extra === "overthrow")
+          return `${ball.runs + ball.extraRuns}OT`;
         return `${ball.runs}`;
       });
   };
@@ -216,25 +297,24 @@ export default function FullScorecard({
 
   const getInningsRuns = (innings: InningsData | null) => {
     if (!innings) return 0;
-    return innings.balls.reduce((total, ball) => {
-      return total + ball.runs + (ball.extra !== "none" ? ball.extraRuns : 0);
-    }, 0);
+    return innings.balls.reduce(
+      (total, ball) =>
+        total + ball.runs + (ball.extra !== "none" ? ball.extraRuns : 0),
+      0
+    );
   };
 
   const getLegalBalls = (innings: InningsData | null) => {
     if (!innings) return 0;
-    return innings.balls.filter(
-      (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
-    ).length;
+    return getLegalBallCount(innings.balls);
   };
 
   const getOversTextFromBalls = (balls: number) => {
-    const ballsPerOver = matchState.config?.ballsPerOver || 6;
     return `${Math.floor(balls / ballsPerOver)}.${balls % ballsPerOver}`;
   };
 
   const renderInningsScorecard = (
-    title: string,
+    inningsNumber: 1 | 2,
     innings: InningsData | null,
     battingTeam: Team,
     bowlingTeam: Team
@@ -242,137 +322,202 @@ export default function FullScorecard({
     if (!innings) return null;
 
     const totals = calculateInningsTotal(innings);
-    const battingRows = calculateBatting(innings, battingTeam);
+    const { displayed: battingRows, yetToBat, atCrease } = getBattingDisplay(
+      innings,
+      battingTeam
+    );
     const bowlingRows = calculateBowling(innings, bowlingTeam);
     const extras = calculateExtras(innings);
+    const overs = calculateOvers(innings.balls);
+    const runRate = calculateRunRate(innings.balls, totals.runs);
+    const inningsLabel = `${battingTeam.name} ${inningsNumber === 1 ? "1st" : "2nd"} Innings`;
 
     return (
-      <Card className="cricket-broadcast-card border-0 shadow-none gap-0 py-0">
-        <CardHeader>
-          <CardTitle className="text-white flex justify-between items-center">
-            <span>{title}</span>
-            <span className="text-[var(--cricket-gold)]">
-              {totals.runs}/{totals.wickets} ({calculateOvers(innings.balls)})
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <h3 className="text-white font-semibold mb-3">Batting</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-slate-200">
-                <thead className="text-slate-400 border-b border-slate-700">
-                  <tr>
-                    <th className="py-2">Batter</th>
-                    <th className="py-2 text-right">R</th>
-                    <th className="py-2 text-right">B</th>
-                    <th className="py-2 text-right">4s</th>
-                    <th className="py-2 text-right">6s</th>
-                    <th className="py-2 text-right">SR</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {battingRows.map((row) => (
-                    <tr key={row.name} className="border-b border-slate-700/50">
-                      <td className="py-2">
-                        <div>{row.name}</div>
-                        {row.dismissal !== "not out" && (
-                          <div className="text-xs text-slate-400">{row.dismissal}</div>
-                        )}
-                      </td>
-                      <td className="py-2 text-right font-semibold">{row.runs}</td>
-                      <td className="py-2 text-right">{row.balls}</td>
-                      <td className="py-2 text-right">{row.fours}</td>
-                      <td className="py-2 text-right">{row.sixes}</td>
-                      <td className="py-2 text-right">{row.strikeRate}</td>
-                    </tr>
-                  ))}
-                  <tr className="border-b border-slate-700/50 bg-slate-900/40">
-                    <td className="py-2 font-semibold">Extras</td>
-                    <td className="py-2 text-right font-semibold">{extras.total}</td>
-                    <td className="py-2 text-right text-slate-300" colSpan={5}>
-                      b {extras.bye}, lb {extras.legBye}, nb {extras.noBall}, wd {extras.wide}
+      <div className="cricket-scorecard-sheet">
+        <div className="cricket-scorecard-innings-header">
+          <span className="truncate">{inningsLabel}</span>
+          <span className="cricket-scorecard-innings-header__score">
+            {totals.runs}-{totals.wickets} ({overs} Ov)
+          </span>
+        </div>
+
+        <div className="cricket-scorecard-section">
+          <table className="cricket-scorecard-table">
+            <thead>
+              <tr>
+                <th>Batter</th>
+                <th>R</th>
+                <th>B</th>
+                <th>4s</th>
+                <th>6s</th>
+                <th>SR</th>
+              </tr>
+            </thead>
+            <tbody>
+              {battingRows.map((row) => {
+                const dismissalBall = innings.balls.find(
+                  (ball) =>
+                    ball.dismissal !== "none" &&
+                    ball.dismissedPlayer === row.name
+                );
+                const isAtCrease =
+                  atCrease.has(row.playerId) && row.dismissal === "not out";
+                const dismissalShort = isAtCrease
+                  ? null
+                  : dismissalBall
+                    ? formatDismissalShort(dismissalBall)
+                    : null;
+
+                return (
+                  <tr key={row.playerId}>
+                    <td>
+                      <div className="cricket-scorecard-batter-name">
+                        {row.name}
+                      </div>
+                      {isAtCrease ? (
+                        <div className="cricket-scorecard-batter-meta cricket-scorecard-batter-meta--live">
+                          batting
+                        </div>
+                      ) : dismissalShort ? (
+                        <div className="cricket-scorecard-batter-meta">
+                          {dismissalShort}
+                        </div>
+                      ) : null}
                     </td>
+                    <td className="cricket-scorecard-stat-bold">{row.runs}</td>
+                    <td>{row.balls}</td>
+                    <td>{row.fours}</td>
+                    <td>{row.sixes}</td>
+                    <td>{row.strikeRate}</td>
                   </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+                );
+              })}
+              <tr className="cricket-scorecard-summary-row">
+                <td>Extras</td>
+                <td className="cricket-scorecard-stat-bold">{extras.total}</td>
+                <td
+                  colSpan={4}
+                  className="cricket-scorecard-summary-detail"
+                >
+                  (b {extras.bye}, lb {extras.legBye}, w {extras.wide}, nb{" "}
+                  {extras.noBall}, p 0)
+                </td>
+              </tr>
+              <tr className="cricket-scorecard-summary-row">
+                <td>Total</td>
+                <td className="cricket-scorecard-stat-bold">
+                  {totals.runs}-{totals.wickets}
+                </td>
+                <td colSpan={4} className="cricket-scorecard-summary-detail">
+                  {overs} Ov (RR : {runRate})
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-          <div>
-            <h3 className="text-white font-semibold mb-3">Bowling</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-slate-200">
-                <thead className="text-slate-400 border-b border-slate-700">
-                  <tr>
-                    <th className="py-2">Bowler</th>
-                    <th className="py-2 text-right">O</th>
-                    <th className="py-2 text-right">M</th>
-                    <th className="py-2 text-right">R</th>
-                    <th className="py-2 text-right">W</th>
-                    <th className="py-2 text-right">NB</th>
-                    <th className="py-2 text-right">WD</th>
-                    <th className="py-2 text-right">ECO</th>
-                    <th className="py-2 text-right"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bowlingRows.map((row) => {
-                    const bowlerKey = `${title}-${row.name}`;
-                    const isExpanded = !!expandedBowlerKeys[bowlerKey];
-                    const ballByBall = getBowlerBallByBall(innings, row.name);
-
-                    return (
-                      <Fragment key={row.name}>
-                        <tr className="border-b border-slate-700/50">
-                          <td className="py-2">{row.name}</td>
-                          <td className="py-2 text-right">
-                            {Math.floor(row.balls / (matchState.config?.ballsPerOver || 6))}.
-                            {row.balls % (matchState.config?.ballsPerOver || 6)}
-                          </td>
-                          <td className="py-2 text-right">{row.maidens}</td>
-                          <td className="py-2 text-right">{row.runs}</td>
-                          <td className="py-2 text-right font-semibold">{row.wickets}</td>
-                          <td className="py-2 text-right">{row.noBalls}</td>
-                          <td className="py-2 text-right">{row.wides}</td>
-                          <td className="py-2 text-right">{row.economy}</td>
-                          <td className="py-2 text-right">
-                            <button
-                              type="button"
-                              onClick={() => toggleBowlerDetails(bowlerKey)}
-                              className="inline-flex items-center text-slate-100 hover:text-white"
-                              aria-label={isExpanded ? "Collapse bowler details" : "Expand bowler details"}
-                            >
-                              {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                            </button>
-                          </td>
-                        </tr>
-                        {isExpanded && (
-                          <tr className="border-b border-slate-700/50">
-                            <td colSpan={9} className="py-2">
-                              <div className="text-xs text-slate-400 mb-2">Ball by ball</div>
-                              <div className="flex flex-wrap gap-2">
-                                {ballByBall.map((entry, idx) => (
-                                  <span
-                                    key={`${row.name}-${idx}`}
-                                    className="px-2 py-1 rounded bg-slate-700 text-slate-100 text-xs"
-                                  >
-                                    {entry}
-                                  </span>
-                                ))}
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
+          {yetToBat.length > 0 && (
+            <div className="cricket-scorecard-yet-to-bat">
+              <p className="cricket-scorecard-yet-to-bat__label">Yet to bat</p>
+              {yetToBat.map((name) => (
+                <span
+                  key={name}
+                  className="cricket-scorecard-yet-to-bat__player"
+                >
+                  {name}
+                </span>
+              ))}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          )}
+        </div>
+
+        <div className="cricket-scorecard-section">
+          <table className="cricket-scorecard-table">
+            <thead>
+              <tr>
+                <th>Bowler</th>
+                <th>O</th>
+                <th>M</th>
+                <th>R</th>
+                <th>W</th>
+                <th>NB</th>
+                <th>WD</th>
+                <th>ECO</th>
+                <th aria-hidden></th>
+              </tr>
+            </thead>
+            <tbody>
+              {bowlingRows.map((row) => {
+                const bowlerKey = `${inningsLabel}-${row.name}`;
+                const isExpanded = !!expandedBowlerKeys[bowlerKey];
+                const ballByBall = getBowlerBallByBall(innings, row.name);
+
+                return (
+                  <Fragment key={row.name}>
+                    <tr>
+                      <td>
+                        <span className="cricket-scorecard-bowler-name">
+                          {row.name}
+                        </span>
+                      </td>
+                      <td>
+                        {Math.floor(row.balls / ballsPerOver)}.
+                        {row.balls % ballsPerOver}
+                      </td>
+                      <td>{row.maidens}</td>
+                      <td>{row.runs}</td>
+                      <td className="cricket-scorecard-stat-bold">
+                        {row.wickets}
+                      </td>
+                      <td>{row.noBalls}</td>
+                      <td>{row.wides}</td>
+                      <td>{row.economy}</td>
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() => toggleBowlerDetails(bowlerKey)}
+                          className="cricket-scorecard-expand-btn"
+                          aria-label={
+                            isExpanded
+                              ? "Collapse bowler details"
+                              : "Expand bowler details"
+                          }
+                        >
+                          {isExpanded ? (
+                            <ChevronUp size={14} />
+                          ) : (
+                            <ChevronDown size={14} />
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={9}>
+                          <div className="cricket-scorecard-bbb">
+                            <p className="cricket-scorecard-bbb__label">
+                              Ball by ball
+                            </p>
+                            <div className="cricket-scorecard-bbb__chips">
+                              {ballByBall.map((entry, idx) => (
+                                <span
+                                  key={`${row.name}-${idx}`}
+                                  className="cricket-scorecard-bbb__chip"
+                                >
+                                  {entry}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     );
   };
 
@@ -405,44 +550,79 @@ export default function FullScorecard({
           </div>
         </div>
 
-        {renderInningsScorecard(
-          `${matchState.team1.name} Innings`,
-          matchState.innings1,
-          matchState.team1,
-          matchState.team2
-        )}
+        <div className="space-y-3">
+          <div className="cricket-scorecard-tabs">
+            <button
+              type="button"
+              onClick={() => setActiveInningsTab(1)}
+              className={cn(
+                "cricket-scorecard-inn-tab",
+                activeInningsTab === 1 && "cricket-scorecard-inn-tab--active"
+              )}
+            >
+              {abbreviateTeamName(matchState.team1.name)} (1st Inn)
+            </button>
+            <button
+              type="button"
+              onClick={() => innings2Available && setActiveInningsTab(2)}
+              disabled={!innings2Available}
+              className={cn(
+                "cricket-scorecard-inn-tab",
+                activeInningsTab === 2 && "cricket-scorecard-inn-tab--active",
+                !innings2Available && "cricket-scorecard-inn-tab--disabled"
+              )}
+            >
+              {abbreviateTeamName(matchState.team2.name)} (2nd Inn)
+            </button>
+          </div>
 
-        {renderInningsScorecard(
-          `${matchState.team2.name} Innings`,
-          matchState.innings2,
-          matchState.team2,
-          matchState.team1
-        )}
+          {activeInningsTab === 1 &&
+            renderInningsScorecard(
+              1,
+              matchState.innings1,
+              matchState.team1,
+              matchState.team2
+            )}
 
-        {(() => {
-          const innings1Runs = getInningsRuns(matchState.innings1);
-          if (!matchState.innings1 || !matchState.config) return null;
+          {activeInningsTab === 2 &&
+            innings2Available &&
+            renderInningsScorecard(
+              2,
+              matchState.innings2,
+              matchState.team2,
+              matchState.team1
+            )}
 
-          const showChaseSection =
-            showStartSecondInnings || matchState.currentInnings === 2;
-          if (!showChaseSection) return null;
+          {(() => {
+            const innings1Runs = getInningsRuns(matchState.innings1);
+            if (!matchState.innings1 || !matchState.config) return null;
 
-          const target = innings1Runs + 1;
-          const innings2Runs = getInningsRuns(matchState.innings2);
-          const runsNeeded = Math.max(target - innings2Runs, 0);
+            const showChaseSection =
+              showStartSecondInnings || matchState.currentInnings === 2;
+            if (!showChaseSection) return null;
 
-          const totalLegalBalls =
-            matchState.config.totalOvers * matchState.config.ballsPerOver;
-          const legalBallsBowled = getLegalBalls(matchState.innings2);
-          const ballsRemaining = Math.max(totalLegalBalls - legalBallsBowled, 0);
+            const chasingTeam =
+              matchState.innings2?.teamName ?? matchState.team2.name;
+            const target = innings1Runs + 1;
+            const innings2Runs = getInningsRuns(matchState.innings2);
+            const runsNeeded = Math.max(target - innings2Runs, 0);
 
-          return (
-            <div className="cricket-chase-banner">
-              {matchState.team2.name} needs {runsNeeded} runs in{" "}
-              {getOversTextFromBalls(ballsRemaining)} overs
-            </div>
-          );
-        })()}
+            const totalLegalBalls =
+              matchState.config.totalOvers * matchState.config.ballsPerOver;
+            const legalBallsBowled = getLegalBalls(matchState.innings2);
+            const ballsRemaining = Math.max(
+              totalLegalBalls - legalBallsBowled,
+              0
+            );
+
+            return (
+              <div className="cricket-chase-banner">
+                {chasingTeam} needs {runsNeeded} runs in{" "}
+                {getOversTextFromBalls(ballsRemaining)} overs
+              </div>
+            );
+          })()}
+        </div>
       </div>
     </div>
   );
