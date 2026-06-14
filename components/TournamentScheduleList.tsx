@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { CricketEyebrow } from "@/components/cricket-shell";
+import { TournamentMatchFaceoff } from "@/components/TournamentMatchFaceoff";
 import { TournamentNextMatchHero } from "@/components/TournamentNextMatchHero";
 import type { Team } from "@/lib/cricket-types";
 import type { TournamentFixture } from "@/lib/roster-storage";
@@ -34,6 +35,23 @@ interface TournamentScheduleListProps {
 
 function formatScore(runs: number, wickets: number): string {
   return `${runs}/${wickets}`;
+}
+
+function MatchCardHeader({
+  matchNumber,
+  dragHandle,
+}: {
+  matchNumber: number;
+  dragHandle: ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2 px-3 pt-3">
+      {dragHandle}
+      <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[oklch(0.55_0.03_255)]">
+        Match {matchNumber}
+      </p>
+    </div>
+  );
 }
 
 export default function TournamentScheduleList({
@@ -79,6 +97,16 @@ export default function TournamentScheduleList({
     setOverId(null);
   };
 
+  const dragHandle = (
+    <span
+      className="flex h-9 w-9 shrink-0 cursor-grab touch-manipulation items-center justify-center rounded border border-[oklch(0.35_0.05_295/0.5)] bg-[oklch(0.16_0.03_295/0.4)] text-[oklch(0.55_0.04_288)] active:cursor-grabbing"
+      aria-hidden
+      title="Drag to reorder"
+    >
+      <GripVertical className="h-4 w-4" />
+    </span>
+  );
+
   return (
     <div className="space-y-3">
       <div className="tournament-game-section-head">
@@ -88,21 +116,11 @@ export default function TournamentScheduleList({
       <p className="text-xs text-[oklch(0.55_0.03_255)]">
         Drag matches to set play order. The highlighted match in the list is up next.
       </p>
-      <div className="space-y-2">
+      <div className="space-y-3">
         {orderedRows.map((fx, idx) => {
           const isDragging = dragId === fx.id;
           const isOver = overId === fx.id && dragId !== fx.id;
           const isNextMatch = !fx.played && fx.id === nextFixtureId;
-
-          const dragHandle = (
-            <span
-              className="flex h-11 w-11 shrink-0 cursor-grab touch-manipulation items-center justify-center rounded border border-[oklch(0.35_0.05_295/0.5)] bg-[oklch(0.16_0.03_295/0.4)] text-[oklch(0.55_0.04_288)] active:cursor-grabbing"
-              aria-hidden
-              title="Drag to reorder"
-            >
-              <GripVertical className="h-4 w-4" />
-            </span>
-          );
 
           const rowProps = {
             key: fx.id,
@@ -128,19 +146,19 @@ export default function TournamentScheduleList({
               setOverId(null);
             },
             className: cn(
-              "rounded-md border transition-[border-color,box-shadow,opacity,transform]",
+              "tournament-match-card transition-[border-color,box-shadow,opacity,transform]",
               isDragging && "opacity-50 scale-[0.99]",
               isNextMatch
                 ? cn(
-                    "border-[oklch(0.55_0.12_295/0.65)] bg-[oklch(0.12_0.02_255/0.6)] shadow-[0_0_0_1px_oklch(0.55_0.12_295/0.35)]",
+                    "tournament-match-card--next",
                     isOver &&
                       "border-[oklch(0.55_0.12_295/0.85)] shadow-[0_0_0_2px_oklch(0.55_0.12_295/0.45)]"
                   )
                 : cn(
-                    "tournament-game-row bg-[oklch(0.12_0.02_255/0.6)] p-3",
+                    "tournament-game-row",
                     isOver
                       ? "border-[oklch(0.55_0.12_295/0.75)] shadow-[0_0_0_1px_oklch(0.55_0.12_295/0.35)]"
-                      : "border-[oklch(0.32_0.04_255)]"
+                      : ""
                   )
             ),
           };
@@ -162,74 +180,60 @@ export default function TournamentScheduleList({
 
           return (
             <div {...rowProps}>
-              <div className="mb-2 flex items-center gap-2">
-                {dragHandle}
-                <p className="text-xs text-[oklch(0.55_0.03_255)]">Match {idx + 1}</p>
+              <MatchCardHeader matchNumber={idx + 1} dragHandle={dragHandle} />
+              <div className="tournament-match-card__faceoff">
+                <TournamentMatchFaceoff teamA={fx.teamA} teamB={fx.teamB} size="sm" />
               </div>
-              <div className="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
-                <div className="min-w-0">
-                  <p className="truncate font-medium text-[var(--cricket-cream)]">
-                    {fx.teamA.name}
-                  </p>
-                  {fx.played ? (
-                    <p className="text-sm text-[oklch(0.65_0.03_255)]">
-                      {fx.fixture.result?.abandoned
-                        ? "Abandoned"
-                        : formatScore(fx.runsA ?? 0, fx.wicketsA ?? 0)}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-[oklch(0.55_0.03_255)]">Not played</p>
-                  )}
-                </div>
-                <p className="text-center text-xs text-[oklch(0.55_0.03_255)]">vs</p>
-                <div className="min-w-0 sm:text-right">
-                  <p className="truncate font-medium text-[var(--cricket-cream)]">
-                    {fx.teamB.name}
-                  </p>
-                  {fx.played ? (
-                    <p className="text-sm text-[oklch(0.65_0.03_255)]">
-                      {fx.fixture.result?.abandoned
-                        ? "Abandoned"
-                        : formatScore(fx.runsB ?? 0, fx.wicketsB ?? 0)}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-[oklch(0.55_0.03_255)]">Not played</p>
-                  )}
-                </div>
-              </div>
-              {fx.played ? (
-                <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                  <p className="text-xs text-[oklch(0.72_0.1_75)]">
-                    {fx.fixture.result?.abandoned
-                      ? "Abandoned due to rain — no points"
-                      : fx.winnerId
-                        ? `${fx.winnerId === fx.teamA.id ? fx.teamA.name : fx.teamB.name} won`
-                        : "Match tied"}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      draggable={false}
-                      className="cricket-btn-add cricket-btn-add--inline cricket-btn-add--tournament !w-auto px-3 text-xs"
-                      onClick={() => onSummary(fx.id)}
-                    >
-                      Match summary
-                    </button>
-                    <button
-                      type="button"
-                      draggable={false}
-                      className="cricket-btn-setup !w-auto !min-h-[2.2rem] px-3 text-xs"
-                      onClick={() => onReplay(fx.id, fx.teamA.name, fx.teamB.name)}
-                    >
-                      Replay match
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-2">
+              <div className="tournament-match-card__footer space-y-2">
+                {fx.played ? (
+                  <>
+                    <div className="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+                      <p className="text-center text-sm font-semibold text-[oklch(0.72_0.03_255)] sm:text-right">
+                        {fx.fixture.result?.abandoned
+                          ? "Abandoned"
+                          : formatScore(fx.runsA ?? 0, fx.wicketsA ?? 0)}
+                      </p>
+                      <p className="text-center text-[10px] uppercase tracking-[0.12em] text-[oklch(0.5_0.03_255)]">
+                        Final
+                      </p>
+                      <p className="text-center text-sm font-semibold text-[oklch(0.72_0.03_255)] sm:text-left">
+                        {fx.fixture.result?.abandoned
+                          ? "Abandoned"
+                          : formatScore(fx.runsB ?? 0, fx.wicketsB ?? 0)}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                      <p className="text-xs text-[oklch(0.72_0.1_75)]">
+                        {fx.fixture.result?.abandoned
+                          ? "Abandoned due to rain — no points"
+                          : fx.winnerId
+                            ? `${fx.winnerId === fx.teamA.id ? fx.teamA.name : fx.teamB.name} won`
+                            : "Match tied"}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          draggable={false}
+                          className="cricket-btn-add cricket-btn-add--inline cricket-btn-add--tournament !w-auto px-3 text-xs"
+                          onClick={() => onSummary(fx.id)}
+                        >
+                          Match summary
+                        </button>
+                        <button
+                          type="button"
+                          draggable={false}
+                          className="cricket-btn-setup !w-auto !min-h-[2.2rem] px-3 text-xs"
+                          onClick={() => onReplay(fx.id, fx.teamA.name, fx.teamB.name)}
+                        >
+                          Replay match
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
                   <p className="text-xs text-[oklch(0.55_0.03_255)]">Awaiting play</p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           );
         })}

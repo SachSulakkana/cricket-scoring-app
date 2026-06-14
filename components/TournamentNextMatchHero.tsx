@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { CricketBroadcastCard, CricketEyebrow } from "@/components/cricket-shell";
+import { TournamentMatchFaceoff } from "@/components/TournamentMatchFaceoff";
 import type { Team } from "@/lib/cricket-types";
 import { CheckCircle2, Play } from "lucide-react";
 
@@ -31,12 +32,8 @@ export function TournamentNextMatchHero({
 }: TournamentNextMatchHeroProps) {
   const content = (
     <>
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,oklch(0.45_0.14_295/0.28),transparent_65%)]"
-        aria-hidden
-      />
-      <div className="relative z-10 space-y-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="relative z-10 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 pt-3 sm:px-4">
           <div className="flex min-w-0 items-center gap-2">
             {headerPrefix}
             <CricketEyebrow className="mb-0 text-[var(--cricket-gold)]">
@@ -48,38 +45,28 @@ export function TournamentNextMatchHero({
           </span>
         </div>
 
-        <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr] sm:gap-6">
-          <div className="min-w-0 text-center sm:text-right">
-            <p className="cricket-display text-2xl font-bold leading-tight text-[var(--cricket-cream)] sm:text-3xl">
-              {teamA.name}
-            </p>
-          </div>
-          <p className="cricket-display text-center text-xl font-semibold text-[var(--cricket-gold)] sm:text-2xl">
-            vs
-          </p>
-          <div className="min-w-0 text-center sm:text-left">
-            <p className="cricket-display text-2xl font-bold leading-tight text-[var(--cricket-cream)] sm:text-3xl">
-              {teamB.name}
-            </p>
-          </div>
+        <div className="tournament-match-card__faceoff px-4 pb-5 pt-1 sm:px-5 sm:pb-6">
+          <TournamentMatchFaceoff teamA={teamA} teamB={teamB} size="lg" />
         </div>
 
-        <button
-          type="button"
-          draggable={false}
-          onClick={onPlayNow}
-          className="cricket-btn-play cricket-btn-play--tournament flex w-full min-h-[3.25rem] items-center justify-center gap-2.5 text-base font-bold sm:min-h-[3.5rem] sm:text-lg"
-        >
-          <Play className="h-5 w-5 shrink-0 fill-current" aria-hidden />
-          Play this match
-        </button>
+        <div className="px-3 pb-4 sm:px-4 sm:pb-5">
+          <button
+            type="button"
+            draggable={false}
+            onClick={onPlayNow}
+            className="cricket-btn-play cricket-btn-play--tournament flex w-full min-h-[3.25rem] items-center justify-center gap-2.5 text-base font-bold sm:min-h-[3.5rem] sm:text-lg"
+          >
+            <Play className="h-5 w-5 shrink-0 fill-current" aria-hidden />
+            Play this match
+          </button>
+        </div>
       </div>
     </>
   );
 
   if (embedded) {
     return (
-      <div className="tournament-next-match-hero relative overflow-hidden p-5 sm:p-6">
+      <div className="tournament-next-match-hero relative overflow-hidden">
         {content}
       </div>
     );

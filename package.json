@@ -2,6 +2,9 @@
   "name": "my-project",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20 <21"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -40,7 +43,7 @@
     "@reduxjs/toolkit": "^2.12.0",
     "@vercel/analytics": "1.6.1",
     "autoprefixer": "^10.4.20",
-    "better-sqlite3": "^12.10.0",
+    "better-sqlite3": "12.9.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.1.1",
