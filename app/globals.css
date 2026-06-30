@@ -2287,12 +2287,6 @@
     width: 100%;
   }
 
-  @media (min-width: 1024px) {
-    .landing-row {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-
   .landing-tile {
     position: relative;
     isolation: isolate;
@@ -2339,31 +2333,75 @@
   }
 
   .landing-tile__media--tournament {
-    background-image: url('/landing/tournament.svg');
+    background-image: url('/landing/tournament.png');
+    filter: brightness(0.35) saturate(1) contrast(1.05);
   }
 
   .landing-tile__media--player {
-    background-image: url('/landing/player.svg');
+    background-image: url('/landing/player.png');
+    filter: brightness(0.35) saturate(1) contrast(1.05);
   }
 
   .landing-tile__media--team {
-    background-image: url('/landing/team.svg');
+    background-image: url('/landing/team.png');
+    filter: brightness(0.35) saturate(1) contrast(1.05);
   }
 
   .landing-tile__media--calendar {
-    background-image: url('/landing/calendar.svg');
+    background-image: url('/landing/calendar.png');
+    filter: brightness(0.35) saturate(1) contrast(1.05);
+  }
+
+  .landing-tile__media--settings {
+    background-image: url('/landing/settings.png');
+    filter: brightness(0.35) saturate(1) contrast(1.05);
   }
 
   .landing-tile__media--quickMatch {
-    background-image: url('/landing/quick-match.svg');
+    background-image: url('/landing/quick-match.png');
+    filter: brightness(0.35) saturate(1) contrast(1.05);
+  }
+
+  .landing-tile:has(.landing-tile__media--tournament) .landing-tile__overlay,
+  .landing-tile:has(.landing-tile__media--player) .landing-tile__overlay,
+  .landing-tile:has(.landing-tile__media--team) .landing-tile__overlay,
+  .landing-tile:has(.landing-tile__media--calendar) .landing-tile__overlay,
+  .landing-tile:has(.landing-tile__media--settings) .landing-tile__overlay,
+  .landing-tile:has(.landing-tile__media--quickMatch) .landing-tile__overlay {
+    background: linear-gradient(
+      180deg,
+      oklch(0.08 0.02 290 / 0.15) 0%,
+      oklch(0.06 0.03 290 / 0.38) 45%,
+      oklch(0.05 0.04 295 / 0.62) 100%
+    );
+  }
+
+  .landing-tile:has(.landing-tile__media--tournament) .landing-tile__content,
+  .landing-tile:has(.landing-tile__media--player) .landing-tile__content,
+  .landing-tile:has(.landing-tile__media--team) .landing-tile__content,
+  .landing-tile:has(.landing-tile__media--calendar) .landing-tile__content,
+  .landing-tile:has(.landing-tile__media--settings) .landing-tile__content,
+  .landing-tile:has(.landing-tile__media--quickMatch) .landing-tile__content {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .landing-tile:has(.landing-tile__media--tournament) .landing-tile__label,
+  .landing-tile:has(.landing-tile__media--player) .landing-tile__label,
+  .landing-tile:has(.landing-tile__media--team) .landing-tile__label,
+  .landing-tile:has(.landing-tile__media--calendar) .landing-tile__label,
+  .landing-tile:has(.landing-tile__media--settings) .landing-tile__label,
+  .landing-tile:has(.landing-tile__media--quickMatch) .landing-tile__label {
+    text-shadow:
+      0 2px 16px oklch(0 0 0 / 0.95),
+      0 0 32px oklch(0 0 0 / 0.75);
   }
 
   .landing-tile__media--comingSoon {
     background-image: url('/landing/coming-soon.svg');
-  }
-
-  .landing-tile__media--settings {
-    background-image: url('/landing/settings.svg');
   }
 
   .landing-tile__overlay {
@@ -2473,6 +2511,29 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  @media (min-width: 1024px) {
+    .landing-row,
+    .landing-row--bottom {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+
+    .landing-row--top .landing-tile {
+      grid-column: span 3;
+      max-width: none;
+      width: 100%;
+      justify-self: stretch;
+    }
+
+    .landing-row--bottom .landing-tile {
+      grid-column: span 4;
+      max-width: none;
+      width: 100%;
+      justify-self: stretch;
+      aspect-ratio: auto;
+      height: var(--landing-tile-short-h-max);
+    }
+  }
+
   @container landing (max-width: 520px) {
     .landing-tile__subtitle {
       font-size: 0.5rem;
@@ -2528,6 +2589,15 @@
     filter: brightness(0.88) saturate(1.2) contrast(1.08);
   }
 
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--tournament) .landing-tile__media,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--player) .landing-tile__media,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--team) .landing-tile__media,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--calendar) .landing-tile__media,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--settings) .landing-tile__media,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--quickMatch) .landing-tile__media {
+    filter: brightness(0.78) saturate(1.1) contrast(1.08);
+  }
+
   .landing-tile:hover:not(:disabled) .landing-tile__overlay {
     background: linear-gradient(
       180deg,
@@ -2535,6 +2605,29 @@
       oklch(0.08 0.05 295 / 0.55) 50%,
       oklch(0.06 0.06 295 / 0.72) 100%
     );
+  }
+
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--tournament) .landing-tile__overlay,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--player) .landing-tile__overlay,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--team) .landing-tile__overlay,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--calendar) .landing-tile__overlay,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--settings) .landing-tile__overlay,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--quickMatch) .landing-tile__overlay {
+    background: linear-gradient(
+      180deg,
+      oklch(0.1 0.03 295 / 0.2) 0%,
+      oklch(0.08 0.04 295 / 0.42) 50%,
+      oklch(0.06 0.05 295 / 0.58) 100%
+    );
+  }
+
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--tournament) .landing-tile__content,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--player) .landing-tile__content,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--team) .landing-tile__content,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--calendar) .landing-tile__content,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--settings) .landing-tile__content,
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--quickMatch) .landing-tile__content {
+    background: transparent;
   }
 
   .landing-tile:hover:not(:disabled) .landing-tile__glow {

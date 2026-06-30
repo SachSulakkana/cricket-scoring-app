@@ -139,8 +139,8 @@ export default function CsvImportDialog({
           <DialogDescription className="text-[oklch(0.6_0.03_255)] text-sm">
             {kind === "players" ? (
               <>
-                Required columns: name, role, gender, batting_style, bowling_style.
-                Optional: age.
+                Required columns: name, gender.
+                Optional: role, age, batting_style, bowling_style.
               </>
             ) : (
               <>Required: name. Optional: owner_name. Squads stay empty until you edit a team.</>

@@ -101,6 +101,26 @@ function requireColumn(
   return null;
 }
 
+function parseOptionalPlayerField<T extends string>(
+  value: string | undefined,
+  allowed: Set<T>,
+  defaultValue: T,
+  rowNum: number,
+  fieldLabel: string
+): { value: T; error: string | null } {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) {
+    return { value: defaultValue, error: null };
+  }
+  if (!allowed.has(trimmed as T)) {
+    return {
+      value: defaultValue,
+      error: `Row ${rowNum}: Invalid ${fieldLabel}. Use: ${[...allowed].join(", ")} or leave empty.`,
+    };
+  }
+  return { value: trimmed as T, error: null };
+}
+
 export function parsePlayersCsv(
   text: string,
   existingNames: Set<string>
@@ -115,7 +135,7 @@ export function parsePlayersCsv(
   }
 
   const headers = rows[0].map(normalizeHeader);
-  const requiredHeaders = ["name", "role", "gender", "batting_style", "bowling_style"];
+  const requiredHeaders = ["name", "gender"];
   for (const h of requiredHeaders) {
     if (!headers.includes(h)) {
       return {
@@ -123,7 +143,7 @@ export function parsePlayersCsv(
         errors: [
           {
             row: 1,
-            message: `Missing column "${h}". Required: ${requiredHeaders.join(", ")}. Optional: age`,
+            message: `Missing column "${h}". Required: ${requiredHeaders.join(", ")}. Optional: role, age, batting_style, bowling_style`,
           },
         ],
         skippedDuplicates: 0,
@@ -149,12 +169,14 @@ export function parsePlayersCsv(
       continue;
     }
 
-    const role = record.role?.trim() as Player["role"];
-    if (!role || !PLAYER_ROLES.has(role)) {
-      rowErrors.push(
-        `Row ${rowNum}: Invalid role. Use: ${[...PLAYER_ROLES].join(", ")}`
-      );
-    }
+    const roleResult = parseOptionalPlayerField(
+      record.role,
+      PLAYER_ROLES,
+      "all-rounder",
+      rowNum,
+      "role"
+    );
+    if (roleResult.error) rowErrors.push(roleResult.error);
 
     const gender = record.gender?.trim() as Player["gender"];
     if (!gender || !PLAYER_GENDERS.has(gender)) {
@@ -163,19 +185,23 @@ export function parsePlayersCsv(
       );
     }
 
-    const battingStyle = record.batting_style?.trim() as Player["battingStyle"];
-    if (!battingStyle || !BATTING_STYLES.has(battingStyle)) {
-      rowErrors.push(
-        `Row ${rowNum}: Invalid batting_style. Use: ${[...BATTING_STYLES].join(", ")}`
-      );
-    }
+    const battingStyleResult = parseOptionalPlayerField(
+      record.batting_style,
+      BATTING_STYLES,
+      "right-hand",
+      rowNum,
+      "batting_style"
+    );
+    if (battingStyleResult.error) rowErrors.push(battingStyleResult.error);
 
-    const bowlingStyle = record.bowling_style?.trim() as Player["bowlingStyle"];
-    if (!bowlingStyle || !BOWLING_STYLES.has(bowlingStyle)) {
-      rowErrors.push(
-        `Row ${rowNum}: Invalid bowling_style. Use: ${[...BOWLING_STYLES].join(", ")}`
-      );
-    }
+    const bowlingStyleResult = parseOptionalPlayerField(
+      record.bowling_style,
+      BOWLING_STYLES,
+      "none",
+      rowNum,
+      "bowling_style"
+    );
+    if (bowlingStyleResult.error) rowErrors.push(bowlingStyleResult.error);
 
     let age: number | undefined;
     const ageRaw = record.age?.trim();
@@ -196,11 +222,11 @@ export function parsePlayersCsv(
     players.push({
       id: `player-${baseId}-${i}`,
       name,
-      role: role!,
+      role: roleResult.value,
       gender: gender!,
       age,
-      battingStyle: battingStyle!,
-      bowlingStyle: bowlingStyle!,
+      battingStyle: battingStyleResult.value,
+      bowlingStyle: bowlingStyleResult.value,
     });
   }
 
@@ -266,9 +292,9 @@ export function parseTeamsCsv(
   return { teams, errors, skippedDuplicates };
 }
 
-export const PLAYER_CSV_TEMPLATE = `name,role,gender,age,batting_style,bowling_style
-Virat Kohli,batsman,male,35,right-hand,right-arm-medium
-Jasprit Bumrah,bowler,male,30,right-hand,right-arm-fast`;
+export const PLAYER_CSV_TEMPLATE = `name,gender,role,age,batting_style,bowling_style
+Virat Kohli,male,batsman,35,right-hand,right-arm-medium
+New Player,female,,,`;
 
 export const TEAM_CSV_TEMPLATE = `name,owner_name
 Mumbai Strikers,Rahul
