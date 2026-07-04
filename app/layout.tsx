@@ -6,6 +6,7 @@ import AppToaster from '@/components/AppToaster'
 import CricketDbProvider from '@/components/CricketDbProvider'
 import { ResumePromptProvider } from '@/components/ResumePromptProvider'
 import StoreProvider from '@/components/StoreProvider'
+import { APP_DESCRIPTION, APP_NAME } from '@/lib/app-brand'
 import './globals.css'
 
 const display = Oswald({
@@ -27,21 +28,18 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Cricket Scorer',
-  description: 'Ball-by-ball cricket scoring application',
+  title: APP_NAME,
+  description: APP_DESCRIPTION,
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
+        url: '/logo.png',
+        type: 'image/png',
       },
       {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
+        url: '/icon-32.png',
+        sizes: '32x32',
+        type: 'image/png',
       },
     ],
     apple: '/apple-icon.png',

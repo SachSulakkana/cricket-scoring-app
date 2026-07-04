@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { DataClearAction } from "@/lib/data-clear-types";
-import { sqliteRunDataClear } from "@/lib/sqlite-db";
+import { runDataClear } from "@/lib/firestore-db";
 
 export const runtime = "nodejs";
 
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     if (!action || !ACTIONS.has(action)) {
       return NextResponse.json({ error: "Invalid clear action" }, { status: 400 });
     }
-    sqliteRunDataClear(action);
+    await runDataClear(action);
     return NextResponse.json({ ok: true, action });
   } catch (error) {
     console.error("POST /api/settings/clear failed", error);

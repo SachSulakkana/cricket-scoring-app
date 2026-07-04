@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { sqliteLoadAll } from "@/lib/sqlite-db";
+import { loadAll } from "@/lib/firestore-db";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const data = sqliteLoadAll();
+    const data = await loadAll();
     return NextResponse.json(data);
   } catch (error) {
     console.error("GET /api/roster failed", error);

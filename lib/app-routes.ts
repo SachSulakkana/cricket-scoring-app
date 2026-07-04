@@ -1,5 +1,6 @@
 export const routes = {
   home: "/",
+  live: "/live",
   settings: "/settings",
   quickMatch: "/quick-match",
   quickMatchHistory: "/quick-match/history",
@@ -22,3 +23,9 @@ export const routes = {
   playCustomTournamentMatch: (id: string, fixtureId: string) =>
     `/tournament/play/custom/${encodeURIComponent(id)}/game/${encodeURIComponent(fixtureId)}`,
 } as const;
+
+/** Opens the read-only spectator view in a new browser tab/window. */
+export function openSpectatorView() {
+  if (typeof window === "undefined") return;
+  window.open(routes.live, "_blank", "noopener,noreferrer");
+}

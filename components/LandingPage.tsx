@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import AppLogo from "@/components/AppLogo";
+import { APP_NAME } from "@/lib/app-brand";
 import type { LandingTileImageKey } from "@/lib/landing-tile-images";
-import { routes } from "@/lib/app-routes";
+import { openSpectatorView, routes } from "@/lib/app-routes";
 
 function TileLabel({
   lines,
@@ -87,6 +89,10 @@ export default function LandingPage() {
   return (
     <div className="landing-wireframe">
       <div className="landing-frame">
+        <div className="landing-brand">
+          <AppLogo size={40} priority className="landing-brand__logo" />
+          <span className="landing-brand__name">{APP_NAME}</span>
+        </div>
         <Link href={routes.home} className="landing-home-tab">
           Home
         </Link>
@@ -131,6 +137,12 @@ export default function LandingPage() {
               lines={["Quick", "Match"]}
               subtitle="Score without a fixture"
               onClick={() => router.push(routes.quickMatch)}
+            />
+            <LandingTile
+              image="live"
+              lines={["Watch", "Live"]}
+              subtitle="Follow the match"
+              onClick={openSpectatorView}
             />
             <LandingTile
               image="comingSoon"

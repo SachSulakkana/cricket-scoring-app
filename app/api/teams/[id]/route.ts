@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sqliteDeleteTeam, sqliteSaveTeam } from "@/lib/sqlite-db";
+import { deleteTeam, saveTeam } from "@/lib/firestore-db";
 import type { Team } from "@/lib/cricket-types";
 
 export const runtime = "nodejs";
@@ -14,7 +14,7 @@ export async function PUT(
     if (team.id !== id) {
       return NextResponse.json({ error: "ID mismatch" }, { status: 400 });
     }
-    sqliteSaveTeam(team);
+    await saveTeam(team);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("PUT /api/teams/[id] failed", error);
@@ -31,7 +31,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    sqliteDeleteTeam(id);
+    await deleteTeam(id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("DELETE /api/teams/[id] failed", error);

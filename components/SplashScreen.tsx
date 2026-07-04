@@ -2,7 +2,8 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
-import { CricketBatIcon } from "@/components/icons/CricketBatIcon";
+import AppLogo from "@/components/AppLogo";
+import { APP_NAME_DISPLAY } from "@/lib/app-brand";
 
 const LOAD_STEPS = [
   { id: "db", label: "Opening local database" },
@@ -91,13 +92,17 @@ export default function SplashScreen({
             <span className="splash-screen__ring splash-screen__ring--outer" />
             <span className="splash-screen__ring splash-screen__ring--inner" />
             <span className="splash-screen__emblem-core">
-              <CricketBatIcon className="h-12 w-12" />
+              <AppLogo size={76} priority className="splash-screen__logo" />
             </span>
           </div>
 
           <h1 className="splash-screen__title">
-            <span className="splash-screen__title-line">Cricket</span>
-            <span className="splash-screen__title-accent">Scorer</span>
+            <span className="splash-screen__title-line">
+              {APP_NAME_DISPLAY.primary}
+            </span>
+            <span className="splash-screen__title-accent">
+              {APP_NAME_DISPLAY.accent}
+            </span>
           </h1>
 
           <p className="splash-screen__tagline">

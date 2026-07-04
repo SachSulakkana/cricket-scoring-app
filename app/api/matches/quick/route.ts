@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { sqliteListQuickMatches, sqliteSaveQuickMatch } from "@/lib/sqlite-db";
+import { listQuickMatches, saveQuickMatch } from "@/lib/firestore-db";
 import type { MatchState } from "@/lib/cricket-types";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const matches = sqliteListQuickMatches();
+    const matches = await listQuickMatches();
     return NextResponse.json({ matches });
   } catch (error) {
     console.error("GET /api/matches/quick failed", error);
@@ -34,7 +34,12 @@ export async function POST(request: Request) {
       body.label?.trim() ||
       `${body.matchState.team1.name} vs ${body.matchState.team2.name}`;
     const createdAt = new Date().toISOString();
-    sqliteSaveQuickMatch(id, label, JSON.stringify(body.matchState), createdAt);
+    await saveQuickMatch(
+      id,
+      label,
+      JSON.stringify(body.matchState),
+      createdAt
+    );
     return NextResponse.json({ ok: true, id, label });
   } catch (error) {
     console.error("POST /api/matches/quick failed", error);

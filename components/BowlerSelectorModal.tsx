@@ -3,7 +3,25 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Player } from "@/lib/cricket-types";
+import { Player, type BowlingStyle } from "@/lib/cricket-types";
+import { formatBowlingStyle } from "@/lib/player-options";
+import { cn } from "@/lib/utils";
+
+const BOWLING_STYLE_SHORT: Record<BowlingStyle, string> = {
+  none: "—",
+  "right-arm-fast": "RAF",
+  "right-arm-medium": "RAM",
+  "right-arm-off-spin": "RAOS",
+  "right-arm-leg-spin": "RALeg",
+  "left-arm-fast": "LAF",
+  "left-arm-medium": "LAM",
+  "left-arm-orthodox": "LAO",
+  "left-arm-chinaman": "LAC",
+};
+
+function bowlingStyleShort(style: Player["bowlingStyle"]): string {
+  return BOWLING_STYLE_SHORT[style] ?? style;
+}
 
 interface BowlerSelectorModalProps {
   players: Player[];
@@ -28,25 +46,45 @@ export default function BowlerSelectorModal({
         type="button"
         onClick={() => !isDisabled && setSelectedBowler(player.id)}
         disabled={isDisabled}
-        className={`w-full p-4 rounded-lg border-2 transition-all flex items-center justify-between gap-3 text-left ${
+        title={`${player.name} · ${formatBowlingStyle(player.bowlingStyle)}`}
+        className={cn(
+          "relative flex aspect-square w-full flex-col rounded-lg border-2 p-2.5 text-center transition-all sm:p-3",
           isDisabled
-            ? "border-[oklch(0.32_0.04_255)] bg-[oklch(0.16_0.025_255)] text-[oklch(0.5_0.03_255)] opacity-50 cursor-not-allowed"
+            ? "cursor-not-allowed border-[oklch(0.32_0.04_255)] bg-[oklch(0.16_0.025_255)] text-[oklch(0.5_0.03_255)] opacity-50"
             : isSelected
               ? "border-[oklch(0.55_0.12_300)] bg-[oklch(0.2_0.06_300/0.35)] text-[var(--cricket-cream)]"
               : "border-[oklch(0.32_0.04_255)] bg-[oklch(0.16_0.025_255)] text-[oklch(0.85_0.02_95)] hover:border-[oklch(0.55_0.12_300/0.5)]"
-        }`}
+        )}
       >
-        <div className="font-semibold">{player.name}</div>
         {isSelected && (
-          <span className="text-xs font-bold tracking-wide text-[oklch(0.75_0.12_300)] shrink-0">
-            SELECTED
+          <span className="mb-1 text-[0.6rem] font-bold leading-none tracking-wide text-[oklch(0.75_0.12_300)] sm:text-[0.65rem]">
+            BOWLER
           </span>
         )}
         {isDisabled && (
-          <span className="text-xs font-bold tracking-wide text-[oklch(0.5_0.03_255)] shrink-0">
-            Last over
+          <span className="mb-1 text-[0.6rem] font-bold leading-none tracking-wide text-[oklch(0.5_0.03_255)] sm:text-[0.65rem]">
+            LAST OVER
           </span>
         )}
+
+        <div className="flex flex-1 items-center justify-center">
+          <p className="line-clamp-3 w-full text-xs font-semibold leading-tight sm:text-sm">
+            {player.name}
+          </p>
+        </div>
+
+        <span
+          className={cn(
+            "mt-1 line-clamp-1 text-[0.6rem] font-semibold uppercase tracking-[0.1em] sm:text-[0.65rem]",
+            isDisabled
+              ? "text-[oklch(0.45_0.03_255)]"
+              : isSelected
+                ? "text-[oklch(0.72_0.08_300)]"
+                : "text-[oklch(0.55_0.03_255)]"
+          )}
+        >
+          {bowlingStyleShort(player.bowlingStyle)}
+        </span>
       </button>
     );
   };
@@ -54,49 +92,52 @@ export default function BowlerSelectorModal({
   const isSubmitEnabled = selectedBowler !== null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <Card className="bg-slate-800 border-slate-700 w-full max-w-2xl">
-        <CardHeader>
-          <CardTitle className="text-white text-2xl">
-            End of Over - Select Next Bowler
+    <div className="cricket-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
+      <Card className="cricket-modal w-full max-w-2xl gap-0 border-0 py-0 shadow-none">
+        <CardHeader className="px-5 pt-5">
+          <CardTitle className="cricket-display text-[var(--cricket-cream)]">
+            End of over — select next bowler
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <p className="text-slate-300 text-base">
-            The previous bowler cannot bowl consecutive overs. Select a new bowler to continue.
+        <CardContent className="flex max-h-[min(80dvh,44rem)] flex-col gap-4 px-5 pb-5">
+          <p className="text-sm text-[oklch(0.65_0.03_255)]">
+            The previous bowler cannot bowl consecutive overs. Select a new bowler to
+            continue.
           </p>
 
-          {/* Selection Summary */}
           {selectedBowler && (
-            <div className="bg-slate-900 p-4 rounded-lg border border-slate-700">
-              <div className="flex items-center gap-3">
-                <span className="text-sm bg-slate-600 px-3 py-1 rounded text-white font-bold">
+            <div className="rounded-lg bg-slate-900 p-3">
+              <div className="flex items-center gap-2">
+                <span className="rounded bg-slate-600 px-2 py-1 text-xs text-white">
                   NEXT BOWLER
                 </span>
-                <span className="text-white font-bold text-lg">
+                <span className="font-semibold text-white">
                   {players.find((p) => p.id === selectedBowler)?.name}
                 </span>
               </div>
             </div>
           )}
 
-          {/* Player list — one per row */}
-          <div className="flex flex-col gap-3">
-            {players.map((player) => getPlayerCard(player))}
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {players.map((player) => getPlayerCard(player))}
+            </div>
           </div>
 
-          {/* Submit Button */}
-          <Button
-            onClick={() => onSubmit(selectedBowler!)}
-            disabled={!isSubmitEnabled}
-            className={`w-full py-6 text-lg font-bold ${
-              isSubmitEnabled
-                ? "bg-slate-700 hover:bg-slate-600 text-white"
-                : "bg-slate-600 text-slate-400 cursor-not-allowed"
-            }`}
-          >
-            Start Next Over
-          </Button>
+          <div className="sticky bottom-0 border-t border-[oklch(0.28_0.04_288/0.45)] bg-[var(--cricket-surface)] pt-4">
+            <Button
+              onClick={() => onSubmit(selectedBowler!)}
+              disabled={!isSubmitEnabled}
+              className={cn(
+                "w-full py-6 text-lg font-bold",
+                isSubmitEnabled
+                  ? "cricket-btn-play cricket-btn-play--quick"
+                  : "cursor-not-allowed bg-[oklch(0.2_0.03_255)] text-[oklch(0.5_0.03_255)]"
+              )}
+            >
+              Start next over
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

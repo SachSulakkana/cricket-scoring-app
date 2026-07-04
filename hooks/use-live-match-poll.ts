@@ -8,13 +8,14 @@ import {
 
 const DEFAULT_INTERVAL_MS = 3000;
 
-export function useLiveMatchPoll(intervalMs = DEFAULT_INTERVAL_MS) {
+export function useLiveMatchPoll(intervalMs = DEFAULT_INTERVAL_MS, enabled = true) {
   const [draft, setDraft] = useState<LiveMatchDraft | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const draftRef = useRef<LiveMatchDraft | null>(null);
 
   const refresh = useCallback(async () => {
+    if (!enabled) return;
     try {
       const next = await loadLiveMatchDraftRemote();
       draftRef.current = next;
@@ -25,15 +26,19 @@ export function useLiveMatchPoll(intervalMs = DEFAULT_INTERVAL_MS) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
     void refresh();
     const timer = window.setInterval(() => {
       void refresh();
     }, intervalMs);
     return () => window.clearInterval(timer);
-  }, [intervalMs, refresh]);
+  }, [intervalMs, refresh, enabled]);
 
   return { draft, loading, error, refresh };
 }

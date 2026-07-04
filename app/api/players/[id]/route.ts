@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import {
-  sqliteDeletePlayer,
-  sqliteSavePlayer,
-  sqliteSyncPlayerInTeams,
-} from "@/lib/sqlite-db";
+  deletePlayer,
+  savePlayer,
+  syncPlayerInTeams,
+} from "@/lib/firestore-db";
 import type { Player } from "@/lib/cricket-types";
 
 export const runtime = "nodejs";
@@ -18,8 +18,8 @@ export async function PUT(
     if (player.id !== id) {
       return NextResponse.json({ error: "ID mismatch" }, { status: 400 });
     }
-    sqliteSavePlayer(player);
-    sqliteSyncPlayerInTeams(player);
+    await savePlayer(player);
+    await syncPlayerInTeams(player);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("PUT /api/players/[id] failed", error);
@@ -36,7 +36,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    sqliteDeletePlayer(id);
+    await deletePlayer(id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("DELETE /api/players/[id] failed", error);

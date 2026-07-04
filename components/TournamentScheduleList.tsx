@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { CricketEyebrow } from "@/components/cricket-shell";
 import { TournamentMatchFaceoff } from "@/components/TournamentMatchFaceoff";
+import { TournamentFixtureResult } from "@/components/TournamentFixtureResult";
 import { TournamentNextMatchHero } from "@/components/TournamentNextMatchHero";
 import type { Team } from "@/lib/cricket-types";
 import type { TournamentFixture } from "@/lib/roster-storage";
@@ -31,10 +32,6 @@ interface TournamentScheduleListProps {
   onSummary: (fixtureId: string) => void;
   onReplay: (fixtureId: string, teamA: string, teamB: string) => void;
   onReorderFixtures: (fixtures: TournamentFixture[]) => void | Promise<void>;
-}
-
-function formatScore(runs: number, wickets: number): string {
-  return `${runs}/${wickets}`;
 }
 
 function MatchCardHeader({
@@ -123,7 +120,6 @@ export default function TournamentScheduleList({
           const isNextMatch = !fx.played && fx.id === nextFixtureId;
 
           const rowProps = {
-            key: fx.id,
             draggable: true as const,
             onDragStart: (e: React.DragEvent) => {
               e.dataTransfer.effectAllowed = "move";
@@ -165,7 +161,7 @@ export default function TournamentScheduleList({
 
           if (isNextMatch) {
             return (
-              <div {...rowProps}>
+              <div key={fx.id} {...rowProps}>
                 <TournamentNextMatchHero
                   embedded
                   teamA={fx.teamA}
@@ -179,57 +175,44 @@ export default function TournamentScheduleList({
           }
 
           return (
-            <div {...rowProps}>
+            <div key={fx.id} {...rowProps} className={cn(rowProps.className, "flex flex-col")}>
               <MatchCardHeader matchNumber={idx + 1} dragHandle={dragHandle} />
-              <div className="tournament-match-card__faceoff">
-                <TournamentMatchFaceoff teamA={fx.teamA} teamB={fx.teamB} size="sm" />
-              </div>
+              {fx.played ? (
+                <TournamentFixtureResult
+                  teamA={fx.teamA}
+                  teamB={fx.teamB}
+                  abandoned={fx.fixture.result?.abandoned}
+                  winnerId={fx.winnerId}
+                  runsA={fx.runsA}
+                  wicketsA={fx.wicketsA}
+                  runsB={fx.runsB}
+                  wicketsB={fx.wicketsB}
+                />
+              ) : (
+                <div className="tournament-match-card__faceoff">
+                  <TournamentMatchFaceoff teamA={fx.teamA} teamB={fx.teamB} size="sm" />
+                </div>
+              )}
               <div className="tournament-match-card__footer space-y-2">
                 {fx.played ? (
-                  <>
-                    <div className="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
-                      <p className="text-center text-sm font-semibold text-[oklch(0.72_0.03_255)] sm:text-right">
-                        {fx.fixture.result?.abandoned
-                          ? "Abandoned"
-                          : formatScore(fx.runsA ?? 0, fx.wicketsA ?? 0)}
-                      </p>
-                      <p className="text-center text-[10px] uppercase tracking-[0.12em] text-[oklch(0.5_0.03_255)]">
-                        Final
-                      </p>
-                      <p className="text-center text-sm font-semibold text-[oklch(0.72_0.03_255)] sm:text-left">
-                        {fx.fixture.result?.abandoned
-                          ? "Abandoned"
-                          : formatScore(fx.runsB ?? 0, fx.wicketsB ?? 0)}
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                      <p className="text-xs text-[oklch(0.72_0.1_75)]">
-                        {fx.fixture.result?.abandoned
-                          ? "Abandoned due to rain — no points"
-                          : fx.winnerId
-                            ? `${fx.winnerId === fx.teamA.id ? fx.teamA.name : fx.teamB.name} won`
-                            : "Match tied"}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          draggable={false}
-                          className="cricket-btn-add cricket-btn-add--inline cricket-btn-add--tournament !w-auto px-3 text-xs"
-                          onClick={() => onSummary(fx.id)}
-                        >
-                          Match summary
-                        </button>
-                        <button
-                          type="button"
-                          draggable={false}
-                          className="cricket-btn-setup !w-auto !min-h-[2.2rem] px-3 text-xs"
-                          onClick={() => onReplay(fx.id, fx.teamA.name, fx.teamB.name)}
-                        >
-                          Replay match
-                        </button>
-                      </div>
-                    </div>
-                  </>
+                  <div className="flex flex-wrap gap-2 sm:justify-end">
+                    <button
+                      type="button"
+                      draggable={false}
+                      className="cricket-btn-add cricket-btn-add--inline cricket-btn-add--tournament !w-auto px-3 text-xs"
+                      onClick={() => onSummary(fx.id)}
+                    >
+                      Match summary
+                    </button>
+                    <button
+                      type="button"
+                      draggable={false}
+                      className="cricket-btn-setup !w-auto !min-h-[2.2rem] px-3 text-xs"
+                      onClick={() => onReplay(fx.id, fx.teamA.name, fx.teamB.name)}
+                    >
+                      Replay match
+                    </button>
+                  </div>
                 ) : (
                   <p className="text-xs text-[oklch(0.55_0.03_255)]">Awaiting play</p>
                 )}

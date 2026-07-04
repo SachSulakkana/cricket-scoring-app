@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sqliteSaveTeam } from "@/lib/sqlite-db";
+import { saveTeam } from "@/lib/firestore-db";
 import type { Team } from "@/lib/cricket-types";
 
 export const runtime = "nodejs";
@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
     const team = (await request.json()) as Team;
-    sqliteSaveTeam(team);
+    await saveTeam(team);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("POST /api/teams failed", error);

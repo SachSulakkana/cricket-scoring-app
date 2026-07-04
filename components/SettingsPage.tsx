@@ -154,10 +154,10 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
 
       <CricketBroadcastCard className="p-5 mt-4 space-y-2">
         <CricketEyebrow>Storage</CricketEyebrow>
-        <CricketDetailRow label="Database" value="SQLite (local)" />
+        <CricketDetailRow label="Database" value="Cloud Firestore" />
         <div className="flex items-center gap-2 text-xs text-[oklch(0.55_0.03_255)] pt-1">
           <Database className="h-3.5 w-3.5 shrink-0" />
-          <span>data/cricket.db on this device</span>
+          <span>Firebase project (synced via API)</span>
         </div>
         <div className="flex items-center gap-2 text-xs text-[oklch(0.55_0.03_255)]">
           <History className="h-3.5 w-3.5 shrink-0" />

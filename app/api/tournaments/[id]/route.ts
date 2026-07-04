@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { sqliteDeleteTournament, sqliteSaveTournament } from "@/lib/sqlite-db";
-import type { DbTournament } from "@/lib/sqlite-db";
+import { deleteTournament, saveTournament } from "@/lib/firestore-db";
+import type { DbTournament } from "@/lib/firestore-db";
 
 export const runtime = "nodejs";
 
@@ -14,7 +14,7 @@ export async function PUT(
     if (tournament.id !== id) {
       return NextResponse.json({ error: "ID mismatch" }, { status: 400 });
     }
-    sqliteSaveTournament(tournament);
+    await saveTournament(tournament);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("PUT /api/tournaments/[id] failed", error);
@@ -31,7 +31,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    sqliteDeleteTournament(id);
+    await deleteTournament(id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("DELETE /api/tournaments/[id] failed", error);

@@ -2148,10 +2148,14 @@
   .splash-screen__ring--inner { inset: 10px; border-color: oklch(0.62 0.1 300 / 0.4); animation: splash-ring-pulse 2.8s ease-in-out infinite reverse; }
   .splash-screen__emblem-core {
     position: relative; z-index: 1; display: flex; align-items: center; justify-content: center;
-    width: 4.75rem; height: 4.75rem; border-radius: 50%; color: var(--cricket-gold);
-    background: linear-gradient(145deg, oklch(0.2 0.04 295) 0%, oklch(0.12 0.03 288) 100%);
+    width: 5.25rem; height: 5.25rem; border-radius: 1rem; overflow: hidden;
+    background: #000;
     border: 1px solid oklch(0.45 0.08 295 / 0.6);
     box-shadow: 0 0 32px oklch(0.38 0.1 295 / 0.45), 0 0 48px oklch(0.35 0.09 300 / 0.2);
+  }
+  .splash-screen__logo {
+    width: 100% !important;
+    height: 100% !important;
   }
   .splash-screen__title { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 0.1rem; font-family: var(--font-display), ui-sans-serif, sans-serif; line-height: 0.95; }
   .splash-screen__title-line { font-size: clamp(2rem, 8vw, 2.65rem); font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cricket-cream); }
@@ -2246,6 +2250,27 @@
     container-type: inline-size;
     container-name: landing;
     width: min(100%, var(--landing-grid-w-max));
+  }
+
+  .landing-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .landing-brand__logo {
+    border-radius: 0.45rem;
+  }
+
+  .landing-brand__name {
+    font-family: var(--font-display), ui-sans-serif, sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cricket-cream);
+    line-height: 1;
   }
 
   .landing-home-tab {
@@ -2508,7 +2533,7 @@
   }
 
   .landing-row--bottom {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   @media (min-width: 1024px) {
@@ -2525,7 +2550,7 @@
     }
 
     .landing-row--bottom .landing-tile {
-      grid-column: span 4;
+      grid-column: span 3;
       max-width: none;
       width: 100%;
       justify-self: stretch;
@@ -3274,6 +3299,450 @@
     .cricket-scoring-layout {
       grid-template-columns: 1fr 1fr;
     }
+  }
+
+  /* ── Spectator (mobile-first live view) ── */
+  .spectator-page {
+    max-width: 28rem;
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+
+  .spectator-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .spectator-topbar__title {
+    flex: 1;
+    text-align: center;
+    font-family: var(--font-display), sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cricket-cream);
+  }
+
+  .spectator-refresh-btn {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid oklch(0.35 0.04 288);
+    background: oklch(0.16 0.03 288);
+    color: var(--cricket-gold);
+    font-size: 1.25rem;
+    touch-action: manipulation;
+  }
+
+  .spectator-hero {
+    text-align: center;
+    padding: 0.5rem 0 1rem;
+  }
+
+  .spectator-hero__status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+  }
+
+  .spectator-meta {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: oklch(0.62 0.06 255);
+    max-width: 12rem;
+  }
+
+  .spectator-hero__innings {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: oklch(0.58 0.05 255);
+    margin-bottom: 0.35rem;
+  }
+
+  .spectator-hero__team {
+    font-family: var(--font-display), sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--cricket-cream);
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+  }
+
+  .spectator-hero__score {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .spectator-hero__runs {
+    font-size: clamp(2.5rem, 12vw, 3.25rem) !important;
+    line-height: 1;
+  }
+
+  .spectator-hero__overs {
+    font-family: var(--font-display), sans-serif;
+    font-size: 1rem;
+    color: oklch(0.65 0.06 255);
+  }
+
+  .spectator-hero__over {
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cricket-gold-dim);
+  }
+
+  .spectator-team-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .spectator-team-card {
+    padding: 0.65rem 0.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid oklch(0.32 0.04 288);
+    background: oklch(0.13 0.025 288 / 0.9);
+    min-width: 0;
+  }
+
+  .spectator-team-card--active {
+    border-color: oklch(0.5 0.12 295 / 0.55);
+    background: linear-gradient(
+      135deg,
+      oklch(0.18 0.06 295 / 0.45) 0%,
+      oklch(0.12 0.03 288) 100%
+    );
+  }
+
+  .spectator-team-card__name {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: oklch(0.62 0.06 255);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .spectator-team-card__score {
+    font-family: var(--font-display), sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--cricket-cream);
+    margin-top: 0.15rem;
+  }
+
+  .spectator-chase {
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+    text-align: center;
+    border-radius: var(--radius-md);
+    border: 1px solid oklch(0.5 0.1 295 / 0.45);
+    background: linear-gradient(
+      90deg,
+      oklch(0.14 0.04 295 / 0.5) 0%,
+      oklch(0.18 0.06 295 / 0.35) 50%,
+      oklch(0.14 0.04 295 / 0.5) 100%
+    );
+    font-family: var(--font-display), sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--cricket-cream);
+    line-height: 1.35;
+  }
+
+  .spectator-result-hero {
+    text-align: center;
+    padding: 0.5rem 0 1.25rem;
+  }
+
+  .spectator-result-hero__teams {
+    font-family: var(--font-display), sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: oklch(0.72 0.04 255);
+    margin-bottom: 0.75rem;
+    line-height: 1.35;
+  }
+
+  .spectator-result-hero__winner {
+    font-family: var(--font-display), sans-serif;
+    font-size: clamp(1.15rem, 5.5vw, 1.45rem);
+    font-weight: 700;
+    color: var(--cricket-score);
+    line-height: 1.35;
+    text-wrap: balance;
+  }
+
+  .spectator-result-hero__winner--tie {
+    color: var(--cricket-gold);
+  }
+
+  .spectator-team-card--winner {
+    border-color: oklch(0.62 0.14 82 / 0.65);
+    background: linear-gradient(
+      135deg,
+      oklch(0.22 0.08 82 / 0.35) 0%,
+      oklch(0.14 0.04 288) 100%
+    );
+    box-shadow: 0 0 20px oklch(0.55 0.12 82 / 0.2);
+  }
+
+  .spectator-team-card--winner .spectator-team-card__score {
+    color: var(--cricket-gold);
+  }
+
+  .spectator-crease__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .spectator-recent-balls {
+    margin: 0.75rem 0 1rem;
+  }
+
+  .spectator-recent-balls__track {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .spectator-recent-balls__track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .spectator-ball-pill {
+    flex-shrink: 0;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    border: 1px solid oklch(0.35 0.04 288);
+    background: oklch(0.16 0.025 288);
+    font-family: var(--font-display), sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--cricket-cream);
+  }
+
+  .spectator-ball-pill--wicket {
+    border-color: oklch(0.55 0.2 25 / 0.6);
+    background: oklch(0.2 0.08 25 / 0.35);
+    color: oklch(0.85 0.12 25);
+  }
+
+  .spectator-ball-pill--extra {
+    border-color: oklch(0.65 0.14 300 / 0.5);
+  }
+
+  .spectator-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem;
+    padding: 0.25rem;
+    margin-bottom: 0.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid oklch(0.32 0.04 288);
+    background: oklch(0.12 0.025 288);
+  }
+
+  .spectator-tab {
+    min-height: 2.75rem;
+    border-radius: calc(var(--radius-md) - 2px);
+    border: none;
+    background: transparent;
+    font-family: var(--font-display), sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: oklch(0.58 0.04 255);
+    touch-action: manipulation;
+  }
+
+  .spectator-tab--active {
+    background: oklch(0.2 0.05 295 / 0.65);
+    color: var(--cricket-cream);
+    box-shadow: inset 0 0 0 1px oklch(0.45 0.1 295 / 0.35);
+  }
+
+  .spectator-tab-panel {
+    min-width: 0;
+  }
+
+  .spectator-footer {
+    margin-top: 1.25rem;
+    text-align: center;
+  }
+
+  .spectator-footer__sync {
+    font-size: 0.7rem;
+    color: oklch(0.5 0.03 255);
+  }
+
+  .spectator-footer__error {
+    font-size: 0.75rem;
+    color: oklch(0.7 0.14 25);
+  }
+
+  .spectator-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 50vh;
+    padding: 2rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .spectator-empty__icon {
+    font-size: 2.5rem;
+    opacity: 0.7;
+  }
+
+  .spectator-empty__text {
+    font-size: 0.95rem;
+    color: oklch(0.58 0.03 255);
+    max-width: 18rem;
+    line-height: 1.5;
+  }
+
+  .spectator-empty__hint {
+    font-size: 0.8rem;
+    color: oklch(0.48 0.03 255);
+  }
+
+  .spectator-scorecard-innings__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 2px solid oklch(0.32 0.04 288);
+  }
+
+  .spectator-scorecard-section {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid oklch(0.28 0.03 288);
+  }
+
+  .spectator-scorecard-section:last-child {
+    border-bottom: none;
+  }
+
+  .spectator-score-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .spectator-score-table {
+    width: 100%;
+    font-size: 0.8rem;
+    border-collapse: collapse;
+    color: oklch(0.82 0.02 255);
+  }
+
+  .spectator-score-table th {
+    padding: 0.35rem 0.25rem;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: oklch(0.52 0.03 255);
+    text-align: right;
+    border-bottom: 1px solid oklch(0.3 0.03 288);
+  }
+
+  .spectator-score-table th:first-child {
+    text-align: left;
+  }
+
+  .spectator-score-table td {
+    padding: 0.45rem 0.25rem;
+    text-align: right;
+    vertical-align: top;
+    border-bottom: 1px solid oklch(0.22 0.02 288);
+  }
+
+  .spectator-score-table td:first-child {
+    text-align: left;
+    max-width: 9rem;
+  }
+
+  .spectator-score-table__name {
+    display: block;
+    font-weight: 600;
+    color: var(--cricket-cream);
+  }
+
+  .spectator-score-table__dismissal {
+    display: block;
+    font-size: 0.65rem;
+    color: oklch(0.52 0.03 255);
+    margin-top: 0.1rem;
+    line-height: 1.3;
+  }
+
+  .spectator-scorecard-extras {
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    color: oklch(0.55 0.03 255);
+  }
+
+  .landing-tile__media--live {
+    background-image: url('/landing/tournament.png');
+    filter: brightness(0.3) saturate(1.2) contrast(1.05) hue-rotate(-15deg);
+  }
+
+  .landing-tile:has(.landing-tile__media--live) .landing-tile__overlay {
+    background: linear-gradient(
+      180deg,
+      oklch(0.12 0.06 25 / 0.25) 0%,
+      oklch(0.08 0.04 290 / 0.55) 55%,
+      oklch(0.06 0.03 290 / 0.85) 100%
+    );
+  }
+
+  .landing-tile:has(.landing-tile__media--live) .landing-tile__content {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .landing-tile:has(.landing-tile__media--live) .landing-tile__label {
+    text-shadow:
+      0 2px 16px oklch(0 0 0 / 0.95),
+      0 0 32px oklch(0 0 0 / 0.75);
+  }
+
+  .landing-tile:hover:not(:disabled):has(.landing-tile__media--live) .landing-tile__media {
+    filter: brightness(0.72) saturate(1.15) contrast(1.08) hue-rotate(-15deg);
   }
 
 }

@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 import {
-  sqliteIsLegacyMigrated,
-  sqliteMigrateFromLegacy,
-} from "@/lib/sqlite-db";
+  isLegacyMigrated,
+  migrateFromLegacy,
+} from "@/lib/firestore-db";
 import type { Player, Team } from "@/lib/cricket-types";
-import type { DbTournament } from "@/lib/sqlite-db";
+import type { DbTournament } from "@/lib/firestore-db";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    if (sqliteIsLegacyMigrated()) {
+    if (await isLegacyMigrated()) {
       return NextResponse.json({ ok: true, skipped: true });
     }
 
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       tournaments?: DbTournament[];
     };
 
-    sqliteMigrateFromLegacy({
+    await migrateFromLegacy({
       players: body.players ?? [],
       teams: body.teams ?? [],
       tournaments: body.tournaments ?? [],

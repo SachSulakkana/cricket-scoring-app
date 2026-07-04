@@ -6,7 +6,7 @@ export default function AppToaster() {
   return (
     <Toaster
       theme="dark"
-      position="top-center"
+      position="top-right"
       richColors
       closeButton
       duration={4000}

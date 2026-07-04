@@ -12,6 +12,7 @@ import {
 } from "@/components/cricket-shell";
 import TournamentMatchSummaryDialog from "@/components/TournamentMatchSummaryDialog";
 import TournamentScheduleList from "@/components/TournamentScheduleList";
+import { TournamentFixtureResult } from "@/components/TournamentFixtureResult";
 import ExportPdfButton from "@/components/ExportPdfButton";
 import {
   TournamentChampionHero,
@@ -42,6 +43,7 @@ import {
   formatTournamentNrr,
   getMatchNrrContributions,
 } from "@/lib/tournament-nrr";
+import { buildTournamentPlayerStats } from "@/lib/tournament-stats";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Trophy, Users } from "lucide-react";
 
@@ -86,18 +88,6 @@ interface StandingRow {
   nrr: number | null;
 }
 
-interface BattingRecord {
-  player: string;
-  team: string;
-  runs: number;
-}
-
-interface BowlingRecord {
-  player: string;
-  team: string;
-  wickets: number;
-}
-
 interface FixtureWithTeams {
   id: string;
   teamA: Team;
@@ -109,8 +99,13 @@ interface FixtureWithTeams {
   runsB?: number;
   wicketsB?: number;
   winnerId?: string;
-  bestBatting?: { player: string; team: string; runs: number };
-  bestBowling?: { player: string; team: string; wickets: number };
+}
+
+function buildStats(fixtures: FixtureWithTeams[], teams: Team[]) {
+  return buildTournamentPlayerStats(
+    fixtures.map((fx) => fx.fixture),
+    teams
+  );
 }
 
 function buildPointsTable(
@@ -219,29 +214,6 @@ function buildPointsTable(
   });
 }
 
-function buildStats(fixtures: FixtureWithTeams[]) {
-  const batting: BattingRecord[] = [];
-  const bowling: BowlingRecord[] = [];
-
-  fixtures.forEach((fx) => {
-    if (!fx.played) return;
-    if (fx.bestBatting) batting.push(fx.bestBatting);
-    if (fx.bestBowling) bowling.push(fx.bestBowling);
-  });
-
-  batting.sort((a, b) => b.runs - a.runs);
-  bowling.sort((a, b) => b.wickets - a.wickets);
-
-  return {
-    battingTop: batting.slice(0, 10),
-    bowlingTop: bowling.slice(0, 10),
-  };
-}
-
-function formatScoreLine(runs: number, wickets: number): string {
-  return `${runs}/${wickets}`;
-}
-
 function playoffMatchLabel(kind: TournamentFixture["playoffMatchKind"]): string {
   if (kind === "qualifier") return "Qualifier — #2 vs #3";
   if (kind === "final") return "Final — #1 vs qualifier winner";
@@ -303,38 +275,35 @@ function StageFixtureResultsPanel({
         return (
           <div
             key={fx.id}
-            className="tournament-game-row rounded-md border border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.02_255/0.6)] p-3"
+            className="tournament-game-row tournament-match-card overflow-hidden rounded-md border border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.02_255/0.6)]"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[oklch(0.55_0.04_288)] mb-2">
+            <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-[0.08em] text-[oklch(0.55_0.04_288)]">
               {label}
             </p>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="font-medium text-[var(--cricket-cream)]">
-                {fx.teamA.name}
-                {fx.played && fx.runsA != null && fx.wicketsA != null
-                  ? ` ${formatScoreLine(fx.runsA, fx.wicketsA)}`
-                  : ""}
-              </p>
-              <span className="text-xs text-[oklch(0.55_0.03_255)]">vs</span>
-              <p className="font-medium text-[var(--cricket-cream)] sm:text-right">
-                {teamBName}
-                {fx.played && fx.runsB != null && fx.wicketsB != null
-                  ? ` ${formatScoreLine(fx.runsB, fx.wicketsB)}`
-                  : ""}
-              </p>
-            </div>
             {fx.played ? (
-              <p className="text-xs text-[oklch(0.72_0.1_75)] mt-2">
-                {fx.fixture.result?.abandoned
-                  ? "Abandoned (rain) — no points"
-                  : fx.winnerId
-                    ? `Winner: ${
-                        fx.winnerId === fx.teamA.id ? fx.teamA.name : teamBName
-                      }`
-                    : "Match tied"}
-              </p>
+              <TournamentFixtureResult
+                teamA={fx.teamA}
+                teamB={fx.teamB}
+                teamBLabel={teamBName}
+                abandoned={fx.fixture.result?.abandoned}
+                abandonedMessage="Abandoned (rain) — no points"
+                winnerId={fx.winnerId}
+                runsA={fx.runsA}
+                wicketsA={fx.wicketsA}
+                runsB={fx.runsB}
+                wicketsB={fx.wicketsB}
+              />
             ) : (
-              <p className="text-xs text-[oklch(0.55_0.03_255)] mt-2">Not played</p>
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                  <p className="font-medium text-[var(--cricket-cream)]">{fx.teamA.name}</p>
+                  <span className="text-xs text-[oklch(0.55_0.03_255)]">vs</span>
+                  <p className="font-medium text-[var(--cricket-cream)] sm:text-right">
+                    {teamBName}
+                  </p>
+                </div>
+                <p className="px-3 pb-3 text-xs text-[oklch(0.55_0.03_255)]">Not played</p>
+              </>
             )}
           </div>
         );
@@ -599,20 +568,6 @@ export default function CustomTournamentGamePage({
         runsB: fixture.result?.runsB,
         wicketsB: fixture.result?.wicketsB,
         winnerId: fixture.result?.winnerTeamId,
-        bestBatting: fixture.result?.bestBatting
-          ? {
-              player: fixture.result.bestBatting.playerName,
-              team: teamMap.get(fixture.result.bestBatting.teamId)?.name ?? "Team",
-              runs: fixture.result.bestBatting.runs,
-            }
-          : undefined,
-        bestBowling: fixture.result?.bestBowling
-          ? {
-              player: fixture.result.bestBowling.playerName,
-              team: teamMap.get(fixture.result.bestBowling.teamId)?.name ?? "Team",
-              wickets: fixture.result.bestBowling.wickets,
-            }
-          : undefined,
       };
     })
     .filter((fx): fx is FixtureWithTeams => Boolean(fx));
@@ -650,7 +605,7 @@ export default function CustomTournamentGamePage({
   };
 
   const playedFixtures = mappedFixtures.filter((fx) => fx.played);
-  const stats = buildStats(playedFixtures);
+  const stats = buildStats(playedFixtures, teams);
 
   const handleExportFullResultsPdf = () => {
     setExportingPdf(true);
@@ -839,7 +794,7 @@ export default function CustomTournamentGamePage({
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-xs text-[oklch(0.55_0.03_255)] uppercase tracking-[0.12em]">
-                    Highest batting scores
+                    Most Runs (tournament)
                   </p>
                   {stats.battingTop.length === 0 ? (
                     <div className="rounded-md border border-dashed border-[oklch(0.35_0.04_255)] p-3 text-sm text-[oklch(0.55_0.03_255)]">
@@ -869,7 +824,7 @@ export default function CustomTournamentGamePage({
 
                 <div className="space-y-2">
                   <p className="text-xs text-[oklch(0.55_0.03_255)] uppercase tracking-[0.12em]">
-                    Most wickets
+                    Most wickets (tournament)
                   </p>
                   {stats.bowlingTop.length === 0 ? (
                     <div className="rounded-md border border-dashed border-[oklch(0.35_0.04_255)] p-3 text-sm text-[oklch(0.55_0.03_255)]">

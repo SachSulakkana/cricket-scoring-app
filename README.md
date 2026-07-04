@@ -1,6 +1,6 @@
-# 🏏 Boundary XI
+# 🏏 CrickScore
 
-Boundary XI is a **local-first ball-by-ball cricket scoring and tournament management system** built with **Next.js 16, React 19, and SQLite**.
+CrickScore is a **ball-by-ball cricket scoring and tournament management system** built with **Next.js, React, and Cloud Firestore**.
 
 It supports quick matches, structured tournaments, player/team management, and full scorecard analytics — all running locally with persistent storage.
 
@@ -69,7 +69,7 @@ It supports quick matches, structured tournaments, player/team management, and f
 
 ## 🏗️ Architecture Overview
 
-Boundary XI is built using a **modular cricket domain architecture**:
+CrickScore is built using a **modular cricket domain architecture**:
 
 - 🧠 Match Engine → ball-by-ball scoring logic  
 - 🧑‍🤝‍🧑 Roster System → players & teams management  

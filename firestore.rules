@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // App API routes use Firebase Admin SDK (bypasses these rules).
+    // Spectator views can read live match docs when you add them later.
+    match /live_match_draft/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

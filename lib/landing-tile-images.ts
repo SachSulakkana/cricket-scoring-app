@@ -4,6 +4,7 @@ export const LANDING_TILE_IMAGES = {
   team: "/landing/team.png",
   calendar: "/landing/calendar.png",
   quickMatch: "/landing/quick-match.png",
+  live: "/landing/tournament.png",
   comingSoon: "/landing/coming-soon.svg",
   settings: "/landing/settings.png",
 } as const;

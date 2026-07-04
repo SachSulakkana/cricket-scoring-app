@@ -49,7 +49,7 @@ function normalizePlayer(raw: Partial<Player> & { id: string; name: string }): P
 const PLAYERS_KEY = "cricket-scorer-players";
 const TEAMS_KEY = "cricket-scorer-teams";
 const TOURNAMENTS_KEY = "cricket-scorer-tournaments";
-const CLIENT_MIGRATION_FLAG = "cricket-scorer-sqlite-migrated-v1";
+const CLIENT_MIGRATION_FLAG = "cricket-scorer-roster-migrated-v1";
 
 type RosterCache = {
   players: Player[];
@@ -314,7 +314,7 @@ function requireHydrated() {
   }
 }
 
-/** Load SQLite data via API once into Redux; subsequent reads use the store. */
+/** Load Firestore data via API once into Redux; subsequent reads use the store. */
 export async function initRosterStorage(): Promise<void> {
   if (getRosterState().hydrated) return;
   if (initPromise) return initPromise;
@@ -362,7 +362,7 @@ export function isRosterStorageReady(): boolean {
   return getRosterState().hydrated;
 }
 
-/** Re-fetch all roster data from SQLite into Redux (manual resync). */
+/** Re-fetch all roster data from Firestore into Redux (manual resync). */
 export async function reloadRosterFromServer(): Promise<void> {
   const res = await apiFetch("/api/roster");
   const { bundle } = normalizeRosterBundle((await res.json()) as RosterCache);

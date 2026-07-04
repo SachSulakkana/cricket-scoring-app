@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import {
-  sqliteClearLiveMatchDraft,
-  sqliteGetLiveMatchDraft,
-  sqliteSaveLiveMatchDraft,
-} from "@/lib/sqlite-db";
+  clearLiveMatchDraft,
+  getLiveMatchDraft,
+  saveLiveMatchDraft,
+} from "@/lib/firestore-db";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const draft = sqliteGetLiveMatchDraft();
+    const draft = await getLiveMatchDraft();
     if (!draft) {
       return NextResponse.json({ draft: null });
     }
@@ -39,7 +39,7 @@ export async function PUT(request: Request) {
     if (!body.matchState) {
       return NextResponse.json({ error: "matchState required" }, { status: 400 });
     }
-    sqliteSaveLiveMatchDraft(
+    await saveLiveMatchDraft(
       body.matchState,
       body.meta ?? null,
       body.updatedAt ?? new Date().toISOString()
@@ -56,7 +56,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE() {
   try {
-    sqliteClearLiveMatchDraft();
+    await clearLiveMatchDraft();
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("DELETE /api/matches/draft failed", error);

@@ -14,6 +14,7 @@ import {
 } from "./scorecard-stats";
 import { computeStandings } from "./tournament-stage-engine/standings";
 import { formatTournamentNrr } from "./tournament-nrr";
+import { buildTournamentPlayerStats } from "./tournament-stats";
 import { countsAsWicket } from "./cricket-types";
 
 type JsPdfDoc = import("jspdf").jsPDF & {
@@ -318,34 +319,6 @@ export async function exportTournamentMatchPdf(options: {
   });
 }
 
-function buildTournamentStats(fixtures: TournamentFixture[], teams: Team[]) {
-  const teamMap = new Map(teams.map((t) => [t.id, t.name]));
-  const batting: { player: string; team: string; runs: number }[] = [];
-  const bowling: { player: string; team: string; wickets: number }[] = [];
-
-  fixtures.forEach((fx) => {
-    if (!fx.played || !fx.result || fx.result.abandoned) return;
-    if (fx.result.bestBatting) {
-      batting.push({
-        player: fx.result.bestBatting.playerName,
-        team: teamMap.get(fx.result.bestBatting.teamId) ?? "Team",
-        runs: fx.result.bestBatting.runs,
-      });
-    }
-    if (fx.result.bestBowling) {
-      bowling.push({
-        player: fx.result.bestBowling.playerName,
-        team: teamMap.get(fx.result.bestBowling.teamId) ?? "Team",
-        wickets: fx.result.bestBowling.wickets,
-      });
-    }
-  });
-
-  batting.sort((a, b) => b.runs - a.runs);
-  bowling.sort((a, b) => b.wickets - a.wickets);
-  return { batting: batting.slice(0, 10), bowling: bowling.slice(0, 10) };
-}
-
 function formatFixtureOutcome(
   fx: TournamentFixture,
   teamAName: string,
@@ -456,17 +429,33 @@ export async function exportTournamentFullResultsPdf(options: {
   });
   y = (doc.lastAutoTable?.finalY ?? y) + 10;
 
-  const stats = buildTournamentStats(tournament.fixtures, teams);
-  if (stats.batting.length > 0) {
+  const stats = buildTournamentPlayerStats(tournament.fixtures, teams);
+  if (stats.battingTop.length > 0 || stats.bowlingTop.length > 0) {
     y = ensureSpace(doc, y, 20);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text("Top batting (match highs)", 14, y);
+    doc.text("Stats", 14, y);
+    y += 4;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text("All stages · top 10", 14, y);
+    y += 6;
+  }
+
+  if (stats.battingTop.length > 0) {
+    y = ensureSpace(doc, y, 20);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Most Runs (tournament)", 14, y);
     y += 4;
     autoTable(doc, {
       startY: y,
       head: [["Player", "Team", "Runs"]],
-      body: stats.batting.map((r, i) => [`${i + 1}. ${r.player}`, r.team, r.runs]),
+      body: stats.battingTop.map((r, i) => [
+        `${i + 1}. ${r.player}`,
+        r.team,
+        r.runs,
+      ]),
       styles: { fontSize: 9, cellPadding: 2 },
       headStyles: { fillColor: [55, 48, 107], textColor: 255 },
       margin: { left: 14, right: 14 },
@@ -474,16 +463,16 @@ export async function exportTournamentFullResultsPdf(options: {
     y = (doc.lastAutoTable?.finalY ?? y) + 10;
   }
 
-  if (stats.bowling.length > 0) {
+  if (stats.bowlingTop.length > 0) {
     y = ensureSpace(doc, y, 20);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text("Top bowling (match highs)", 14, y);
+    doc.setFontSize(11);
+    doc.text("Most wickets (tournament)", 14, y);
     y += 4;
     autoTable(doc, {
       startY: y,
       head: [["Player", "Team", "Wkts"]],
-      body: stats.bowling.map((r, i) => [
+      body: stats.bowlingTop.map((r, i) => [
         `${i + 1}. ${r.player}`,
         r.team,
         r.wickets,

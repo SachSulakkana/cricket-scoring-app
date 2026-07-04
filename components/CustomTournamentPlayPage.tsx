@@ -37,7 +37,7 @@ import {
 } from "@/lib/tournament-format-presets";
 import { initializeTournamentPlay } from "@/lib/tournament-stage-engine";
 import { cn } from "@/lib/utils";
-import { CricketBatIcon } from "@/components/icons/CricketBatIcon";
+import AppLogo from "@/components/AppLogo";
 import { Trophy } from "lucide-react";
 
 interface CustomTournamentPlayPageProps {
@@ -274,7 +274,7 @@ export default function CustomTournamentPlayPage({
             disabled={Boolean(presetError)}
             className="tournament-setup-footer__play"
           >
-            <CricketBatIcon className="h-4 w-4" />
+            <AppLogo size={18} className="rounded-sm" />
             Start Tournament
           </CricketLoadingButton>
         </footer>
