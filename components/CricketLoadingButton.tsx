@@ -1,7 +1,7 @@
 "use client";
 
 import { CricketAddButton } from "@/components/cricket-shell";
-import { Spinner } from "@/components/ui/spinner";
+import CricketLoader from "@/components/CricketLoader";
 import { cn } from "@/lib/utils";
 
 type CricketLoadingButtonProps = React.ComponentProps<typeof CricketAddButton> & {
@@ -24,10 +24,10 @@ export default function CricketLoadingButton({
       {...props}
     >
       {loading ? (
-        <>
-          <Spinner className="h-4 w-4" />
+        <span className="inline-flex items-center gap-2">
+          <CricketLoader size="sm" />
           {loadingLabel}
-        </>
+        </span>
       ) : (
         children
       )}

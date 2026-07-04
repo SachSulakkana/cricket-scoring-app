@@ -12,6 +12,7 @@ import {
 } from "@/components/cricket-shell";
 import SpectatorScorecard from "@/components/SpectatorScorecard";
 import SpectatorScoresheet from "@/components/SpectatorScoresheet";
+import CricketLoader from "@/components/CricketLoader";
 import { useLiveMatchSnapshot } from "@/hooks/use-live-match-snapshot";
 import { routes } from "@/lib/app-routes";
 import { getMatchResult, isMatchComplete } from "@/lib/match-result";
@@ -421,13 +422,11 @@ export default function SpectatorView() {
     return (
       <CricketPage className="spectator-page">
         <header className="spectator-topbar">
-          <CricketBackButton onClick={onBack} ariaLabel="Back to home" />
+          <CricketBackButton onClick={onBack} ariaLabel="Back to live matches" />
           <h1 className="spectator-topbar__title">Live</h1>
           <div className="w-11" aria-hidden />
         </header>
-        <div className="spectator-empty">
-          <p className="spectator-empty__text">Loading live score…</p>
-        </div>
+        <CricketLoader block size="lg" label="Loading live score…" />
       </CricketPage>
     );
   }

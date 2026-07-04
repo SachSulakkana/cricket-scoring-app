@@ -1,7 +1,7 @@
 "use client";
 
 import { FileDown } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
+import CricketLoader from "@/components/CricketLoader";
 import { cn } from "@/lib/utils";
 
 interface ExportPdfButtonProps {
@@ -36,10 +36,10 @@ export default function ExportPdfButton({
       )}
     >
       {loading ? (
-        <>
-          <Spinner className="h-4 w-4" />
+        <span className="inline-flex items-center gap-1.5">
+          <CricketLoader size="sm" />
           Exporting…
-        </>
+        </span>
       ) : (
         <>
           <FileDown className="h-4 w-4" />

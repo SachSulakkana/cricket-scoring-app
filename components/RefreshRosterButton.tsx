@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
+import CricketLoader from "@/components/CricketLoader";
 import { appToast } from "@/lib/app-toast";
 import { reloadRosterFromServer } from "@/lib/roster-storage";
 
@@ -31,7 +31,7 @@ export default function RefreshRosterButton() {
       aria-label="Refresh data from database"
     >
       {loading ? (
-        <Spinner className="h-3.5 w-3.5" />
+        <CricketLoader size="sm" />
       ) : (
         <RefreshCw className="h-3.5 w-3.5 shrink-0" />
       )}

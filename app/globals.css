@@ -189,6 +189,142 @@
     }
   }
 
+  @keyframes cricket-ball-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes cricket-ball-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  .cricket-loader {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .cricket-loader-block {
+    display: flex;
+    min-height: 50vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .cricket-loader__ball-wrap {
+    animation: cricket-ball-float 1.6s ease-in-out infinite;
+  }
+
+  .cricket-loader__ball-wrap--sm,
+  .cricket-loader__ball-wrap.cricket-loader__ball--sm {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .cricket-loader__ball-wrap--md,
+  .cricket-loader__ball-wrap.cricket-loader__ball--md {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .cricket-loader__ball-wrap--lg,
+  .cricket-loader__ball-wrap.cricket-loader__ball--lg {
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+
+  .cricket-loader__ball {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle at 32% 28%,
+      oklch(0.72 0.12 55) 0%,
+      oklch(0.52 0.16 42) 42%,
+      oklch(0.38 0.12 38) 100%
+    );
+    box-shadow:
+      inset -0.15em -0.2em 0.35em oklch(0.22 0.08 35 / 0.55),
+      inset 0.12em 0.1em 0.25em oklch(0.85 0.08 85 / 0.25),
+      0 0.35rem 1rem oklch(0 0 0 / 0.35);
+    animation: cricket-ball-spin 0.85s linear infinite;
+  }
+
+  .cricket-loader__ball--sm {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .cricket-loader__ball--md {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .cricket-loader__ball--lg {
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+
+  .cricket-loader__seam {
+    position: absolute;
+    inset: 8%;
+    border-radius: 50%;
+    border: 2px solid transparent;
+  }
+
+  .cricket-loader__ball--sm .cricket-loader__seam {
+    inset: 10%;
+    border-width: 1px;
+  }
+
+  .cricket-loader__seam--a {
+    border-top-color: oklch(0.94 0.02 95 / 0.95);
+    border-right-color: oklch(0.94 0.02 95 / 0.55);
+    transform: rotate(-24deg);
+  }
+
+  .cricket-loader__seam--b {
+    border-bottom-color: oklch(0.94 0.02 95 / 0.95);
+    border-left-color: oklch(0.94 0.02 95 / 0.55);
+    transform: rotate(-24deg);
+  }
+
+  .cricket-loader__shine {
+    position: absolute;
+    top: 14%;
+    left: 22%;
+    width: 28%;
+    height: 18%;
+    border-radius: 50%;
+    background: oklch(0.95 0.03 95 / 0.45);
+    filter: blur(1px);
+  }
+
+  .cricket-loader__label {
+    margin: 0;
+    font-family: var(--font-display), sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: oklch(0.58 0.05 255);
+    text-align: center;
+  }
+
   .cricket-broadcast-card {
     background: linear-gradient(
       155deg,

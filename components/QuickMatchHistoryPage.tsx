@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { History } from "lucide-react";
 import EmptyState from "@/components/EmptyState";
+import CricketLoader from "@/components/CricketLoader";
 import {
   CricketBroadcastCard,
   CricketEyebrow,
@@ -59,7 +60,7 @@ export default function QuickMatchHistoryPage({
       {error ? (
         <p className="text-center text-sm text-[oklch(0.72_0.12_25)]">{error}</p>
       ) : items == null ? (
-        <p className="text-center text-sm text-[oklch(0.55_0.03_255)]">Loading…</p>
+        <CricketLoader block size="lg" label="Loading match history…" />
       ) : items.length === 0 ? (
         <EmptyState
           icon={<History className="h-12 w-12" />}

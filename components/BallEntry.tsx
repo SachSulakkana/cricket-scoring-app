@@ -9,6 +9,7 @@ import {
   ExtraType,
 } from "@/lib/cricket-types";
 import DismissalModal from "./DismissalModal";
+import CricketLoader from "@/components/CricketLoader";
 import ReplacementBatsmanModal from "./ReplacementBatsmanModal";
 import BowlerSelectorModal from "./BowlerSelectorModal";
 
@@ -345,8 +346,8 @@ export default function BallEntry({
 
   if (!strikerInfo || !bowlerInfo) {
     return (
-      <div className="cricket-broadcast-card p-6">
-        <p className="text-[oklch(0.6_0.03_255)]">Loading match setup...</p>
+      <div className="cricket-broadcast-card p-8 flex items-center justify-center min-h-[12rem]">
+        <CricketLoader size="md" label="Setting up the crease…" />
       </div>
     );
   }

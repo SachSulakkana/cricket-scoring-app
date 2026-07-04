@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import LiveMatchCard from "@/components/LiveMatchCard";
+import CricketLoader from "@/components/CricketLoader";
 import {
   CricketBackButton,
   CricketPage,
@@ -28,9 +29,11 @@ export default function LiveMatchHub() {
       </header>
 
       {loading ? (
-        <div className="live-hub-empty">
-          <p className="live-hub-empty__text">Loading live matches…</p>
-        </div>
+        <CricketLoader
+          block
+          size="lg"
+          label="Loading live matches…"
+        />
       ) : liveMatches.length === 0 ? (
         <div className="live-hub-empty">
           <span className="live-hub-empty__icon" aria-hidden>
