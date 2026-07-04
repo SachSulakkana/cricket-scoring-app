@@ -1,7 +1,7 @@
 "use client";
 
-import SpectatorView from "@/components/SpectatorView";
+import LiveMatchHub from "@/components/LiveMatchHub";
 
 export default function LivePage() {
-  return <SpectatorView />;
+  return <LiveMatchHub />;
 }

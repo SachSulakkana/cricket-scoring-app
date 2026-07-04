@@ -320,7 +320,7 @@ export default function SpectatorView() {
   const { draft, loading, error, refresh, source } = useLiveMatchSnapshot();
   const [tab, setTab] = useState<SpectatorTab>("live");
 
-  const onBack = () => router.push(routes.home);
+  const onBack = () => router.push(routes.live);
 
   const liveView = useMemo(() => {
     if (!draft?.matchState?.matchStarted) return null;

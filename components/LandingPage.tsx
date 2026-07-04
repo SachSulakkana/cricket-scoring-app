@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import AppLogo from "@/components/AppLogo";
 import { APP_NAME } from "@/lib/app-brand";
 import type { LandingTileImageKey } from "@/lib/landing-tile-images";
-import { openSpectatorView, routes } from "@/lib/app-routes";
+import { routes } from "@/lib/app-routes";
 
 function TileLabel({
   lines,
@@ -142,7 +142,7 @@ export default function LandingPage() {
               image="live"
               lines={["Watch", "Live"]}
               subtitle="Follow the match"
-              onClick={openSpectatorView}
+              onClick={() => router.push(routes.live)}
             />
             <LandingTile
               image="comingSoon"
