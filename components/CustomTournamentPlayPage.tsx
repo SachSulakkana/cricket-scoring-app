@@ -17,7 +17,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -47,7 +49,7 @@ interface CustomTournamentPlayPageProps {
 }
 
 const selectTriggerClass =
-  "w-full cricket-form-input h-10 data-[placeholder]:text-[oklch(0.5_0.03_255)]";
+  "w-full cricket-form-input h-10 text-[var(--cricket-cream)] data-[placeholder]:text-[oklch(0.58_0.03_255)]";
 
 function SetupDivider() {
   return <hr className="tournament-setup-divider" aria-hidden />;
@@ -183,25 +185,24 @@ export default function CustomTournamentPlayPage({
               <SelectTrigger id="format-preset" className={selectTriggerClass}>
                 <SelectValue placeholder="Select format" />
               </SelectTrigger>
-              <SelectContent className="cricket-select-content max-h-[min(20rem,70vh)]">
+              <SelectContent
+                className="cricket-select-content z-[100] max-h-[min(20rem,70vh)] min-w-[var(--radix-select-trigger-width)]"
+                position="popper"
+              >
                 {[1, 2, 3, 4].map((rounds) => {
                   const list = presetsByRounds.get(rounds) ?? [];
                   if (list.length === 0) return null;
                   return (
-                    <div key={rounds}>
-                      <p className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[oklch(0.5_0.04_288)]">
+                    <SelectGroup key={rounds}>
+                      <SelectLabel>
                         {rounds} round{rounds === 1 ? "" : "s"}
-                      </p>
+                      </SelectLabel>
                       {list.map((p) => (
-                        <SelectItem
-                          key={p.id}
-                          value={p.id}
-                          className="focus:bg-[oklch(0.22_0.08_75)]"
-                        >
+                        <SelectItem key={p.id} value={p.id}>
                           {p.label}
                         </SelectItem>
                       ))}
-                    </div>
+                    </SelectGroup>
                   );
                 })}
               </SelectContent>

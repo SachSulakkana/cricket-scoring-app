@@ -198,3 +198,22 @@ export function resolveBattingBowlingTeams(
 }
 
 export type { MatchConfig };
+
+export function formatDismissalShort(ball: BallData): string {
+  if (ball.dismissal === "bowled") return `b ${ball.bowlerName}`;
+  if (ball.dismissal === "lbw") return `lbw b ${ball.bowlerName}`;
+  if (ball.dismissal === "caught")
+    return `c ${ball.fielderName || "?"} b ${ball.bowlerName}`;
+  if (ball.dismissal === "stumped")
+    return `st ${ball.fielderName || "?"} b ${ball.bowlerName}`;
+  if (ball.dismissal === "run-out")
+    return `run out (${ball.fielderName || "?"})`;
+  if (ball.dismissal === "retired-hurt") return "retired hurt";
+  return ball.dismissal;
+}
+
+export function getLegalBallCount(balls: BallData[]) {
+  return balls.filter(
+    (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
+  ).length;
+}

@@ -1,8 +1,30 @@
 import { NextResponse } from "next/server";
-import { deleteTournament, saveTournament } from "@/lib/firestore-db";
+import { deleteTournament, getTournament, listTeams, saveTournament } from "@/lib/firestore-db";
 import type { DbTournament } from "@/lib/firestore-db";
 
 export const runtime = "nodejs";
+
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const tournament = await getTournament(id);
+    if (!tournament) {
+      return NextResponse.json({ error: "Tournament not found" }, { status: 404 });
+    }
+    const teamIds = new Set(tournament.selectedTeamIds ?? []);
+    const teams = (await listTeams()).filter((team) => teamIds.has(team.id));
+    return NextResponse.json({ tournament, teams });
+  } catch (error) {
+    console.error("GET /api/tournaments/[id] failed", error);
+    return NextResponse.json(
+      { error: "Failed to load tournament" },
+      { status: 500 }
+    );
+  }
+}
 
 export async function PUT(
   request: Request,

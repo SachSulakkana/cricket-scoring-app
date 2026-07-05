@@ -1545,6 +1545,30 @@
     transition: border-color 0.15s, box-shadow 0.15s;
   }
 
+  .cricket-form-input[data-slot="select-trigger"] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: oklch(0.14 0.025 288) !important;
+    color: var(--cricket-cream) !important;
+    cursor: pointer;
+  }
+
+  .cricket-form-input[data-slot="select-trigger"] [data-slot="select-value"] {
+    color: var(--cricket-cream);
+  }
+
+  .cricket-form-input[data-slot="select-trigger"] svg {
+    color: oklch(0.68 0.04 288);
+    opacity: 0.9;
+  }
+
+  .cricket-form-input[data-slot="select-trigger"]:focus-visible {
+    outline: none;
+    border-color: oklch(0.55 0.1 295);
+    box-shadow: 0 0 0 3px oklch(0.45 0.1 295 / 0.25);
+  }
+
   .cricket-form-input::placeholder {
     color: oklch(0.5 0.03 288);
   }
@@ -1999,10 +2023,10 @@
     padding: 0.7rem 0.9rem;
     background: linear-gradient(
       135deg,
-      oklch(0.42 0.12 295) 0%,
-      oklch(0.34 0.1 288) 100%
+      oklch(0.36 0.1 158) 0%,
+      oklch(0.3 0.08 152) 100%
     );
-    border-bottom: 1px solid oklch(0.55 0.1 300 / 0.25);
+    border-bottom: 1px solid oklch(0.45 0.1 155 / 0.35);
     font-family: var(--font-display), sans-serif;
     font-size: 0.85rem;
     font-weight: 700;
@@ -2012,7 +2036,7 @@
   .cricket-scorecard-innings-header__score {
     font-family: var(--font-score), var(--font-display), sans-serif;
     font-size: 0.95rem;
-    color: var(--cricket-gold);
+    color: oklch(0.95 0.04 95);
     white-space: nowrap;
   }
 
@@ -2024,6 +2048,17 @@
     border-bottom: none;
   }
 
+  .cricket-scorecard-section-title {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: oklch(0.58 0.03 255);
+    background: oklch(0.13 0.02 255);
+    border-bottom: 1px solid oklch(0.24 0.03 255);
+  }
+
   .cricket-scorecard-table {
     width: 100%;
     border-collapse: collapse;
@@ -2031,15 +2066,15 @@
   }
 
   .cricket-scorecard-table thead th {
-    padding: 0.45rem 0.5rem;
+    padding: 0.5rem 0.5rem;
     font-size: 0.62rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     text-align: right;
-    color: oklch(0.55 0.03 255);
-    background: oklch(0.16 0.025 255);
-    border-bottom: 1px solid oklch(0.28 0.04 255);
+    color: oklch(0.72 0.03 255);
+    background: oklch(0.2 0.025 255);
+    border-bottom: 1px solid oklch(0.32 0.04 255);
   }
 
   .cricket-scorecard-table thead th:first-child {
@@ -2051,8 +2086,20 @@
     padding: 0.55rem 0.5rem;
     text-align: right;
     vertical-align: top;
-    color: oklch(0.85 0.02 95);
-    border-bottom: 1px solid oklch(0.22 0.03 255);
+    color: oklch(0.88 0.02 95);
+    border-bottom: 1px solid oklch(0.24 0.03 255);
+  }
+
+  .cricket-scorecard-table tbody tr:not(.cricket-scorecard-summary-row):nth-child(even) td {
+    background: oklch(0.15 0.02 255 / 0.85);
+  }
+
+  .cricket-scorecard-table tbody tr:not(.cricket-scorecard-summary-row):nth-child(odd) td {
+    background: oklch(0.11 0.018 255 / 0.65);
+  }
+
+  .cricket-scorecard-table tbody tr:not(.cricket-scorecard-summary-row):hover td {
+    background: oklch(0.2 0.04 255 / 0.75);
   }
 
   .cricket-scorecard-table tbody td:first-child {
@@ -2066,7 +2113,7 @@
 
   .cricket-scorecard-batter-name {
     font-weight: 600;
-    color: oklch(0.78 0.1 300);
+    color: oklch(0.75 0.12 240);
     line-height: 1.25;
   }
 
@@ -2088,16 +2135,16 @@
   }
 
   .cricket-scorecard-summary-row td {
-    background: oklch(0.14 0.025 255 / 0.6);
+    background: oklch(0.18 0.03 255 / 0.95) !important;
     font-weight: 600;
     color: var(--cricket-cream);
-    border-bottom: 1px solid oklch(0.28 0.04 255) !important;
+    border-bottom: 1px solid oklch(0.32 0.04 255) !important;
   }
 
   .cricket-scorecard-summary-detail {
-    font-size: 0.62rem;
+    font-size: 0.65rem;
     font-weight: 500;
-    color: oklch(0.55 0.03 255);
+    color: oklch(0.62 0.03 255);
     text-align: left !important;
   }
 
@@ -2127,7 +2174,7 @@
 
   .cricket-scorecard-bowler-name {
     font-weight: 600;
-    color: oklch(0.78 0.1 300);
+    color: oklch(0.75 0.12 240);
   }
 
   .cricket-scorecard-expand-btn {
@@ -2190,9 +2237,29 @@
   }
 
   .cricket-select-content {
+    z-index: 100;
     border: 1px solid oklch(0.35 0.04 288);
-    background: oklch(0.13 0.025 288);
+    background-color: oklch(0.13 0.025 288) !important;
+    color: var(--cricket-cream) !important;
+    box-shadow: 0 16px 48px oklch(0 0 0 / 0.55);
+  }
+
+  .cricket-select-content [data-slot="select-item"] {
     color: var(--cricket-cream);
+  }
+
+  .cricket-select-content [data-slot="select-item"][data-highlighted],
+  .cricket-select-content [data-slot="select-item"]:focus {
+    background: oklch(0.22 0.06 288);
+    color: var(--cricket-cream);
+  }
+
+  .cricket-select-content [data-slot="select-label"] {
+    color: oklch(0.58 0.05 288);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   .cricket-squad-chip {
@@ -3974,6 +4041,338 @@
     background: oklch(0.12 0.025 288);
   }
 
+  .spectator-nav-tabs {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    margin: 0 -0.25rem 1rem;
+    padding: 0 0.25rem;
+    border-bottom: 1px solid oklch(0.28 0.04 288);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .spectator-nav-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .spectator-nav-tab {
+    flex: 0 0 auto;
+    padding: 0.72rem 0.95rem;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: transparent;
+    font-family: var(--font-display), sans-serif;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: oklch(0.62 0.03 255);
+    white-space: nowrap;
+    touch-action: manipulation;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .spectator-nav-tab--active {
+    color: oklch(0.78 0.12 158);
+    border-bottom-color: oklch(0.58 0.12 158);
+  }
+
+  .spectator-tournament-empty {
+    padding: 1.25rem 0.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: oklch(0.58 0.03 255);
+  }
+
+  .spectator-tournament-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .spectator-tournament-head__sub {
+    font-size: 0.75rem;
+    color: oklch(0.55 0.03 255);
+  }
+
+  .spectator-tournament-match {
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    border: 1px solid oklch(0.32 0.04 255);
+    background: oklch(0.12 0.02 255 / 0.75);
+  }
+
+  .spectator-tournament-match--live {
+    border-color: oklch(0.55 0.14 25 / 0.55);
+    box-shadow: 0 0 0 1px oklch(0.55 0.14 25 / 0.15);
+  }
+
+  .spectator-tournament-match--current {
+    border-color: oklch(0.55 0.1 295 / 0.55);
+  }
+
+  .spectator-tournament-match__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid oklch(0.28 0.04 255);
+    background: oklch(0.14 0.025 255 / 0.65);
+  }
+
+  .spectator-tournament-match__label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: oklch(0.58 0.04 288);
+  }
+
+  .spectator-tournament-match__status {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: oklch(0.55 0.03 255);
+  }
+
+  .spectator-tournament-match__live-pill {
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cricket-cream);
+    background: oklch(0.52 0.2 25);
+  }
+
+  .spectator-tournament-match__faceoff {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 0.75rem;
+  }
+
+  .spectator-tournament-match__summary {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 0.75rem;
+    border: none;
+    border-top: 1px solid oklch(0.28 0.04 255);
+    background: transparent;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .spectator-tournament-match__summary--static {
+    cursor: default;
+  }
+
+  .spectator-tournament-match__summary:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px oklch(0.55 0.1 295 / 0.45);
+  }
+
+  .spectator-tournament-match__summary-scores {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+  }
+
+  .spectator-tournament-match__summary-team {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .spectator-tournament-match__summary-team--right {
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  .spectator-tournament-match__summary-name {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--cricket-cream);
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .spectator-tournament-match__summary-runs {
+    font-family: var(--font-score), var(--font-display), sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--cricket-gold);
+  }
+
+  .spectator-tournament-match__chevron {
+    flex-shrink: 0;
+    color: oklch(0.55 0.04 288);
+    transition: transform 0.2s ease, color 0.15s ease;
+  }
+
+  .spectator-tournament-match__chevron--open {
+    transform: rotate(180deg);
+    color: oklch(0.72 0.1 158);
+  }
+
+  .spectator-tournament-match__scorecard {
+    padding: 0.75rem;
+    border-top: 1px solid oklch(0.28 0.04 255);
+    background: oklch(0.1 0.02 255 / 0.45);
+  }
+
+  .spectator-tournament-match__hint {
+    margin: 0;
+    padding: 0 0.75rem 0.75rem;
+    font-size: 0.72rem;
+    color: oklch(0.55 0.03 255);
+    text-align: center;
+  }
+
+  .spectator-tournament-match--expanded {
+    border-color: oklch(0.45 0.08 158 / 0.45);
+  }
+
+  .spectator-tournament-match__team {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--cricket-cream);
+    text-align: center;
+  }
+
+  .spectator-tournament-match__vs {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: oklch(0.52 0.03 255);
+  }
+
+  .spectator-stats-table-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid oklch(0.32 0.04 255);
+    background: oklch(0.11 0.02 255 / 0.85);
+  }
+
+  .spectator-stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+  }
+
+  .spectator-stats-table thead th {
+    padding: 0.55rem 0.5rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: right;
+    color: oklch(0.58 0.03 255);
+    background: oklch(0.16 0.025 255);
+    border-bottom: 1px solid oklch(0.28 0.04 255);
+  }
+
+  .spectator-stats-table thead th:first-child {
+    text-align: left;
+    padding-left: 0.75rem;
+  }
+
+  .spectator-stats-table tbody td {
+    padding: 0.55rem 0.5rem;
+    text-align: right;
+    color: oklch(0.85 0.02 95);
+    border-bottom: 1px solid oklch(0.24 0.03 255);
+  }
+
+  .spectator-stats-table tbody tr:nth-child(even) td {
+    background: oklch(0.14 0.02 255 / 0.55);
+  }
+
+  .spectator-stats-table tbody td:first-child {
+    text-align: left;
+    padding-left: 0.75rem;
+    font-weight: 600;
+    color: var(--cricket-cream);
+  }
+
+  .spectator-stats-table__rank {
+    display: inline-flex;
+    min-width: 1.25rem;
+    margin-right: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: oklch(0.55 0.04 288);
+  }
+
+  .spectator-stats-table__pts {
+    font-weight: 700;
+    color: var(--cricket-cream);
+  }
+
+  .spectator-stats-table__nrr {
+    color: var(--cricket-gold);
+  }
+
+  .spectator-stats-leaders {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .spectator-stats-leader {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid oklch(0.3 0.04 255);
+    background: oklch(0.12 0.02 255 / 0.75);
+  }
+
+  .spectator-stats-leader__rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: oklch(0.72 0.1 158);
+    background: oklch(0.2 0.05 158 / 0.35);
+  }
+
+  .spectator-stats-leader__name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--cricket-cream);
+  }
+
+  .spectator-stats-leader__team {
+    font-size: 0.72rem;
+    color: oklch(0.55 0.03 255);
+  }
+
+  .spectator-stats-leader__value {
+    margin-left: auto;
+    font-family: var(--font-score), var(--font-display), sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--cricket-gold);
+  }
+
   .spectator-tab {
     min-height: 2.75rem;
     border-radius: calc(var(--radius-md) - 2px);
@@ -4038,6 +4437,123 @@
   .spectator-empty__hint {
     font-size: 0.8rem;
     color: oklch(0.48 0.03 255);
+  }
+
+  .spectator-upcoming-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 0.25rem 0 0.5rem;
+  }
+
+  .spectator-upcoming-card {
+    border-color: oklch(0.35 0.04 288 / 0.55);
+  }
+
+  .spectator-upcoming-card__summary {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .spectator-upcoming-card__summary:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px oklch(0.55 0.1 295 / 0.45);
+  }
+
+  .spectator-upcoming-card__faceoff {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+  }
+
+  .spectator-upcoming-card__team {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--cricket-cream);
+    line-height: 1.25;
+  }
+
+  .spectator-upcoming-card__vs {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: oklch(0.52 0.03 255);
+  }
+
+  .spectator-upcoming-card__chevron {
+    flex-shrink: 0;
+    color: oklch(0.55 0.04 288);
+    transition: transform 0.2s ease, color 0.15s ease;
+  }
+
+  .spectator-upcoming-card__chevron--open {
+    transform: rotate(180deg);
+    color: oklch(0.72 0.1 158);
+  }
+
+  .spectator-upcoming-card__details {
+    border-top: 1px solid oklch(0.28 0.04 288 / 0.45);
+  }
+
+  .spectator-upcoming-card__details .live-match-card__header {
+    padding-top: 0.75rem;
+  }
+
+  .spectator-upcoming-card--highlight {
+    border-color: oklch(0.55 0.14 25 / 0.55);
+    box-shadow:
+      0 0 0 1px oklch(0.55 0.14 25 / 0.12),
+      0 12px 32px oklch(0 0 0 / 0.35);
+  }
+
+  .spectator-upcoming-card__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: oklch(0.72 0.04 255);
+    background: oklch(0.2 0.03 255 / 0.75);
+    border: 1px solid oklch(0.35 0.04 255);
+  }
+
+  .spectator-upcoming-card__stage {
+    padding: 0 1rem 0.25rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: oklch(0.58 0.04 288);
+  }
+
+  .spectator-upcoming-card__message {
+    margin: 0;
+    padding: 0.85rem 1rem 1rem;
+    border-top: 1px solid oklch(0.28 0.04 288 / 0.45);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: oklch(0.62 0.03 255);
+    text-align: center;
+  }
+
+  .spectator-upcoming-card--highlight .spectator-upcoming-card__message {
+    color: oklch(0.72 0.1 75);
   }
 
   .spectator-scorecard-innings__header {

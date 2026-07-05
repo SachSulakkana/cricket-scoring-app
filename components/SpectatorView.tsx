@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   CricketBackButton,
@@ -10,13 +10,23 @@ import {
   CricketPage,
   CricketScoreDisplay,
 } from "@/components/cricket-shell";
+import SpectatorUpcomingMatchCard from "@/components/SpectatorUpcomingMatchCard";
+import SpectatorNavTabs, {
+  type SpectatorMatchTab,
+} from "@/components/SpectatorNavTabs";
 import SpectatorScorecard from "@/components/SpectatorScorecard";
 import SpectatorScoresheet from "@/components/SpectatorScoresheet";
+import {
+  SpectatorTournamentMatches,
+  SpectatorTournamentStats,
+} from "@/components/SpectatorTournamentPanels";
 import CricketLoader from "@/components/CricketLoader";
 import { useLiveMatchSnapshot } from "@/hooks/use-live-match-snapshot";
+import { useSpectatorTournament } from "@/hooks/use-spectator-tournament";
 import { routes } from "@/lib/app-routes";
 import { getMatchResult, isMatchComplete } from "@/lib/match-result";
 import type { MatchState } from "@/lib/cricket-types";
+import type { LiveMatchMeta } from "@/lib/store/match-slice";
 import {
   formatBallChip,
   formatOversFromLegalBalls,
@@ -28,8 +38,6 @@ import {
   getLegalBalls,
 } from "@/lib/spectator-live-stats";
 import { cn } from "@/lib/utils";
-
-type SpectatorTab = "live" | "scorecard";
 
 function getBattingTeam(matchState: MatchState) {
   return matchState.currentInnings === 1 ? matchState.team1 : matchState.team2;
@@ -51,7 +59,11 @@ function formatUpdatedAt(iso: string): string {
   }
 }
 
-function MatchMetaLabel({ meta }: { meta: NonNullable<ReturnType<typeof useLiveMatchSnapshot>["draft"]>["meta"] }) {
+function MatchMetaLabel({
+  meta,
+}: {
+  meta: NonNullable<ReturnType<typeof useLiveMatchSnapshot>["draft"]>["meta"];
+}) {
   if (!meta) return null;
   if (meta.kind === "quick") {
     return <p className="spectator-meta">Quick match</p>;
@@ -60,6 +72,75 @@ function MatchMetaLabel({ meta }: { meta: NonNullable<ReturnType<typeof useLiveM
     <p className="spectator-meta truncate" title={meta.label}>
       {meta.label}
     </p>
+  );
+}
+
+function SpectatorFooter({
+  error,
+  updatedAt,
+  source,
+}: {
+  error: string | null;
+  updatedAt: string;
+  source: "firestore" | "poll";
+}) {
+  return (
+    <footer className="spectator-footer">
+      {error ? (
+        <p className="spectator-footer__error">{error}</p>
+      ) : (
+        <p className="spectator-footer__sync">
+          Updated {formatUpdatedAt(updatedAt)}
+          {source === "firestore" ? " · live" : " · auto-refresh"}
+        </p>
+      )}
+    </footer>
+  );
+}
+
+function SpectatorTabPanels({
+  tab,
+  matchState,
+  meta,
+  liveContent,
+  scoresheet,
+}: {
+  tab: SpectatorMatchTab;
+  matchState: MatchState;
+  meta: LiveMatchMeta | null;
+  liveContent: ReactNode;
+  scoresheet?: ReactNode;
+}) {
+  const isTournament = meta?.kind === "tournament";
+  const tournamentId =
+    meta?.kind === "tournament" ? meta.tournamentId : undefined;
+  const activeFixtureId =
+    meta?.kind === "tournament" ? meta.fixtureId : undefined;
+  const { data, loading, error } = useSpectatorTournament(
+    isTournament ? tournamentId : undefined
+  );
+
+  return (
+    <div className="spectator-tab-panel">
+      {tab === "live" ? (
+        <>
+          {liveContent}
+          {scoresheet}
+        </>
+      ) : null}
+      {tab === "scorecard" ? <SpectatorScorecard matchState={matchState} /> : null}
+      {tab === "matches" ? (
+        <SpectatorTournamentMatches
+          data={data}
+          loading={loading}
+          error={error}
+          activeFixtureId={activeFixtureId}
+        />
+      ) : null}
+      {tab === "stats" ? (
+        <SpectatorTournamentStats data={data} loading={loading} error={error} />
+      ) : null}
+    </div>
   );
 }
 
@@ -88,37 +169,9 @@ function EmptyState({ onBack }: { onBack: () => void }) {
 
 function WaitingState({
   matchState,
-  onBack,
-}: {
-  matchState: MatchState;
-  onBack: () => void;
-}) {
-  return (
-    <CricketPage className="spectator-page">
-      <header className="spectator-topbar">
-        <CricketBackButton onClick={onBack} ariaLabel="Back to home" />
-        <h1 className="spectator-topbar__title">Live</h1>
-        <div className="w-11" aria-hidden />
-      </header>
-      <div className="spectator-empty">
-        <CricketLivePill />
-        <h2 className="cricket-display text-xl font-semibold text-[var(--cricket-cream)] mt-4">
-          Match starting soon
-        </h2>
-        <p className="spectator-empty__text">
-          {matchState.team1.name} vs {matchState.team2.name}
-        </p>
-        <p className="spectator-empty__hint">
-          Waiting for the scorer to complete lineup setup…
-        </p>
-      </div>
-    </CricketPage>
-  );
-}
-
-function InningsBreakView({
-  matchState,
   meta,
+  tab,
+  onTabChange,
   onBack,
   onRefresh,
   error,
@@ -126,7 +179,162 @@ function InningsBreakView({
   source,
 }: {
   matchState: MatchState;
-  meta: NonNullable<ReturnType<typeof useLiveMatchSnapshot>["draft"]>["meta"];
+  meta: LiveMatchMeta | null;
+  tab: SpectatorMatchTab;
+  onTabChange: (tab: SpectatorMatchTab) => void;
+  onBack: () => void;
+  onRefresh: () => void;
+  error: string | null;
+  updatedAt: string;
+  source: "firestore" | "poll";
+}) {
+  const isTournament = meta?.kind === "tournament";
+  const tournamentId =
+    meta?.kind === "tournament" ? meta.tournamentId : undefined;
+  const activeFixtureId =
+    meta?.kind === "tournament" ? meta.fixtureId : undefined;
+  const { data: tournamentData } = useSpectatorTournament(
+    isTournament ? tournamentId : undefined
+  );
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
+
+  const formatLabel = matchState.config
+    ? `${matchState.config.totalOvers} overs`
+    : tournamentData?.tournament
+      ? `${tournamentData.tournament.totalOvers} overs`
+      : null;
+
+  const metaLabel =
+    meta?.kind === "tournament"
+      ? (meta.label ?? tournamentData?.tournament.name ?? "Tournament match")
+      : meta?.kind === "quick"
+        ? "Quick match"
+        : null;
+
+  const upcomingCards = (() => {
+    const cards: {
+      key: string;
+      teamAName: string;
+      teamBName: string;
+      status: "starting-soon" | "upcoming";
+      stageLabel?: string;
+      highlighted?: boolean;
+    }[] = [
+      {
+        key: activeFixtureId ?? "current",
+        teamAName: matchState.team1.name,
+        teamBName: matchState.team2.name,
+        status: "starting-soon",
+        highlighted: true,
+      },
+    ];
+
+    if (!tournamentData || !activeFixtureId) return cards;
+
+    const teamMap = new Map(
+      tournamentData.teams.map((team) => [team.id, team.name])
+    );
+
+    tournamentData.tournament.fixtures.forEach((fixture) => {
+      if (fixture.played || fixture.id === activeFixtureId) return;
+
+      const teamAName = teamMap.get(fixture.teamAId);
+      const teamBName =
+        fixture.teamBId === "__pending_qualifier_winner__"
+          ? "Qualifier winner (TBD)"
+          : teamMap.get(fixture.teamBId);
+      if (!teamAName || !teamBName) return;
+
+      cards.push({
+        key: fixture.id,
+        teamAName,
+        teamBName,
+        status: "upcoming",
+        stageLabel: `Stage ${fixture.stageIndex + 1}`,
+      });
+    });
+
+    return cards;
+  })();
+
+  const liveContent = (
+    <div className="spectator-upcoming-cards">
+      {upcomingCards.map((card) => (
+        <SpectatorUpcomingMatchCard
+          key={card.key}
+          teamAName={card.teamAName}
+          teamBName={card.teamBName}
+          status={card.status}
+          metaLabel={
+            card.highlighted
+              ? metaLabel
+              : tournamentData?.tournament.name ?? metaLabel
+          }
+          formatLabel={formatLabel}
+          stageLabel={card.stageLabel}
+          highlighted={card.highlighted}
+          expanded={expandedCardId === card.key}
+          onToggle={() =>
+            setExpandedCardId((prev) => (prev === card.key ? null : card.key))
+          }
+        />
+      ))}
+    </div>
+  );
+
+  return (
+    <CricketPage className="spectator-page">
+      <header className="spectator-topbar">
+        <CricketBackButton onClick={onBack} ariaLabel="Back to home" />
+        <h1 className="spectator-topbar__title">Live</h1>
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="spectator-refresh-btn"
+          aria-label="Refresh"
+        >
+          ↻
+        </button>
+      </header>
+
+      {isTournament ? (
+        <>
+          <SpectatorNavTabs
+            active={tab}
+            onChange={onTabChange}
+            isTournament={isTournament}
+          />
+          <SpectatorTabPanels
+            tab={tab}
+            matchState={matchState}
+            meta={meta}
+            liveContent={liveContent}
+          />
+        </>
+      ) : (
+        liveContent
+      )}
+
+      <SpectatorFooter error={error} updatedAt={updatedAt} source={source} />
+    </CricketPage>
+  );
+}
+
+function InningsBreakView({
+  matchState,
+  meta,
+  tab,
+  onTabChange,
+  onBack,
+  onRefresh,
+  error,
+  updatedAt,
+  source,
+}: {
+  matchState: MatchState;
+  meta: LiveMatchMeta | null;
+  tab: SpectatorMatchTab;
+  onTabChange: (tab: SpectatorMatchTab) => void;
   onBack: () => void;
   onRefresh: () => void;
   error: string | null;
@@ -142,41 +350,25 @@ function InningsBreakView({
   );
   const target = innings1Runs + 1;
   const chasingTeam = matchState.team2.name;
+  const isTournament = meta?.kind === "tournament";
 
-  return (
-    <CricketPage className="spectator-page">
-      <header className="spectator-topbar">
-        <CricketBackButton onClick={onBack} ariaLabel="Back to home" />
-        <h1 className="spectator-topbar__title">Live</h1>
-        <button
-          type="button"
-          onClick={onRefresh}
-          className="spectator-refresh-btn"
-          aria-label="Refresh score"
-        >
-          ↻
-        </button>
-      </header>
-
+  const liveContent = (
+    <>
       <div className="spectator-hero">
         <div className="spectator-hero__status">
           <CricketLivePill />
           <MatchMetaLabel meta={meta} />
         </div>
-
         <p className="spectator-hero__innings">Innings break</p>
-
         <h2 className="spectator-hero__team">
           {matchState.innings1?.teamName ?? matchState.team1.name}
         </h2>
-
         <div className="spectator-hero__score">
           <CricketScoreDisplay size="xl" className="spectator-hero__runs">
             {innings1Runs}/{innings1Wickets}
           </CricketScoreDisplay>
           <span className="spectator-hero__overs">({innings1Overs} ov)</span>
         </div>
-
         <p className="spectator-hero__over">1st innings complete</p>
       </div>
 
@@ -200,19 +392,38 @@ function InningsBreakView({
       <p className="spectator-empty__hint text-center mb-4">
         2nd innings starting soon — waiting for lineup setup…
       </p>
+    </>
+  );
 
-      <SpectatorScorecard matchState={matchState} />
+  return (
+    <CricketPage className="spectator-page">
+      <header className="spectator-topbar">
+        <CricketBackButton onClick={onBack} ariaLabel="Back to home" />
+        <h1 className="spectator-topbar__title">Live</h1>
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="spectator-refresh-btn"
+          aria-label="Refresh score"
+        >
+          ↻
+        </button>
+      </header>
 
-      <footer className="spectator-footer">
-        {error ? (
-          <p className="spectator-footer__error">{error}</p>
-        ) : (
-          <p className="spectator-footer__sync">
-            Updated {formatUpdatedAt(updatedAt)}
-            {source === "firestore" ? " · live" : " · auto-refresh"}
-          </p>
-        )}
-      </footer>
+      <SpectatorNavTabs
+        active={tab}
+        onChange={onTabChange}
+        isTournament={isTournament}
+      />
+
+      <SpectatorTabPanels
+        tab={tab}
+        matchState={matchState}
+        meta={meta}
+        liveContent={liveContent}
+      />
+
+      <SpectatorFooter error={error} updatedAt={updatedAt} source={source} />
     </CricketPage>
   );
 }
@@ -220,6 +431,8 @@ function InningsBreakView({
 function MatchCompleteView({
   matchState,
   meta,
+  tab,
+  onTabChange,
   onBack,
   onRefresh,
   error,
@@ -227,7 +440,9 @@ function MatchCompleteView({
   source,
 }: {
   matchState: MatchState;
-  meta: NonNullable<ReturnType<typeof useLiveMatchSnapshot>["draft"]>["meta"];
+  meta: LiveMatchMeta | null;
+  tab: SpectatorMatchTab;
+  onTabChange: (tab: SpectatorMatchTab) => void;
   onBack: () => void;
   onRefresh: () => void;
   error: string | null;
@@ -239,22 +454,10 @@ function MatchCompleteView({
   const innings1Wickets = getInningsWickets(matchState.innings1);
   const innings2Runs = getInningsRuns(matchState.innings2);
   const innings2Wickets = getInningsWickets(matchState.innings2);
+  const isTournament = meta?.kind === "tournament";
 
-  return (
-    <CricketPage className="spectator-page">
-      <header className="spectator-topbar">
-        <CricketBackButton onClick={onBack} ariaLabel="Back to home" />
-        <h1 className="spectator-topbar__title">Result</h1>
-        <button
-          type="button"
-          onClick={onRefresh}
-          className="spectator-refresh-btn"
-          aria-label="Refresh score"
-        >
-          ↻
-        </button>
-      </header>
-
+  const liveContent = (
+    <>
       <div className="spectator-result-hero">
         <div className="spectator-hero__status">
           <MatchMetaLabel meta={meta} />
@@ -299,19 +502,38 @@ function MatchCompleteView({
           </p>
         </div>
       </div>
+    </>
+  );
 
-      <SpectatorScorecard matchState={matchState} />
+  return (
+    <CricketPage className="spectator-page">
+      <header className="spectator-topbar">
+        <CricketBackButton onClick={onBack} ariaLabel="Back to home" />
+        <h1 className="spectator-topbar__title">Result</h1>
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="spectator-refresh-btn"
+          aria-label="Refresh score"
+        >
+          ↻
+        </button>
+      </header>
 
-      <footer className="spectator-footer">
-        {error ? (
-          <p className="spectator-footer__error">{error}</p>
-        ) : (
-          <p className="spectator-footer__sync">
-            Updated {formatUpdatedAt(updatedAt)}
-            {source === "firestore" ? " · live" : " · auto-refresh"}
-          </p>
-        )}
-      </footer>
+      <SpectatorNavTabs
+        active={tab}
+        onChange={onTabChange}
+        isTournament={isTournament}
+      />
+
+      <SpectatorTabPanels
+        tab={tab}
+        matchState={matchState}
+        meta={meta}
+        liveContent={liveContent}
+      />
+
+      <SpectatorFooter error={error} updatedAt={updatedAt} source={source} />
     </CricketPage>
   );
 }
@@ -319,7 +541,7 @@ function MatchCompleteView({
 export default function SpectatorView() {
   const router = useRouter();
   const { draft, loading, error, refresh, source } = useLiveMatchSnapshot();
-  const [tab, setTab] = useState<SpectatorTab>("live");
+  const [tab, setTab] = useState<SpectatorMatchTab>("live");
 
   const onBack = () => router.push(routes.live);
 
@@ -436,7 +658,19 @@ export default function SpectatorView() {
   }
 
   if (liveView?.kind === "waiting") {
-    return <WaitingState matchState={liveView.matchState} onBack={onBack} />;
+    return (
+      <WaitingState
+        matchState={liveView.matchState}
+        meta={draft.meta}
+        tab={tab}
+        onTabChange={setTab}
+        onBack={onBack}
+        onRefresh={() => void refresh()}
+        error={error}
+        updatedAt={draft.updatedAt}
+        source={source}
+      />
+    );
   }
 
   if (liveView?.kind === "inningsBreak") {
@@ -444,6 +678,8 @@ export default function SpectatorView() {
       <InningsBreakView
         matchState={liveView.matchState}
         meta={draft.meta}
+        tab={tab}
+        onTabChange={setTab}
         onBack={onBack}
         onRefresh={() => void refresh()}
         error={error}
@@ -458,6 +694,8 @@ export default function SpectatorView() {
       <MatchCompleteView
         matchState={liveView.matchState}
         meta={draft.meta}
+        tab={tab}
+        onTabChange={setTab}
         onBack={onBack}
         onRefresh={() => void refresh()}
         error={error}
@@ -497,22 +735,10 @@ export default function SpectatorView() {
     getLegalBalls(currentInnings),
     ballsPerOver
   );
+  const isTournament = draft.meta?.kind === "tournament";
 
-  return (
-    <CricketPage className="spectator-page">
-      <header className="spectator-topbar">
-        <CricketBackButton onClick={onBack} ariaLabel="Back to home" />
-        <h1 className="spectator-topbar__title">Live</h1>
-        <button
-          type="button"
-          onClick={() => void refresh()}
-          className="spectator-refresh-btn"
-          aria-label="Refresh score"
-        >
-          ↻
-        </button>
-      </header>
-
+  const liveContent = (
+    <>
       <div className="spectator-hero">
         <div className="spectator-hero__status">
           <CricketLivePill />
@@ -611,7 +837,8 @@ export default function SpectatorView() {
                 key={ball.id}
                 className={cn(
                   "spectator-ball-pill",
-                  ball.dismissal !== "none" && ball.dismissal !== "retired-hurt" &&
+                  ball.dismissal !== "none" &&
+                    ball.dismissal !== "retired-hurt" &&
                     "spectator-ball-pill--wicket",
                   ball.extra !== "none" && "spectator-ball-pill--extra"
                 )}
@@ -622,52 +849,47 @@ export default function SpectatorView() {
           </div>
         </div>
       )}
+    </>
+  );
 
-      <div className="spectator-tabs" role="tablist" aria-label="Live views">
+  const scoresheet = (
+    <SpectatorScoresheet innings={currentInnings} ballsPerOver={ballsPerOver} />
+  );
+
+  return (
+    <CricketPage className="spectator-page">
+      <header className="spectator-topbar">
+        <CricketBackButton onClick={onBack} ariaLabel="Back to home" />
+        <h1 className="spectator-topbar__title">Live</h1>
         <button
           type="button"
-          role="tab"
-          aria-selected={tab === "live"}
-          className={cn("spectator-tab", tab === "live" && "spectator-tab--active")}
-          onClick={() => setTab("live")}
+          onClick={() => void refresh()}
+          className="spectator-refresh-btn"
+          aria-label="Refresh score"
         >
-          Ball by ball
+          ↻
         </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "scorecard"}
-          className={cn(
-            "spectator-tab",
-            tab === "scorecard" && "spectator-tab--active"
-          )}
-          onClick={() => setTab("scorecard")}
-        >
-          Scorecard
-        </button>
-      </div>
+      </header>
 
-      <div className="spectator-tab-panel">
-        {tab === "live" ? (
-          <SpectatorScoresheet
-            innings={currentInnings}
-            ballsPerOver={ballsPerOver}
-          />
-        ) : (
-          <SpectatorScorecard matchState={matchState} />
-        )}
-      </div>
+      <SpectatorNavTabs
+        active={tab}
+        onChange={setTab}
+        isTournament={isTournament}
+      />
 
-      <footer className="spectator-footer">
-        {error ? (
-          <p className="spectator-footer__error">{error}</p>
-        ) : (
-          <p className="spectator-footer__sync">
-            Updated {formatUpdatedAt(draft.updatedAt)}
-            {source === "firestore" ? " · live" : " · auto-refresh"}
-          </p>
-        )}
-      </footer>
+      <SpectatorTabPanels
+        tab={tab}
+        matchState={matchState}
+        meta={draft.meta}
+        liveContent={liveContent}
+        scoresheet={scoresheet}
+      />
+
+      <SpectatorFooter
+        error={error}
+        updatedAt={draft.updatedAt}
+        source={source}
+      />
     </CricketPage>
   );
 }
