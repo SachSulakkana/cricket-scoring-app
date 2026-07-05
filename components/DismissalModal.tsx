@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DismissalType, Player } from "@/lib/cricket-types";
+import { cn } from "@/lib/utils";
 
 interface DismissalModalProps {
   batsmen: Player[];
@@ -148,11 +149,11 @@ export default function DismissalModal({
                 }
               }}
               disabled={!isSubmitEnabled}
-              className={`flex-1 ${
-                isSubmitEnabled
-                  ? "bg-red-600 hover:bg-red-700 text-white"
-                  : "bg-slate-600 text-slate-400 cursor-not-allowed"
-              }`}
+              variant="destructive"
+              className={cn(
+                "flex-1 btn-12 btn-12--destructive btn-12--md !min-h-10",
+                !isSubmitEnabled && "cursor-not-allowed opacity-50"
+              )}
             >
               Confirm Dismissal
             </Button>

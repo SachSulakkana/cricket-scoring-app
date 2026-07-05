@@ -166,7 +166,7 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
               <CardTitle className="cricket-display text-[var(--cricket-cream)]">
                 {step === "team1" ? "Team 1 Setup" : "Team 2 Setup"}
               </CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardDescription className="text-[oklch(0.58_0.03_255)]">
                 Enter team details or pick a saved squad from your roster
               </CardDescription>
             </CardHeader>
@@ -188,7 +188,7 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
                   </Select>
                 </div>
               ) : (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[oklch(0.58_0.03_255)]">
                   No saved teams yet.{" "}
                   <Link href={routes.teams} className="text-[var(--cricket-gold)] underline">
                     Create teams
@@ -237,14 +237,13 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
                   {players.map((player) => (
                     <div
                       key={player.id}
-                      className="flex justify-between items-center bg-slate-700 p-3 rounded"
+                      className="flex items-center justify-between rounded-lg border border-[oklch(0.32_0.04_255)] bg-[oklch(0.14_0.025_255)] p-3"
                     >
-                      <span className="text-white">{player.name}</span>
+                      <span className="text-[var(--cricket-cream)]">{player.name}</span>
                       <Button
                         onClick={() => removePlayer(player.id)}
                         variant="destructive"
                         size="sm"
-                        className="bg-red-600 hover:bg-red-700"
                       >
                         Remove
                       </Button>
@@ -252,14 +251,14 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
                   ))}
                 </div>
 
-                <p className="text-slate-400 text-sm mt-3">
+                <p className="mt-3 text-sm text-[oklch(0.58_0.03_255)]">
                   Players added: {players.length}
                 </p>
               </div>
 
               <Button
                 onClick={handleTeamComplete}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                className="btn-12 btn-12--lg btn-12--full w-full"
               >
                 {editingFromConfirm
                   ? "Save Team Changes"
@@ -275,7 +274,7 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
           <Card className="cricket-broadcast-card border-0 shadow-none gap-0 py-0">
             <CardHeader>
               <CardTitle className="cricket-display text-[var(--cricket-cream)]">Match Configuration</CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardDescription className="text-[oklch(0.58_0.03_255)]">
                 Set match parameters
               </CardDescription>
             </CardHeader>
@@ -289,7 +288,7 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
                   value={totalOvers}
                   onChange={(e) => setTotalOvers(e.target.value)}
                   min="1"
-                  className="bg-slate-700 border-slate-600 text-white"
+                  className="cricket-form-input"
                 />
               </div>
 
@@ -302,15 +301,15 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
                   value={ballsPerOver}
                   onChange={(e) => setBallsPerOver(e.target.value)}
                   min="1"
-                  className="bg-slate-700 border-slate-600 text-white"
+                  className="cricket-form-input"
                 />
               </div>
 
-              <div className="bg-slate-700 p-4 rounded space-y-2">
-                <p className="text-white text-sm font-medium">
+              <div className="space-y-2 rounded-lg border border-[oklch(0.32_0.04_255)] bg-[oklch(0.14_0.025_255)] p-4">
+                <p className="text-sm font-medium text-[var(--cricket-cream)]">
                   Team 1: {tempTeam1?.name}
                 </p>
-                <p className="text-white text-sm font-medium">
+                <p className="text-sm font-medium text-[var(--cricket-cream)]">
                   Team 2: {tempTeam2?.name}
                 </p>
               </div>
@@ -331,35 +330,35 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
           <Card className="cricket-broadcast-card border-0 shadow-none gap-0 py-0">
             <CardHeader>
               <CardTitle className="cricket-display text-[var(--cricket-cream)]">Confirm Match Setup</CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardDescription className="text-[oklch(0.58_0.03_255)]">
                 Review all setup data before starting the match.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-slate-700 p-4 rounded-lg space-y-2">
+                <div className="space-y-2 rounded-lg border border-[oklch(0.32_0.04_255)] bg-[oklch(0.14_0.025_255)] p-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-white font-semibold">Team 1</p>
+                    <p className="font-semibold text-[var(--cricket-cream)]">Team 1</p>
                     <Button
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="h-8 w-8 p-0 text-slate-300 hover:text-white hover:bg-transparent"
+                      className="h-8 w-8 p-0 text-[oklch(0.65_0.03_255)] hover:bg-transparent hover:text-[var(--cricket-cream)]"
                       onClick={() => handleEditSection("team1")}
                       aria-label="Edit Team 1"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
                   </div>
-                  <p className="text-slate-200">{tempTeam1?.name}</p>
-                  <p className="text-slate-400 text-sm">
+                  <p className="text-[oklch(0.85_0.02_95)]">{tempTeam1?.name}</p>
+                  <p className="text-sm text-[oklch(0.58_0.03_255)]">
                     Players: {tempTeam1?.players.length || 0}
                   </p>
-                  <div className="pt-1 space-y-1">
+                  <div className="space-y-1 pt-1">
                     {tempTeam1?.players.map((player) => (
                       <div
                         key={player.id}
-                        className="text-slate-300 text-sm bg-slate-800/60 rounded px-2 py-1"
+                        className="rounded bg-[oklch(0.1_0.03_295/0.6)] px-2 py-1 text-sm text-[oklch(0.75_0.03_255)]"
                       >
                         <span>{player.name}</span>
                       </div>
@@ -367,29 +366,29 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
                   </div>
                 </div>
 
-                <div className="bg-slate-700 p-4 rounded-lg space-y-2">
+                <div className="space-y-2 rounded-lg border border-[oklch(0.32_0.04_255)] bg-[oklch(0.14_0.025_255)] p-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-white font-semibold">Team 2</p>
+                    <p className="font-semibold text-[var(--cricket-cream)]">Team 2</p>
                     <Button
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="h-8 w-8 p-0 text-slate-300 hover:text-white hover:bg-transparent"
+                      className="h-8 w-8 p-0 text-[oklch(0.65_0.03_255)] hover:bg-transparent hover:text-[var(--cricket-cream)]"
                       onClick={() => handleEditSection("team2")}
                       aria-label="Edit Team 2"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
                   </div>
-                  <p className="text-slate-200">{tempTeam2?.name}</p>
-                  <p className="text-slate-400 text-sm">
+                  <p className="text-[oklch(0.85_0.02_95)]">{tempTeam2?.name}</p>
+                  <p className="text-sm text-[oklch(0.58_0.03_255)]">
                     Players: {tempTeam2?.players.length || 0}
                   </p>
-                  <div className="pt-1 space-y-1">
+                  <div className="space-y-1 pt-1">
                     {tempTeam2?.players.map((player) => (
                       <div
                         key={player.id}
-                        className="text-slate-300 text-sm bg-slate-800/60 rounded px-2 py-1"
+                        className="rounded bg-[oklch(0.1_0.03_295/0.6)] px-2 py-1 text-sm text-[oklch(0.75_0.03_255)]"
                       >
                         <span>{player.name}</span>
                       </div>
@@ -398,22 +397,22 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
                 </div>
               </div>
 
-              <div className="bg-slate-700 p-4 rounded-lg space-y-2">
+              <div className="space-y-2 rounded-lg border border-[oklch(0.32_0.04_255)] bg-[oklch(0.14_0.025_255)] p-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-white font-semibold">Match Config</p>
+                  <p className="font-semibold text-[var(--cricket-cream)]">Match Config</p>
                   <Button
                     type="button"
                     size="sm"
                     variant="ghost"
-                    className="h-8 w-8 p-0 text-slate-300 hover:text-white hover:bg-transparent"
+                    className="h-8 w-8 p-0 text-[oklch(0.65_0.03_255)] hover:bg-transparent hover:text-[var(--cricket-cream)]"
                     onClick={() => handleEditSection("config")}
                     aria-label="Edit Match Config"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
                 </div>
-                <p className="text-slate-200">Overs: {totalOvers}</p>
-                <p className="text-slate-200">Balls per over: {ballsPerOver}</p>
+                <p className="text-[oklch(0.85_0.02_95)]">Overs: {totalOvers}</p>
+                <p className="text-[oklch(0.85_0.02_95)]">Balls per over: {ballsPerOver}</p>
               </div>
 
               <Button

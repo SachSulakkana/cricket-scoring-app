@@ -106,12 +106,12 @@ export default function BowlerSelectorModal({
           </p>
 
           {selectedBowler && (
-            <div className="rounded-lg bg-slate-900 p-3">
+            <div className="rounded-lg border border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.04_295)] p-3">
               <div className="flex items-center gap-2">
-                <span className="rounded bg-slate-600 px-2 py-1 text-xs text-white">
+                <span className="rounded bg-[oklch(0.48_0.12_295)] px-2 py-1 text-xs font-bold text-[var(--cricket-cream)]">
                   NEXT BOWLER
                 </span>
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-[var(--cricket-cream)]">
                   {players.find((p) => p.id === selectedBowler)?.name}
                 </span>
               </div>
