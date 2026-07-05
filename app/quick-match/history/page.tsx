@@ -1,12 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import QuickMatchHistoryPage from "@/components/QuickMatchHistoryPage";
+import MatchHistoryPage from "@/components/MatchHistoryPage";
 import { routes } from "@/lib/app-routes";
 
 export default function QuickMatchHistoryRoute() {
   const router = useRouter();
-  return (
-    <QuickMatchHistoryPage onBack={() => router.push(routes.quickMatch)} />
-  );
+  return <MatchHistoryPage onBack={() => router.push(routes.home)} />;
 }

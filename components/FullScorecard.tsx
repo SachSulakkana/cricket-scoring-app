@@ -10,6 +10,8 @@ import {
   countsAsWicket,
 } from "@/lib/cricket-types";
 import { useCricket } from "@/lib/cricket-context";
+import { hasPersistedSuperOver } from "@/lib/match-snapshot";
+import { isRegularInningsTied } from "@/lib/super-over";
 import { cn } from "@/lib/utils";
 
 interface FullScorecardProps {
@@ -200,7 +202,11 @@ export default function FullScorecard({
     return { displayed, yetToBat, atCrease };
   };
 
-  const calculateBowling = (innings: InningsData | null, bowlingTeam: Team) => {
+  const calculateBowling = (
+    innings: InningsData | null,
+    bowlingTeam: Team,
+    bpo: number = ballsPerOver
+  ) => {
     if (!innings) return [] as BowlingRow[];
 
     const rows = bowlingTeam.players.map((player) => {
@@ -238,7 +244,7 @@ export default function FullScorecard({
         (overRuns) => overRuns === 0
       ).length;
       const economy =
-        balls > 0 ? (runs / (balls / ballsPerOver)).toFixed(2) : "0.00";
+        balls > 0 ? (runs / (balls / bpo)).toFixed(2) : "0.00";
 
       return {
         name: player.name,
@@ -317,27 +323,42 @@ export default function FullScorecard({
     inningsNumber: 1 | 2,
     innings: InningsData | null,
     battingTeam: Team,
-    bowlingTeam: Team
+    bowlingTeam: Team,
+    options?: {
+      label?: string;
+      ballsPerOverOverride?: number;
+      useBallCount?: boolean;
+    }
   ) => {
     if (!innings) return null;
 
+    const inningsBallsPerOver = options?.ballsPerOverOverride ?? ballsPerOver;
     const totals = calculateInningsTotal(innings);
     const { displayed: battingRows, yetToBat, atCrease } = getBattingDisplay(
       innings,
       battingTeam
     );
-    const bowlingRows = calculateBowling(innings, bowlingTeam);
+    const bowlingRows = calculateBowling(innings, bowlingTeam, inningsBallsPerOver);
     const extras = calculateExtras(innings);
-    const overs = calculateOvers(innings.balls);
-    const runRate = calculateRunRate(innings.balls, totals.runs);
-    const inningsLabel = `${battingTeam.name} ${inningsNumber === 1 ? "1st" : "2nd"} Innings`;
+    const legalBalls = getLegalBallCount(innings.balls);
+    const overs = options?.useBallCount
+      ? `${legalBalls}/${inningsBallsPerOver} balls`
+      : calculateOvers(innings.balls);
+    const runRate =
+      legalBalls > 0
+        ? (totals.runs / (legalBalls / inningsBallsPerOver)).toFixed(2)
+        : "0.00";
+    const inningsLabel =
+      options?.label ??
+      `${battingTeam.name} ${inningsNumber === 1 ? "1st" : "2nd"} Innings`;
 
     return (
       <div className="cricket-scorecard-sheet">
         <div className="cricket-scorecard-innings-header">
           <span className="truncate">{inningsLabel}</span>
           <span className="cricket-scorecard-innings-header__score">
-            {totals.runs}-{totals.wickets} ({overs} Ov)
+            {totals.runs}-{totals.wickets} (
+            {options?.useBallCount ? overs : `${overs} Ov`})
           </span>
         </div>
 
@@ -409,7 +430,9 @@ export default function FullScorecard({
                   {totals.runs}-{totals.wickets}
                 </td>
                 <td colSpan={4} className="cricket-scorecard-summary-detail">
-                  {overs} Ov (RR : {runRate})
+                  {options?.useBallCount
+                    ? `${overs} (RR : ${runRate})`
+                    : `${overs} Ov (RR : ${runRate})`}
                 </td>
               </tr>
             </tbody>
@@ -460,8 +483,9 @@ export default function FullScorecard({
                         </span>
                       </td>
                       <td>
-                        {Math.floor(row.balls / ballsPerOver)}.
-                        {row.balls % ballsPerOver}
+                        {options?.useBallCount
+                          ? row.balls
+                          : `${Math.floor(row.balls / inningsBallsPerOver)}.${row.balls % inningsBallsPerOver}`}
                       </td>
                       <td>{row.maidens}</td>
                       <td>{row.runs}</td>
@@ -521,6 +545,25 @@ export default function FullScorecard({
     );
   };
 
+  const superOver = matchState.superOver;
+  const showSuperOverScorecard = Boolean(
+    superOver?.innings1 &&
+      (superOver.active || superOver.completed || superOver.settledAsDraw)
+  );
+  const mainMatchTied = isRegularInningsTied(matchState);
+
+  const resolveTeamsForInnings = (innings: InningsData) => {
+    const battingTeam =
+      innings.teamId === matchState.team1.id
+        ? matchState.team1
+        : matchState.team2;
+    const bowlingTeam =
+      battingTeam.id === matchState.team1.id
+        ? matchState.team2
+        : matchState.team1;
+    return { battingTeam, bowlingTeam };
+  };
+
   return (
     <div className="cricket-page min-h-screen">
       <div className="relative z-10 max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -550,7 +593,20 @@ export default function FullScorecard({
           </div>
         </div>
 
-        <div className="space-y-3">
+        <section className="space-y-3">
+          <div>
+            <p className="cricket-eyebrow mb-1">Original match</p>
+            {mainMatchTied && showSuperOverScorecard ? (
+              <p className="text-sm font-semibold text-[var(--cricket-gold)]">
+                Scores tied — see super over below
+              </p>
+            ) : (
+              <p className="text-sm text-[oklch(0.58_0.03_255)]">
+                Main innings
+              </p>
+            )}
+          </div>
+
           <div className="cricket-scorecard-tabs">
             <button
               type="button"
@@ -622,7 +678,52 @@ export default function FullScorecard({
               </div>
             );
           })()}
-        </div>
+        </section>
+
+        {showSuperOverScorecard && superOver?.innings1 ? (
+          <section className="space-y-3 pt-4 border-t border-[oklch(0.32_0.04_255)]">
+            <div>
+              <p className="cricket-eyebrow mb-1">Super over</p>
+              <p className="text-sm text-[oklch(0.58_0.03_255)]">
+                Tie-breaker · {superOver.ballsPerOver} balls per team
+              </p>
+            </div>
+
+            {superOver.innings1 &&
+              (() => {
+                const { battingTeam, bowlingTeam } =
+                  resolveTeamsForInnings(superOver.innings1);
+                return renderInningsScorecard(
+                  1,
+                  superOver.innings1,
+                  battingTeam,
+                  bowlingTeam,
+                  {
+                    label: `${battingTeam.name} · super over`,
+                    ballsPerOverOverride: superOver.ballsPerOver,
+                    useBallCount: true,
+                  }
+                );
+              })()}
+
+            {superOver.innings2 &&
+              (() => {
+                const { battingTeam, bowlingTeam } =
+                  resolveTeamsForInnings(superOver.innings2);
+                return renderInningsScorecard(
+                  2,
+                  superOver.innings2,
+                  battingTeam,
+                  bowlingTeam,
+                  {
+                    label: `${battingTeam.name} · super over`,
+                    ballsPerOverOverride: superOver.ballsPerOver,
+                    useBallCount: true,
+                  }
+                );
+              })()}
+          </section>
+        ) : null}
       </div>
     </div>
   );

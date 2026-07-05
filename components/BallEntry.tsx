@@ -26,14 +26,15 @@ export default function BallEntry({
 }: BallEntryProps) {
   const {
     matchState,
+    getActiveScoringContext,
     addBall,
     setNextBowler,
     setNextBatsman,
     swapStrike,
     undoLastBall,
   } = useCricket();
-  const currentInnings = 
-    matchState.currentInnings === 1 ? matchState.innings1 : matchState.innings2;
+  const scoring = getActiveScoringContext();
+  const currentInnings = scoring?.currentInnings ?? null;
 
   const [showDismissalModal, setShowDismissalModal] = useState(false);
   const [showReplacementModal, setShowReplacementModal] = useState(false);
@@ -46,16 +47,12 @@ export default function BallEntry({
   const [pendingExtraType, setPendingExtraType] = useState<ExtraType | null>(null);
   const [overthrowBatRuns, setOverthrowBatRuns] = useState<number | null>(null);
 
-  if (!currentInnings) return null;
+  if (!currentInnings || !scoring) return null;
 
-  const getBowlingTeam = () =>
-    matchState.currentInnings === 1 ? matchState.team2 : matchState.team1;
-
-  const getBattingTeam = () =>
-    matchState.currentInnings === 1 ? matchState.team1 : matchState.team2;
-
-  const battingTeam = getBattingTeam();
-  const bowlingTeam = getBowlingTeam();
+  const battingTeam = scoring.battingTeam;
+  const bowlingTeam = scoring.bowlingTeam;
+  const isSuperOver = scoring.isSuperOver;
+  const ballsPerOver = scoring.config.ballsPerOver;
 
   const strikerInfo = battingTeam.players.find(
     (p) => p.id === currentInnings.strikerPlayerId
@@ -139,47 +136,42 @@ export default function BallEntry({
   }, [currentInnings.balls]);
 
   const currentOver = useMemo(() => {
-    if (!matchState.config) return 0;
-    return Math.floor(currentLegalBallCount / matchState.config.ballsPerOver);
-  }, [currentLegalBallCount, matchState.config]);
+    return Math.floor(currentLegalBallCount / ballsPerOver);
+  }, [currentLegalBallCount, ballsPerOver]);
 
   const ballsInCurrentOver = useMemo(() => {
-    if (!matchState.config) return 0;
-    return (currentLegalBallCount % matchState.config.ballsPerOver) + 1;
-  }, [currentLegalBallCount, matchState.config]);
+    return (currentLegalBallCount % ballsPerOver) + 1;
+  }, [currentLegalBallCount, ballsPerOver]);
 
   const overJustFinished = useMemo(() => {
-    if (!matchState.config) return false;
     return (
       currentLegalBallCount > 0 &&
-      currentLegalBallCount % matchState.config.ballsPerOver === 0
+      currentLegalBallCount % ballsPerOver === 0
     );
-  }, [currentLegalBallCount, matchState.config]);
+  }, [currentLegalBallCount, ballsPerOver]);
 
   const isInningsComplete = useMemo(() => {
-    if (!matchState.config) return false;
-
     const legalBalls = currentInnings.balls.filter(
       (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
     ).length;
     const wickets = currentInnings.balls.filter((ball) => countsAsWicket(ball.dismissal)).length;
-    const maxWickets = Math.max(battingTeam.players.length - 1, 0);
-    const maxLegalBalls = matchState.config.totalOvers * matchState.config.ballsPerOver;
+    const maxWickets = scoring.maxWickets;
+    const maxLegalBalls = scoring.config.totalOvers * scoring.config.ballsPerOver;
 
     const inningsRuns = currentInnings.balls.reduce((total, ball) => {
       return total + ball.runs + (ball.extra !== "none" ? ball.extraRuns : 0);
     }, 0);
     const firstInningsRuns =
-      matchState.currentInnings === 2 && matchState.innings1
-        ? matchState.innings1.balls.reduce((total, ball) => {
+      scoring.currentInningsNumber === 2 && scoring.innings1
+        ? scoring.innings1.balls.reduce((total, ball) => {
             return total + ball.runs + (ball.extra !== "none" ? ball.extraRuns : 0);
           }, 0)
         : 0;
     const isTargetReached =
-      matchState.currentInnings === 2 && inningsRuns > firstInningsRuns;
+      scoring.currentInningsNumber === 2 && inningsRuns > firstInningsRuns;
 
     return legalBalls >= maxLegalBalls || wickets >= maxWickets || isTargetReached;
-  }, [battingTeam.players.length, currentInnings.balls, matchState]);
+  }, [currentInnings.balls, scoring]);
 
   const scoringLocked = lockActionsUntilUndo || isInningsComplete;
 
@@ -222,14 +214,16 @@ export default function BallEntry({
       ? currentLegalBallCount + 1
       : currentLegalBallCount;
     const overJustCompleted =
-      isLegalBall && nextLegalBallCount % matchState.config!.ballsPerOver === 0;
+      isLegalBall && nextLegalBallCount % ballsPerOver === 0;
 
-    if (overJustCompleted) {
+    if (overJustCompleted && !isSuperOver) {
       // Over just completed, auto-change striker for next over
       swapStrike();
       
       // Show bowler selector (mandatory)
       setShowBowlerSelector(true);
+    } else if (overJustCompleted && isSuperOver) {
+      swapStrike();
     }
   };
 
@@ -289,7 +283,7 @@ export default function BallEntry({
     setShowReplacementModal(false);
     setDismissedPlayerInfo(null);
 
-    if (overJustFinished) {
+    if (overJustFinished && !isSuperOver) {
       swapStrike();
       setShowBowlerSelector(true);
     }
@@ -357,7 +351,9 @@ export default function BallEntry({
       <div className="cricket-broadcast-card overflow-hidden">
         <div className="cricket-score-strip !border-b-0">
           <p className="cricket-display text-sm font-semibold text-[var(--cricket-cream)]">
-            Over {currentOver + 1}.{ballsInCurrentOver}
+            {isSuperOver
+              ? `Ball ${Math.min(currentLegalBallCount + 1, ballsPerOver)} of ${ballsPerOver}`
+              : `Over ${currentOver + 1}.${ballsInCurrentOver}`}
           </p>
           <span className="cricket-eyebrow mb-0">Ball {currentBallNumber}</span>
         </div>
@@ -506,7 +502,7 @@ export default function BallEntry({
         />
       )}
 
-      {showBowlerSelector && (
+      {showBowlerSelector && !isSuperOver && (
         <BowlerSelectorModal
           players={bowlingTeam.players}
           disabledPlayerId={currentInnings.currentBowlerPlayerId}

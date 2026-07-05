@@ -1,71 +1,107 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useResumePrompt } from "@/components/ResumePromptProvider";
 import { useCricket } from "@/lib/cricket-context";
-import {
-  draftMatchesSession,
-  loadLiveMatchDraftLocal,
-} from "@/lib/live-match-draft";
 import type { MatchState } from "@/lib/cricket-types";
+import {
+  draftHasLiveMatch,
+  loadPersistedLiveDraft,
+  sessionHasLiveMatch,
+} from "@/lib/match-session-restore";
+import {
+  isQuickMatchInProgress,
+} from "@/lib/quick-match-session";
 import {
   liveMetaKey,
   liveMetaMatches,
   type LiveMatchMeta,
 } from "@/lib/store/match-slice";
 
-/** Call when entering a scored session to offer resume from draft. */
+type RestoreOptions = {
+  /** When true, call onOfferRestore instead of restoring immediately. */
+  prompt?: boolean;
+  onOfferRestore?: (state: MatchState) => void;
+  onNoRestore?: () => void;
+};
+
+/** Restore live scoring from Redux or persisted draft when entering a session. */
 export function useOfferLiveMatchRestore(
   meta: LiveMatchMeta | null,
-  onRestore: (matchState: MatchState) => void
+  onRestore: (matchState: MatchState) => void,
+  options?: RestoreOptions
 ) {
   const { matchState, liveMeta, restoreLiveDraft, setLiveSession } = useCricket();
-  const { offerResume } = useResumePrompt();
   const handledKeyRef = useRef<string | null>(null);
   const onRestoreRef = useRef(onRestore);
   onRestoreRef.current = onRestore;
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   const metaKey = liveMetaKey(meta);
 
   useEffect(() => {
     if (!meta || !metaKey) return;
     if (handledKeyRef.current === metaKey) return;
-    if (matchState.matchStarted) return;
 
-    const ensureSession = () => {
+    const finishWithoutRestore = () => {
+      handledKeyRef.current = metaKey;
       if (!liveMetaMatches(liveMeta, meta)) {
         setLiveSession(meta);
       }
+      optionsRef.current?.onNoRestore?.();
     };
 
-    const local = loadLiveMatchDraftLocal();
-    if (!local?.matchState.matchStarted || !draftMatchesSession(local, meta)) {
+    const restoreNow = (state: MatchState, restoreMeta: LiveMatchMeta) => {
       handledKeyRef.current = metaKey;
-      ensureSession();
+      if (!sessionHasLiveMatch(matchState, liveMeta, meta)) {
+        restoreLiveDraft(state, restoreMeta);
+      } else if (!liveMetaMatches(liveMeta, meta)) {
+        setLiveSession(restoreMeta);
+      }
+      onRestoreRef.current(state);
+    };
+
+    const offerOrRestore = (state: MatchState, restoreMeta: LiveMatchMeta) => {
+      const inProgress =
+        meta.kind === "quick" ? isQuickMatchInProgress(state) : state.matchStarted;
+
+      if (optionsRef.current?.prompt && inProgress) {
+        handledKeyRef.current = metaKey;
+        if (!liveMetaMatches(liveMeta, meta)) {
+          setLiveSession(meta);
+        }
+        optionsRef.current.onOfferRestore?.(state);
+        return;
+      }
+
+      if (state.matchStarted && inProgress) {
+        restoreNow(state, restoreMeta);
+        return;
+      }
+
+      finishWithoutRestore();
+    };
+
+    if (
+      sessionHasLiveMatch(matchState, liveMeta, meta) &&
+      (meta.kind !== "quick" || isQuickMatchInProgress(matchState))
+    ) {
+      offerOrRestore(matchState, liveMeta ?? meta);
       return;
     }
 
-    handledKeyRef.current = metaKey;
-    const ballCount = local.matchState.innings1?.balls.length ?? 0;
+    const draft = loadPersistedLiveDraft();
+    if (draftHasLiveMatch(draft, meta)) {
+      offerOrRestore(draft!.matchState, draft!.meta ?? meta);
+      return;
+    }
 
-    offerResume({
-      meta: local.meta ?? meta,
-      matchState: local.matchState,
-      ballCount,
-      onAccept: () => {
-        restoreLiveDraft(local.matchState, local.meta ?? meta);
-        onRestoreRef.current(local.matchState);
-      },
-      onDecline: () => {
-        ensureSession();
-      },
-    });
+    finishWithoutRestore();
   }, [
     metaKey,
     meta,
-    matchState.matchStarted,
+    matchState,
     liveMeta,
-    offerResume,
     restoreLiveDraft,
     setLiveSession,
   ]);

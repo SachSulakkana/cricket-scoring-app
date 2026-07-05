@@ -1,4 +1,4 @@
-import type { InningsData, MatchConfig, Team } from "./cricket-types";
+import type { InningsData, MatchConfig, Team, SuperOverState } from "./cricket-types";
 import type { TournamentStageConfig } from "./tournament-stage-options";
 
 export interface TournamentBestBatting {
@@ -20,6 +20,9 @@ export interface TournamentMatchSnapshot {
   config: MatchConfig;
   innings1: InningsData | null;
   innings2: InningsData | null;
+  /** Main innings ended level on runs (before any super over). */
+  mainMatchTied?: boolean;
+  superOver?: SuperOverState | null;
 }
 
 export interface TournamentFixtureResult {

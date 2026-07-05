@@ -376,7 +376,7 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
                 onClick={handleConfirmStartMatch}
                 className="w-full cricket-btn-play cricket-btn-play--quick"
               >
-                Start Match
+                Continue to toss
               </Button>
             </CardContent>
           </Card>

@@ -1,4 +1,4 @@
-import type { InningsData, MatchConfig, MatchState, Team } from "./cricket-types";
+import type { InningsData, MatchConfig, MatchState, SuperOverState, Team } from "./cricket-types";
 import type {
   SavedTournament,
   TournamentFixture,
@@ -16,6 +16,12 @@ import { computeStandings } from "./tournament-stage-engine/standings";
 import { formatTournamentNrr } from "./tournament-nrr";
 import { buildTournamentPlayerStats } from "./tournament-stats";
 import { countsAsWicket } from "./cricket-types";
+import { getMatchResult } from "./match-result";
+import { hasPersistedSuperOver } from "./match-snapshot";
+import {
+  getSuperOverTeamTotals,
+  isRegularInningsTied,
+} from "./super-over";
 
 type JsPdfDoc = import("jspdf").jsPDF & {
   lastAutoTable?: { finalY: number };
@@ -30,6 +36,8 @@ export interface MatchPdfInput {
   innings1: InningsData | null;
   innings2: InningsData | null;
   resultLines?: string[];
+  superOver?: SuperOverState | null;
+  mainMatchTied?: boolean;
 }
 
 async function loadPdf() {
@@ -68,16 +76,25 @@ function getRunsWickets(innings: InningsData | null) {
 export function buildQuickMatchResultLines(matchState: MatchState): string[] {
   const i1 = getRunsWickets(matchState.innings1);
   const i2 = getRunsWickets(matchState.innings2);
+  const lines = [
+    `${matchState.team1.name}: ${i1.runs}/${i1.wickets}`,
+    `${matchState.team2.name}: ${i2.runs}/${i2.wickets}`,
+  ];
 
-  if (i1.runs > i2.runs) {
-    return [`${matchState.team1.name} won by ${i1.runs - i2.runs} runs`];
+  if (isRegularInningsTied(matchState)) {
+    lines.push("Main match: tied");
   }
-  if (i2.runs > i1.runs) {
-    const maxWkts = Math.max(matchState.team2.players.length - 1, 0);
-    const wktsInHand = Math.max(maxWkts - i2.wickets, 0);
-    return [`${matchState.team2.name} won by ${wktsInHand} wickets`];
+
+  if (hasPersistedSuperOver(matchState.superOver)) {
+    const so1 = getSuperOverTeamTotals(matchState, matchState.team1.id);
+    const so2 = getSuperOverTeamTotals(matchState, matchState.team2.id);
+    lines.push(
+      `Super over — ${matchState.team1.name}: ${so1.runs}/${so1.wickets}, ${matchState.team2.name}: ${so2.runs}/${so2.wickets}`
+    );
   }
-  return ["Match tied"];
+
+  lines.push(getMatchResult(matchState).text);
+  return lines;
 }
 
 export function buildTournamentMatchResultLines(
@@ -92,10 +109,42 @@ export function buildTournamentMatchResultLines(
     `${teamA.name}: ${result.runsA}/${result.wicketsA}`,
     `${teamB.name}: ${result.runsB}/${result.wicketsB}`,
   ];
+  if (result.scorecard?.mainMatchTied) {
+    lines.push("Main match: tied");
+  }
+  const superOver = result.scorecard?.superOver;
+  if (superOver?.innings1 && result.scorecard) {
+    const { team1, team2 } = result.scorecard;
+    const soTeam1Innings =
+      superOver.innings1.teamId === team1.id
+        ? superOver.innings1
+        : superOver.innings2?.teamId === team1.id
+          ? superOver.innings2
+          : null;
+    const soTeam2Innings =
+      superOver.innings1.teamId === team2.id
+        ? superOver.innings1
+        : superOver.innings2?.teamId === team2.id
+          ? superOver.innings2
+          : null;
+    if (soTeam1Innings && soTeam2Innings) {
+      const t1 = getRunsWickets(soTeam1Innings);
+      const t2 = getRunsWickets(soTeam2Innings);
+      lines.push(
+        `Super over — ${teamA.name}: ${t1.runs}/${t1.wickets}, ${teamB.name}: ${t2.runs}/${t2.wickets}`
+      );
+    }
+  }
   if (result.winnerTeamId) {
+    const viaSuperOver =
+      result.scorecard?.mainMatchTied && superOver?.completed;
     lines.push(
-      `Winner: ${result.winnerTeamId === teamA.id ? teamA.name : teamB.name}`
+      viaSuperOver
+        ? `Winner (super over): ${result.winnerTeamId === teamA.id ? teamA.name : teamB.name}`
+        : `Winner: ${result.winnerTeamId === teamA.id ? teamA.name : teamB.name}`
     );
+  } else if (superOver?.settledAsDraw) {
+    lines.push("Super over tied — match drawn");
   } else {
     lines.push("Result: Match tied");
   }
@@ -129,16 +178,22 @@ function appendInningsSection(
   battingTeam: Team,
   bowlingTeam: Team,
   config: MatchConfig,
-  label: string
+  label: string,
+  options?: { useBallCount?: boolean }
 ): number {
   y = ensureSpace(doc, y, 24);
   const totals = calculateInningsTotal(innings);
-  const overs = calculateOvers(innings.balls, config.ballsPerOver);
+  const legalBalls = innings.balls.filter(
+    (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
+  ).length;
+  const overs = options?.useBallCount
+    ? `${legalBalls}/${config.ballsPerOver} balls`
+    : calculateOvers(innings.balls, config.ballsPerOver);
   const extras = calculateExtras(innings);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text(`${label} — ${totals.runs}/${totals.wickets} (${overs} ov)`, 14, y);
+  doc.text(`${label} — ${totals.runs}/${totals.wickets} (${overs})`, 14, y);
   y += 6;
 
   doc.setFont("helvetica", "normal");
@@ -241,7 +296,9 @@ export async function exportMatchPdf(input: MatchPdfInput) {
     innings: InningsData | null,
     team1: Team,
     team2: Team,
-    inningsLabel: string
+    inningsLabel: string,
+    config: MatchConfig = input.config,
+    options?: { useBallCount?: boolean }
   ) => {
     if (!innings || innings.balls.length === 0) return;
     const { battingTeam, bowlingTeam } = resolveBattingBowlingTeams(
@@ -256,10 +313,25 @@ export async function exportMatchPdf(input: MatchPdfInput) {
       innings,
       battingTeam,
       bowlingTeam,
-      input.config,
-      inningsLabel
+      config,
+      inningsLabel,
+      options
     );
   };
+
+  y = ensureSpace(doc, y, 10);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Original match", 14, y);
+  y += 5;
+  if (input.mainMatchTied) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text("Scores tied on runs", 14, y);
+    y += 6;
+  } else {
+    y += 2;
+  }
 
   renderInnings(
     input.innings1,
@@ -273,6 +345,38 @@ export async function exportMatchPdf(input: MatchPdfInput) {
     input.teamB,
     `${input.teamB.name} 2nd innings`
   );
+
+  const superOver = input.superOver;
+  if (hasPersistedSuperOver(superOver ?? null)) {
+    y = ensureSpace(doc, y, 12);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Super over", 14, y);
+    y += 8;
+    const soConfig = { totalOvers: 1, ballsPerOver: superOver!.ballsPerOver };
+    const firstInnings = superOver!.innings1;
+    const secondInnings = superOver!.innings2;
+    if (firstInnings) {
+      renderInnings(
+        firstInnings,
+        input.teamA,
+        input.teamB,
+        `Super over — ${firstInnings.teamName}`,
+        soConfig,
+        { useBallCount: true }
+      );
+    }
+    if (secondInnings) {
+      renderInnings(
+        secondInnings,
+        input.teamA,
+        input.teamB,
+        `Super over — ${secondInnings.teamName}`,
+        soConfig,
+        { useBallCount: true }
+      );
+    }
+  }
 
   const filename = sanitizeFilename(
     `${input.teamA.name}-vs-${input.teamB.name}-scorecard`
@@ -292,6 +396,8 @@ export async function exportQuickMatchPdf(matchState: MatchState) {
     innings1: matchState.innings1,
     innings2: matchState.innings2,
     resultLines: buildQuickMatchResultLines(matchState),
+    mainMatchTied: isRegularInningsTied(matchState),
+    superOver: matchState.superOver,
   });
 }
 
@@ -316,6 +422,8 @@ export async function exportTournamentMatchPdf(options: {
       options.teamB,
       options.result
     ),
+    mainMatchTied: snapshot?.mainMatchTied,
+    superOver: snapshot?.superOver,
   });
 }
 

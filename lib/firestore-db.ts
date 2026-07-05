@@ -460,6 +460,28 @@ export interface DbQuickMatchListItem {
   createdAt: string;
 }
 
+export interface DbQuickMatchDetail {
+  id: string;
+  label: string;
+  createdAt: string;
+  stateJson: string;
+}
+
+export async function getQuickMatchById(
+  id: string
+): Promise<DbQuickMatchDetail | null> {
+  const snap = await getDb().collection(COLLECTIONS.savedMatches).doc(id).get();
+  if (!snap.exists) return null;
+  const data = snap.data();
+  if (!data || data.kind !== "quick") return null;
+  return {
+    id: data.id as string,
+    label: (data.label as string) || "Quick match",
+    createdAt: data.created_at as string,
+    stateJson: data.state_json as string,
+  };
+}
+
 export async function listQuickMatches(limit = 50): Promise<DbQuickMatchListItem[]> {
   const rows = await listCollection<{
     id: string;

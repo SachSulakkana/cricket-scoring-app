@@ -3,8 +3,9 @@
 import { Fragment, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { InningsData, Team } from "@/lib/cricket-types";
+import type { InningsData } from "@/lib/cricket-types";
 import type { TournamentMatchSnapshot } from "@/lib/roster-storage";
+import { hasPersistedSuperOver } from "@/lib/match-snapshot";
 import {
   calculateBatting,
   calculateBowling,
@@ -31,8 +32,14 @@ export default function TournamentMatchScorecardView({
     setExpandedBowlerKeys((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const renderInningsScorecard = (innings: InningsData | null) => {
+  const renderInningsScorecard = (
+    innings: InningsData | null,
+    ballsPerOverOverride?: number,
+    titleSuffix?: string
+  ) => {
     if (!innings) return null;
+
+    const ballsPerOverForInnings = ballsPerOverOverride ?? ballsPerOver;
 
     const { battingTeam, bowlingTeam } = resolveBattingBowlingTeams(
       innings,
@@ -41,9 +48,9 @@ export default function TournamentMatchScorecardView({
     );
     const totals = calculateInningsTotal(innings);
     const battingRows = calculateBatting(innings, battingTeam);
-    const bowlingRows = calculateBowling(innings, bowlingTeam, ballsPerOver);
+    const bowlingRows = calculateBowling(innings, bowlingTeam, ballsPerOverForInnings);
     const extras = calculateExtras(innings);
-    const title = `${innings.teamName} innings`;
+    const title = titleSuffix ?? `${innings.teamName} innings`;
 
     return (
       <Card
@@ -54,7 +61,11 @@ export default function TournamentMatchScorecardView({
           <CardTitle className="text-white flex justify-between items-center gap-3">
             <span className="truncate">{title}</span>
             <span className="text-[var(--cricket-gold)] shrink-0">
-              {totals.runs}/{totals.wickets} ({calculateOvers(innings.balls, ballsPerOver)})
+              {totals.runs}/{totals.wickets} (
+              {ballsPerOverOverride
+                ? `${innings.balls.filter((b) => b.extra !== "wide" && b.extra !== "no-ball").length}/${ballsPerOverForInnings} balls`
+                : calculateOvers(innings.balls, ballsPerOverForInnings)}
+              )
             </span>
           </CardTitle>
         </CardHeader>
@@ -131,7 +142,7 @@ export default function TournamentMatchScorecardView({
                       const ballByBall = getBowlerBallByBall(innings, row.name);
                       const overs = calculateOvers(
                         innings.balls.filter((b) => b.bowlerName === row.name),
-                        ballsPerOver
+                        ballsPerOverForInnings
                       );
                       return (
                         <Fragment key={row.name}>
@@ -179,9 +190,52 @@ export default function TournamentMatchScorecardView({
   };
 
   return (
-    <div className="space-y-4">
-      {renderInningsScorecard(snapshot.innings1)}
-      {renderInningsScorecard(snapshot.innings2)}
+    <div className="space-y-6">
+      <section className="space-y-4">
+        <div className="text-center sm:text-left">
+          <p className="cricket-eyebrow mb-1">Original match</p>
+          {snapshot.mainMatchTied ? (
+            <p className="text-sm font-semibold text-[var(--cricket-gold)]">
+              Scores tied — match level on runs
+            </p>
+          ) : (
+            <p className="text-sm text-[oklch(0.58_0.03_255)]">
+              Main innings scorecard
+            </p>
+          )}
+        </div>
+        {renderInningsScorecard(
+          snapshot.innings1,
+          undefined,
+          `${snapshot.team1.name} · 1st innings`
+        )}
+        {renderInningsScorecard(
+          snapshot.innings2,
+          undefined,
+          `${snapshot.team2.name} · 2nd innings`
+        )}
+      </section>
+
+      {hasPersistedSuperOver(snapshot.superOver) && snapshot.superOver ? (
+        <section className="space-y-4 pt-2 border-t border-[oklch(0.32_0.04_255)]">
+          <div className="text-center sm:text-left">
+            <p className="cricket-eyebrow mb-1">Super over</p>
+            <p className="text-sm text-[oklch(0.58_0.03_255)]">
+              Tie-breaker · {snapshot.superOver.ballsPerOver} balls per team
+            </p>
+          </div>
+          {renderInningsScorecard(
+            snapshot.superOver.innings1,
+            snapshot.superOver.ballsPerOver,
+            `${snapshot.superOver.innings1?.teamName ?? "Team"} · super over`
+          )}
+          {renderInningsScorecard(
+            snapshot.superOver.innings2,
+            snapshot.superOver.ballsPerOver,
+            `${snapshot.superOver.innings2?.teamName ?? "Team"} · super over`
+          )}
+        </section>
+      ) : null}
     </div>
   );
 }

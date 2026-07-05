@@ -243,21 +243,29 @@ export function CricketLivePill() {
 
 export function CricketMatchHeader({
   overs,
+  ballCount,
   innings,
   teamName,
   children,
 }: {
-  overs: number | string;
+  overs?: number | string;
+  /** When set, shows "N ball(s)" instead of "X Over". */
+  ballCount?: number;
   innings: number;
   teamName: string;
   children?: React.ReactNode;
 }) {
+  const formatLabel =
+    ballCount != null
+      ? `${ballCount} ${ballCount === 1 ? "ball" : "balls"}`
+      : `${overs} Over`;
+
   return (
     <div className="cricket-match-header space-y-3">
       <div className="flex items-center justify-center gap-3">
         <CricketLivePill />
         <span className="cricket-eyebrow mb-0">
-          {overs} Over · Innings {innings}
+          {formatLabel} · Innings {innings}
         </span>
       </div>
       <h1 className="cricket-display text-2xl sm:text-3xl font-bold text-[var(--cricket-cream)]">

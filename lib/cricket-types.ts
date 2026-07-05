@@ -94,4 +94,18 @@ export interface MatchState {
   innings2: InningsData | null;
   currentInnings: 1 | 2;
   matchStarted: boolean;
+  superOver: SuperOverState | null;
+}
+
+export interface SuperOverState {
+  ballsPerOver: number;
+  /** Team that bats first in the super over (team2 from the main match). */
+  firstBattingTeamId: string;
+  innings1: InningsData | null;
+  innings2: InningsData | null;
+  currentInnings: 1 | 2;
+  active: boolean;
+  completed: boolean;
+  /** Main match ended as a tie without a super over. */
+  settledAsDraw: boolean;
 }

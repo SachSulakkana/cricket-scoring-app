@@ -16,10 +16,17 @@ import {
 } from "./cricket-types";
 import {
   clearLiveMatchDraftLocal,
+  clearLiveMatchDraftPersistence,
   clearLiveMatchDraftRemote,
   saveLiveMatchDraftLocal,
   saveLiveMatchDraftRemote,
 } from "./live-match-draft";
+import {
+  getActiveScoringContext,
+  type ActiveScoringContext,
+} from "./scoring-context";
+import { SUPER_OVER_BALLS } from "./super-over";
+import { getStore } from "./store/store";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import {
   initialMatchState,
@@ -33,6 +40,8 @@ interface CricketContextType {
   setLiveSession: (meta: LiveMatchMeta | null) => void;
   restoreLiveDraft: (matchState: MatchState, meta: LiveMatchMeta | null) => void;
   clearLiveDraft: () => void;
+  /** Stop persisting live draft; keep Redux for post-match summary. */
+  finalizeLiveMatch: () => void;
   setTeam1: (team: Team) => void;
   setTeam2: (team: Team) => void;
   setMatchConfig: (config: MatchConfig) => void;
@@ -47,6 +56,11 @@ interface CricketContextType {
   setNextBowler: (bowlerId: string) => void;
   setNextBatsman: (playerId: string, isStriker: boolean) => void;
   swapStrike: () => void;
+  acceptMatchDraw: () => void;
+  initSuperOver: (firstBattingTeamId: string, ballsPerOver?: number) => void;
+  switchSuperOverInnings: () => void;
+  completeSuperOver: () => void;
+  getActiveScoringContext: () => ActiveScoringContext | null;
 }
 
 const CricketContext = createContext<CricketContextType | undefined>(undefined);
@@ -56,21 +70,39 @@ export function CricketProvider({ children }: { children: React.ReactNode }) {
   const matchState = useAppSelector((s) => s.match.matchState);
   const liveMeta = useAppSelector((s) => s.match.meta);
   const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestState = useRef({ matchState, liveMeta });
+  latestState.current = { matchState, liveMeta };
 
   const persistDraft = useCallback((state: MatchState, meta: LiveMatchMeta | null) => {
     saveLiveMatchDraftLocal(state, meta);
     void saveLiveMatchDraftRemote(state, meta);
   }, []);
 
+  const flushPersistDraft = useCallback(() => {
+    if (persistTimer.current) {
+      clearTimeout(persistTimer.current);
+      persistTimer.current = null;
+    }
+    const { matchState: state, liveMeta: meta } = latestState.current;
+    persistDraft(state, meta);
+  }, [persistDraft]);
+
   useEffect(() => {
     if (persistTimer.current) clearTimeout(persistTimer.current);
+    if (!matchState.matchStarted) return;
     persistTimer.current = setTimeout(() => {
       persistDraft(matchState, liveMeta);
-    }, 400);
+    }, 150);
     return () => {
       if (persistTimer.current) clearTimeout(persistTimer.current);
     };
   }, [matchState, liveMeta, persistDraft]);
+
+  useEffect(() => {
+    const onPageHide = () => flushPersistDraft();
+    window.addEventListener("pagehide", onPageHide);
+    return () => window.removeEventListener("pagehide", onPageHide);
+  }, [flushPersistDraft]);
 
   const setLiveSession = useCallback(
     (meta: LiveMatchMeta | null) => {
@@ -87,10 +119,22 @@ export function CricketProvider({ children }: { children: React.ReactNode }) {
   );
 
   const clearLiveDraft = useCallback(() => {
+    if (persistTimer.current) {
+      clearTimeout(persistTimer.current);
+      persistTimer.current = null;
+    }
     dispatch(matchActions.resetLiveMatch());
     clearLiveMatchDraftLocal();
     void clearLiveMatchDraftRemote();
   }, [dispatch]);
+
+  const finalizeLiveMatch = useCallback(() => {
+    if (persistTimer.current) {
+      clearTimeout(persistTimer.current);
+      persistTimer.current = null;
+    }
+    clearLiveMatchDraftPersistence();
+  }, []);
 
   const setTeam1 = useCallback(
     (team: Team) => dispatch(matchActions.setTeam1(team)),
@@ -104,10 +148,11 @@ export function CricketProvider({ children }: { children: React.ReactNode }) {
     (config: MatchConfig) => dispatch(matchActions.setMatchConfig(config)),
     [dispatch]
   );
-  const startMatch = useCallback(
-    () => dispatch(matchActions.startMatch()),
-    [dispatch]
-  );
+  const startMatch = useCallback(() => {
+    dispatch(matchActions.startMatch());
+    const { match } = getStore().getState();
+    persistDraft(match.matchState, match.meta);
+  }, [dispatch, persistDraft]);
   const addBall = useCallback(
     (ball: BallData) => dispatch(matchActions.addBall(ball)),
     [dispatch]
@@ -156,6 +201,35 @@ export function CricketProvider({ children }: { children: React.ReactNode }) {
     () => dispatch(matchActions.swapStrike()),
     [dispatch]
   );
+  const acceptMatchDraw = useCallback(
+    () => dispatch(matchActions.acceptMatchDraw()),
+    [dispatch]
+  );
+  const initSuperOver = useCallback(
+    (firstBattingTeamId: string, ballsPerOver?: number) => {
+      dispatch(
+        matchActions.initSuperOver({
+          firstBattingTeamId,
+          ballsPerOver: ballsPerOver ?? SUPER_OVER_BALLS,
+        })
+      );
+      const { match } = getStore().getState();
+      persistDraft(match.matchState, match.meta);
+    },
+    [dispatch, persistDraft]
+  );
+  const switchSuperOverInnings = useCallback(
+    () => dispatch(matchActions.switchSuperOverInnings()),
+    [dispatch]
+  );
+  const completeSuperOver = useCallback(
+    () => dispatch(matchActions.completeSuperOver()),
+    [dispatch]
+  );
+  const getActiveScoringContextFn = useCallback(
+    () => getActiveScoringContext(matchState),
+    [matchState]
+  );
 
   const value: CricketContextType = {
     matchState,
@@ -163,6 +237,7 @@ export function CricketProvider({ children }: { children: React.ReactNode }) {
     setLiveSession,
     restoreLiveDraft,
     clearLiveDraft,
+    finalizeLiveMatch,
     setTeam1,
     setTeam2,
     setMatchConfig,
@@ -177,6 +252,11 @@ export function CricketProvider({ children }: { children: React.ReactNode }) {
     setNextBowler,
     setNextBatsman,
     swapStrike,
+    acceptMatchDraw,
+    initSuperOver,
+    switchSuperOverInnings,
+    completeSuperOver,
+    getActiveScoringContext: getActiveScoringContextFn,
   };
 
   return (

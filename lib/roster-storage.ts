@@ -1,4 +1,4 @@
-import { InningsData, MatchConfig, Player, Team } from "./cricket-types";
+import { InningsData, MatchConfig, Player, Team, SuperOverState } from "./cricket-types";
 import { migrateLegacyTournamentTemplates } from "@/lib/roster-migrate";
 import { withRosterRollback } from "@/lib/roster-snapshot";
 import { resolveTeamPlayers, resolveTeamsFromRoster } from "@/lib/team-roster";
@@ -84,6 +84,26 @@ function normalizeInningsData(raw: unknown): InningsData | null {
   };
 }
 
+function normalizeSuperOverState(raw: unknown): SuperOverState | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const r = raw as Partial<SuperOverState>;
+  if (typeof r.ballsPerOver !== "number" || typeof r.firstBattingTeamId !== "string") {
+    return undefined;
+  }
+  const innings1 = normalizeInningsData(r.innings1);
+  if (!innings1) return undefined;
+  return {
+    ballsPerOver: r.ballsPerOver,
+    firstBattingTeamId: r.firstBattingTeamId,
+    innings1,
+    innings2: normalizeInningsData(r.innings2),
+    currentInnings: r.currentInnings === 2 ? 2 : 1,
+    active: Boolean(r.active),
+    completed: Boolean(r.completed),
+    settledAsDraw: Boolean(r.settledAsDraw),
+  };
+}
+
 function normalizeMatchSnapshot(raw: unknown): TournamentMatchSnapshot | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const r = raw as Partial<TournamentMatchSnapshot>;
@@ -97,6 +117,8 @@ function normalizeMatchSnapshot(raw: unknown): TournamentMatchSnapshot | undefin
     },
     innings1: normalizeInningsData(r.innings1),
     innings2: normalizeInningsData(r.innings2),
+    mainMatchTied: Boolean(r.mainMatchTied),
+    superOver: normalizeSuperOverState(r.superOver),
   };
 }
 

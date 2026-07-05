@@ -8,7 +8,13 @@ import {
 } from "@/components/cricket-shell";
 import { useCricket } from "@/lib/cricket-context";
 import { countsAsWicket } from "@/lib/cricket-types";
+import { isInningsComplete } from "@/lib/match-result";
+import {
+  isRegularInningsTied,
+  isSuperOverInningsTied,
+} from "@/lib/super-over";
 import { cn } from "@/lib/utils";
+import { getSuperOverInningsForTeam } from "@/lib/super-over";
 import BallEntry from "./BallEntry";
 import Scoresheet from "./Scoresheet";
 import BatsmanSelector from "./BatsmanSelector";
@@ -17,52 +23,47 @@ import ConfirmActionDialog from "./ConfirmActionDialog";
 
 interface ScoringBoardProps {
   onMatchEnd: () => void;
+  onMatchTied?: () => void;
   onViewScorecard: () => void;
   onInnings1AutoEnd: () => void;
+  onSuperOverInnings1End?: () => void;
   lockActionsUntilUndo?: boolean;
   onUnlockAfterUndo?: () => void;
-  /** When set, shows a rain-abandon control (tournament matches). */
   onEndDueToRain?: () => void;
-  /** Optional content above the score header (e.g. flow stepper). */
   banner?: ReactNode;
 }
 
 export default function ScoringBoard({
   onMatchEnd,
+  onMatchTied,
   onViewScorecard,
   onInnings1AutoEnd,
+  onSuperOverInnings1End,
   lockActionsUntilUndo = false,
   onUnlockAfterUndo,
   onEndDueToRain,
   banner,
 }: ScoringBoardProps) {
-  const { matchState, setOpeningBatsmen, setOpeningBowler } = useCricket();
-  const currentInnings =
-    matchState.currentInnings === 1 ? matchState.innings1 : matchState.innings2;
+  const { matchState, getActiveScoringContext, setOpeningBatsmen, setOpeningBowler } =
+    useCricket();
+  const scoring = getActiveScoringContext();
 
   const [step, setStep] = useState<"batsmen" | "bowler" | "scoring">("batsmen");
   const [hasAutoEnded, setHasAutoEnded] = useState(false);
   const [showRainConfirm, setShowRainConfirm] = useState(false);
 
-  if (!matchState.matchStarted || !currentInnings) return null;
+  if (!matchState.matchStarted || !scoring) return null;
 
-  const getBattingTeam = () =>
-    matchState.currentInnings === 1 ? matchState.team1 : matchState.team2;
+  const { currentInnings, battingTeam, bowlingTeam, isSuperOver } = scoring;
 
-  const getBowlingTeam = () =>
-    matchState.currentInnings === 1 ? matchState.team2 : matchState.team1;
-
-  const battingTeam = getBattingTeam();
-  const bowlingTeam = getBowlingTeam();
-
-  const getInningsRuns = (innings: typeof matchState.innings1) => {
+  const getInningsRuns = (innings: typeof scoring.innings1) => {
     if (!innings) return 0;
     return innings.balls.reduce((total, ball) => {
       return total + ball.runs + (ball.extra !== "none" ? ball.extraRuns : 0);
     }, 0);
   };
 
-  const getLegalBalls = (innings: typeof matchState.innings1) => {
+  const getLegalBalls = (innings: typeof scoring.innings1) => {
     if (!innings) return 0;
     return innings.balls.filter(
       (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
@@ -70,8 +71,7 @@ export default function ScoringBoard({
   };
 
   const getOversTextFromBalls = (balls: number) => {
-    const ballsPerOver = matchState.config?.ballsPerOver || 6;
-    return `${Math.floor(balls / ballsPerOver)}.${balls % ballsPerOver}`;
+    return `${Math.floor(balls / scoring.config.ballsPerOver)}.${balls % scoring.config.ballsPerOver}`;
   };
 
   const handleBatsmenSubmit = (strikerId: string, nonStrikerId: string) => {
@@ -86,31 +86,45 @@ export default function ScoringBoard({
 
   useEffect(() => {
     setHasAutoEnded(false);
-  }, [matchState.currentInnings]);
+    setStep(
+      currentInnings.strikerPlayerId && currentInnings.nonStrikerPlayerId
+        ? currentInnings.currentBowlerPlayerId
+          ? "scoring"
+          : "bowler"
+        : "batsmen"
+    );
+  }, [
+    scoring.currentInningsNumber,
+    isSuperOver,
+    currentInnings.strikerPlayerId,
+    currentInnings.nonStrikerPlayerId,
+    currentInnings.currentBowlerPlayerId,
+  ]);
 
   useEffect(() => {
-    if (!currentInnings || !matchState.config || lockActionsUntilUndo) return;
+    if (!currentInnings || lockActionsUntilUndo) return;
 
-    const legalBalls = currentInnings.balls.filter(
-      (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
-    ).length;
-    const wickets = currentInnings.balls.filter((ball) => countsAsWicket(ball.dismissal)).length;
-    const maxWickets = Math.max(getBattingTeam().players.length - 1, 0);
-    const maxLegalBalls = matchState.config.totalOvers * matchState.config.ballsPerOver;
-    const innings1Runs = getInningsRuns(matchState.innings1);
-    const innings2Runs = getInningsRuns(matchState.innings2);
+    const inningsComplete = isInningsComplete(
+      matchState,
+      currentInnings,
+      scoring.maxWickets
+    );
 
-    const isOversFinished = legalBalls >= maxLegalBalls;
-    const isAllOut = wickets >= maxWickets;
-    const isTargetReached = matchState.currentInnings === 2 && innings2Runs > innings1Runs;
-
-    const isInningsEnd = isOversFinished || isAllOut || isTargetReached;
-
-    if (isInningsEnd) {
+    if (inningsComplete) {
       if (!hasAutoEnded) {
         setHasAutoEnded(true);
-        if (matchState.currentInnings === 1) {
+        if (isSuperOver) {
+          if (scoring.currentInningsNumber === 1) {
+            onSuperOverInnings1End?.();
+          } else if (isSuperOverInningsTied(matchState)) {
+            onMatchTied?.();
+          } else {
+            onMatchEnd();
+          }
+        } else if (scoring.currentInningsNumber === 1) {
           onInnings1AutoEnd();
+        } else if (isRegularInningsTied(matchState)) {
+          onMatchTied?.();
         } else {
           onMatchEnd();
         }
@@ -123,22 +137,51 @@ export default function ScoringBoard({
     }
   }, [
     currentInnings,
-    matchState.config,
-    matchState.currentInnings,
+    matchState,
+    scoring.currentInningsNumber,
+    scoring.maxWickets,
     hasAutoEnded,
+    isSuperOver,
     lockActionsUntilUndo,
     onInnings1AutoEnd,
+    onSuperOverInnings1End,
     onMatchEnd,
+    onMatchTied,
   ]);
 
-  // Show batsmen selection
+  const team1PanelInnings = isSuperOver
+    ? matchState.superOver
+      ? getSuperOverInningsForTeam(matchState.superOver, scoring.team1.id)
+      : null
+    : scoring.innings1;
+  const team2PanelInnings = isSuperOver
+    ? matchState.superOver
+      ? getSuperOverInningsForTeam(matchState.superOver, scoring.team2.id)
+      : null
+    : scoring.innings2;
+
+  const matchHeaderProps = isSuperOver
+    ? { ballCount: scoring.config.ballsPerOver }
+    : { overs: scoring.config.totalOvers };
+
   if (step === "batsmen" && !currentInnings.strikerPlayerId) {
     return (
       <CricketPage>
         <div className="space-y-6">
+          {isSuperOver ? (
+            <div className="rounded-md border border-[oklch(0.55_0.12_82/0.45)] bg-[oklch(0.28_0.08_75/0.2)] px-4 py-3 text-center">
+              <p className="cricket-display text-sm font-bold uppercase tracking-widest text-[var(--cricket-gold)]">
+                Super over · {scoring.config.ballsPerOver}{" "}
+                {scoring.config.ballsPerOver === 1 ? "ball" : "balls"}
+              </p>
+              <p className="mt-1 text-sm text-[oklch(0.65_0.03_255)]">
+                {battingTeam.name} batting
+              </p>
+            </div>
+          ) : null}
           <CricketMatchHeader
-            overs={matchState.config?.totalOvers ?? "—"}
-            innings={matchState.currentInnings}
+            {...matchHeaderProps}
+            innings={scoring.currentInningsNumber}
             teamName={battingTeam.name}
           />
           <BatsmanSelector
@@ -150,127 +193,174 @@ export default function ScoringBoard({
     );
   }
 
-  // Show bowler selection
   if (step === "bowler" && !currentInnings.currentBowlerPlayerId) {
     return (
       <CricketPage>
         <div className="space-y-6">
+          {isSuperOver ? (
+            <div className="rounded-md border border-[oklch(0.55_0.12_82/0.45)] bg-[oklch(0.28_0.08_75/0.2)] px-4 py-3 text-center">
+              <p className="cricket-display text-sm font-bold uppercase tracking-widest text-[var(--cricket-gold)]">
+                Super over · {scoring.config.ballsPerOver}{" "}
+                {scoring.config.ballsPerOver === 1 ? "ball" : "balls"}
+              </p>
+            </div>
+          ) : null}
           <CricketMatchHeader
-            overs={matchState.config?.totalOvers ?? "—"}
-            innings={matchState.currentInnings}
+            {...matchHeaderProps}
+            innings={scoring.currentInningsNumber}
             teamName={battingTeam.name}
           />
           <BowlerSelector
             players={bowlingTeam.players}
             onSubmit={handleBowlerSubmit}
             isOpening={true}
+            singleBowlerForInnings={isSuperOver}
           />
         </div>
       </CricketPage>
     );
   }
 
-  // Show scoring board
   return (
     <CricketPage wide className="cricket-scoring-page">
       <div className="space-y-6">
         {banner}
+        {isSuperOver ? (
+          <div className="rounded-md border border-[oklch(0.55_0.12_82/0.45)] bg-[oklch(0.28_0.08_75/0.2)] px-4 py-3 text-center">
+            <p className="cricket-display text-sm font-bold uppercase tracking-widest text-[var(--cricket-gold)]">
+              Super over · {scoring.config.ballsPerOver}{" "}
+              {scoring.config.ballsPerOver === 1 ? "ball" : "balls"}
+            </p>
+          </div>
+        ) : null}
         <div className="cricket-score-sticky">
-        <CricketMatchHeader
-          overs={matchState.config?.totalOvers ?? "—"}
-          innings={matchState.currentInnings}
-          teamName={currentInnings.teamName}
-        >
-          <div className="flex justify-center pt-1">
-            <div className="cricket-tab-bar">
-              <span className="cricket-tab cricket-tab--active">Live</span>
-              <button
-                type="button"
-                onClick={onViewScorecard}
-                disabled={lockActionsUntilUndo}
-                className="cricket-tab disabled:opacity-40"
-              >
-                Scorecard
-              </button>
+          <CricketMatchHeader
+            {...matchHeaderProps}
+            innings={scoring.currentInningsNumber}
+            teamName={currentInnings.teamName}
+          >
+            <div className="flex justify-center pt-1">
+              <div className="cricket-tab-bar">
+                <span className="cricket-tab cricket-tab--active">Live</span>
+                <button
+                  type="button"
+                  onClick={onViewScorecard}
+                  disabled={lockActionsUntilUndo}
+                  className="cricket-tab disabled:opacity-40"
+                >
+                  Scorecard
+                </button>
+              </div>
+            </div>
+            {lockActionsUntilUndo && (
+              <p className="text-[oklch(0.75_0.12_75)] text-sm mt-2 font-medium">
+                Undo last ball to continue scoring.
+              </p>
+            )}
+          </CricketMatchHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              className={cn(
+                "cricket-team-panel",
+                battingTeam.id === scoring.team1.id && "cricket-team-panel--batting"
+              )}
+            >
+              <p className="cricket-panel-label text-[oklch(0.65_0.08_300)] mb-1">
+                {scoring.team1.name}
+                {isSuperOver ? " (SO)" : ""}
+              </p>
+              {team1PanelInnings && (
+                <CricketScoreDisplay size="lg">
+                  {(() => {
+                    let runs = 0;
+                    team1PanelInnings.balls.forEach((b) => {
+                      runs += b.runs + (b.extra !== "none" ? b.extraRuns : 0);
+                    });
+                    return `${runs}/${team1PanelInnings.balls.filter((b) => countsAsWicket(b.dismissal)).length}`;
+                  })()}
+                </CricketScoreDisplay>
+              )}
+            </div>
+
+            <div
+              className={cn(
+                "cricket-team-panel",
+                battingTeam.id === scoring.team2.id && "cricket-team-panel--batting"
+              )}
+            >
+              <p className="cricket-panel-label text-[oklch(0.72_0.1_75)] mb-1">
+                {scoring.team2.name}
+                {isSuperOver ? " (SO)" : ""}
+              </p>
+              {team2PanelInnings && (
+                <CricketScoreDisplay size="lg">
+                  {(() => {
+                    let runs = 0;
+                    team2PanelInnings.balls.forEach((b) => {
+                      runs += b.runs + (b.extra !== "none" ? b.extraRuns : 0);
+                    });
+                    return `${runs}/${team2PanelInnings.balls.filter((b) => countsAsWicket(b.dismissal)).length}`;
+                  })()}
+                </CricketScoreDisplay>
+              )}
             </div>
           </div>
-          {lockActionsUntilUndo && (
-            <p className="text-[oklch(0.75_0.12_75)] text-sm mt-2 font-medium">
-              Undo last ball to continue scoring.
-            </p>
-          )}
-        </CricketMatchHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div
-            className={cn(
-              "cricket-team-panel",
-              matchState.currentInnings === 1 && "cricket-team-panel--batting"
-            )}
-          >
-            <p className="cricket-panel-label text-[oklch(0.65_0.08_300)] mb-1">
-              {matchState.team1.name}
-            </p>
-            {matchState.innings1 && (
-              <CricketScoreDisplay size="lg">
-                  {(() => {
-                    let runs = 0;
-                    matchState.innings1.balls.forEach((b) => {
-                      runs += b.runs + (b.extra !== "none" ? b.extraRuns : 0);
-                    });
-                    return `${runs}/${matchState.innings1.balls.filter((b) => countsAsWicket(b.dismissal)).length}`;
-                  })()}
-              </CricketScoreDisplay>
-            )}
-          </div>
+          {!isSuperOver &&
+            scoring.currentInningsNumber === 2 &&
+            scoring.innings1 &&
+            scoring.innings2 && (
+              <div className="cricket-chase-banner">
+                {(() => {
+                  const target = getInningsRuns(scoring.innings1) + 1;
+                  const runsNeeded = Math.max(
+                    target - getInningsRuns(scoring.innings2),
+                    0
+                  );
+                  const totalLegalBalls =
+                    scoring.config.totalOvers * scoring.config.ballsPerOver;
+                  const ballsRemaining = Math.max(
+                    totalLegalBalls - getLegalBalls(scoring.innings2),
+                    0
+                  );
 
-          <div
-            className={cn(
-              "cricket-team-panel",
-              matchState.currentInnings === 2 && "cricket-team-panel--batting"
+                  return (
+                    <>
+                      {scoring.team2.name} needs {runsNeeded} runs in{" "}
+                      {getOversTextFromBalls(ballsRemaining)} overs
+                    </>
+                  );
+                })()}
+              </div>
             )}
-          >
-            <p className="cricket-panel-label text-[oklch(0.72_0.1_75)] mb-1">
-              {matchState.team2.name}
-            </p>
-            {matchState.innings2 && (
-              <CricketScoreDisplay size="lg">
-                  {(() => {
-                    let runs = 0;
-                    matchState.innings2.balls.forEach((b) => {
-                      runs += b.runs + (b.extra !== "none" ? b.extraRuns : 0);
-                    });
-                    return `${runs}/${matchState.innings2.balls.filter((b) => countsAsWicket(b.dismissal)).length}`;
-                  })()}
-              </CricketScoreDisplay>
-            )}
-          </div>
-        </div>
 
-        {matchState.currentInnings === 2 && matchState.innings1 && matchState.config && (
-          <div className="cricket-chase-banner">
-              {(() => {
-                const target = getInningsRuns(matchState.innings1) + 1;
-                const runsNeeded = Math.max(target - getInningsRuns(matchState.innings2), 0);
-                const totalLegalBalls =
-                  matchState.config!.totalOvers * matchState.config!.ballsPerOver;
-                const ballsRemaining = Math.max(
-                  totalLegalBalls - getLegalBalls(matchState.innings2),
+          {isSuperOver &&
+            scoring.currentInningsNumber === 2 &&
+            scoring.innings1 &&
+            scoring.innings2 && (
+              <div className="cricket-chase-banner">
+                {battingTeam.name} needs{" "}
+                {Math.max(
+                  getInningsRuns(scoring.innings1) + 1 -
+                    getInningsRuns(scoring.innings2),
                   0
-                );
-
-                return (
-                  <>
-                    {matchState.team2.name} needs {runsNeeded} runs in{" "}
-                    {getOversTextFromBalls(ballsRemaining)} overs
-                  </>
-                );
-              })()}
-          </div>
-        )}
+                )}{" "}
+                runs in{" "}
+                {Math.max(
+                  scoring.config.ballsPerOver - getLegalBalls(scoring.innings2),
+                  0
+                )}{" "}
+                {Math.max(
+                  scoring.config.ballsPerOver - getLegalBalls(scoring.innings2),
+                  0
+                ) === 1
+                  ? "ball"
+                  : "balls"}
+              </div>
+            )}
         </div>
 
-        {/* Main Content */}
         <div className="cricket-scoring-layout grid grid-cols-1 gap-6 md:grid-cols-3">
           <div className="md:col-span-2 min-w-0">
             <BallEntry
@@ -285,7 +375,7 @@ export default function ScoringBoard({
           </div>
         </div>
 
-        {onEndDueToRain && (
+        {onEndDueToRain && !isSuperOver && (
           <button
             type="button"
             onClick={() => setShowRainConfirm(true)}

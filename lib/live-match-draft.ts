@@ -42,6 +42,12 @@ export function clearLiveMatchDraftLocal() {
   localStorage.removeItem(LOCAL_DRAFT_KEY);
 }
 
+/** Stop live sync while keeping in-memory Redux state for summary screens. */
+export function clearLiveMatchDraftPersistence() {
+  clearLiveMatchDraftLocal();
+  void clearLiveMatchDraftRemote();
+}
+
 export async function saveLiveMatchDraftRemote(
   matchState: MatchState,
   meta: LiveMatchMeta | null

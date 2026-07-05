@@ -41,6 +41,10 @@ export function getTournamentPlayStatus(
   return "live";
 }
 
+export function isTournamentStarted(tournament: SavedTournament): boolean {
+  return getTournamentPlayStatus(tournament) !== "setup";
+}
+
 export function getTournamentResumeRoute(tournament: SavedTournament): string {
   const status = getTournamentPlayStatus(tournament);
   if (status === "setup") {

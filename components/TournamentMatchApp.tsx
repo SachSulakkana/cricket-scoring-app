@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import BatsmanSelector from "@/components/BatsmanSelector";
 import BowlerSelector from "@/components/BowlerSelector";
 import FullScorecard from "@/components/FullScorecard";
@@ -25,7 +25,63 @@ import TournamentFlowSteps from "@/components/TournamentFlowSteps";
 import ExportPdfButton from "@/components/ExportPdfButton";
 import { appToast } from "@/lib/app-toast";
 import { exportTournamentMatchPdf } from "@/lib/pdf-export";
-import type { LiveMatchMeta } from "@/lib/store/match-slice";
+import TieMatchDialog from "@/components/TieMatchDialog";
+import SuperOverSetupDialog from "@/components/SuperOverSetupDialog";
+import MatchTossSetup from "@/components/MatchTossSetup";
+import { getMatchResult } from "@/lib/match-result";
+import { getSuperOverWinnerTeamId } from "@/lib/super-over";
+import { buildPersistedMatchSnapshot } from "@/lib/match-snapshot";
+import {
+  draftHasLiveMatch,
+  loadPersistedLiveDraft,
+  deriveBattingBowlingTeams,
+  deriveTournamentMatchPage,
+  shouldShowInningsBreak,
+} from "@/lib/match-session-restore";
+import { liveMetaMatches, type LiveMatchMeta } from "@/lib/store/match-slice";
+import { getStore } from "@/lib/store/store";
+
+function applyTournamentMatchRestore(
+  restored: MatchState,
+  teamA: Team,
+  teamB: Team,
+  setPage: (page: TournamentMatchPage) => void,
+  setBattingFirstTeam: (team: Team) => void,
+  setBowlingFirstTeam: (team: Team) => void,
+  setLineupStep: (step: "batsmen" | "bowler" | "confirm") => void,
+  setInnings1AutoEnded: (value: boolean) => void,
+  setRequireUndoAfterInningsBreak: (value: boolean) => void
+) {
+  const { battingFirstTeam, bowlingFirstTeam } = deriveBattingBowlingTeams(
+    restored,
+    teamA,
+    teamB
+  );
+  setBattingFirstTeam(battingFirstTeam);
+  setBowlingFirstTeam(bowlingFirstTeam);
+  const nextPage = deriveTournamentMatchPage(restored);
+  setPage(nextPage);
+  if (nextPage === "lineup") {
+    const innings = restored.innings1;
+    if (innings?.strikerPlayerId && innings.nonStrikerPlayerId) {
+      setLineupStep(
+        innings.currentBowlerPlayerId ? "confirm" : "bowler"
+      );
+    } else {
+      setLineupStep("batsmen");
+    }
+  }
+  const inningsBreak = shouldShowInningsBreak(restored);
+  setInnings1AutoEnded(inningsBreak);
+  setRequireUndoAfterInningsBreak(inningsBreak);
+}
+
+type TournamentMatchPage =
+  | "toss"
+  | "lineup"
+  | "scoring"
+  | "scorecard"
+  | "finished";
 
 interface TournamentMatchAppProps {
   fixture: TournamentFixture;
@@ -182,20 +238,18 @@ function extractFixtureResult(
             wickets: bestBowlB.wickets,
           };
 
-  const scorecard: TournamentMatchSnapshot = {
-    team1: matchState.team1,
-    team2: matchState.team2,
-    config: matchState.config ?? matchConfig,
-    innings1: matchState.innings1,
-    innings2: matchState.innings2,
-  };
+  const scorecard = buildPersistedMatchSnapshot(matchState, matchConfig);
+
+  const superOverWinner = getSuperOverWinnerTeamId(matchState);
 
   return {
     runsA,
     wicketsA,
     runsB,
     wicketsB,
-    winnerTeamId: runsA === runsB ? undefined : runsA > runsB ? teamA.id : teamB.id,
+    winnerTeamId:
+      superOverWinner ??
+      (runsA === runsB ? undefined : runsA > runsB ? teamA.id : teamB.id),
     bestBatting,
     bestBowling,
     scorecard,
@@ -211,13 +265,7 @@ function createRainAbandonedResult(
   const totalsA = getTeamInningsTotals(matchState, teamA);
   const totalsB = getTeamInningsTotals(matchState, teamB);
 
-  const scorecard: TournamentMatchSnapshot = {
-    team1: matchState.team1,
-    team2: matchState.team2,
-    config: matchState.config ?? matchConfig,
-    innings1: matchState.innings1,
-    innings2: matchState.innings2,
-  };
+  const scorecard = buildPersistedMatchSnapshot(matchState, matchConfig);
 
   return {
     runsA: totalsA.runs,
@@ -251,6 +299,12 @@ export default function TournamentMatchApp({
     setOpeningBowler,
     switchInnings,
     resetMatch,
+    finalizeLiveMatch,
+    setLiveSession,
+    acceptMatchDraw,
+    initSuperOver,
+    switchSuperOverInnings,
+    completeSuperOver,
   } = useCricket();
 
   const liveSessionMeta = useMemo(
@@ -263,15 +317,23 @@ export default function TournamentMatchApp({
     [tournamentId, fixture.id, teamA.name, teamB.name]
   );
 
-  useOfferLiveMatchRestore(liveSessionMeta, () => setPage("scoring"));
-  const [page, setPage] = useState<
-    "toss" | "boot-start" | "lineup" | "scoring" | "scorecard" | "finished"
-  >("toss");
+  useOfferLiveMatchRestore(liveSessionMeta, (restored) => {
+    applyTournamentMatchRestore(
+      restored,
+      teamA,
+      teamB,
+      setPage,
+      setBattingFirstTeam,
+      setBowlingFirstTeam,
+      setLineupStep,
+      setInnings1AutoEnded,
+      setRequireUndoAfterInningsBreak
+    );
+  });
+  const [page, setPage] = useState<TournamentMatchPage>("toss");
   const [lineupStep, setLineupStep] = useState<"batsmen" | "bowler" | "confirm">(
     "batsmen"
   );
-  const [tossWinnerId, setTossWinnerId] = useState<string | null>(null);
-  const [tossDecision, setTossDecision] = useState<"bat" | "bowl" | null>(null);
   const [battingFirstTeam, setBattingFirstTeam] = useState<Team | null>(null);
   const [bowlingFirstTeam, setBowlingFirstTeam] = useState<Team | null>(null);
   const [innings1AutoEnded, setInnings1AutoEnded] = useState(false);
@@ -279,52 +341,57 @@ export default function TournamentMatchApp({
     useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [showTieDialog, setShowTieDialog] = useState(false);
+  const [showSuperOverSetup, setShowSuperOverSetup] = useState(false);
+  const [tieIsSuperOver, setTieIsSuperOver] = useState(false);
+  const initializedFixtureRef = useRef<string | null>(null);
+
+  useLayoutEffect(() => {
+    setLiveSession(liveSessionMeta);
+  }, [liveSessionMeta, setLiveSession]);
 
   useEffect(() => {
+    if (initializedFixtureRef.current === fixture.id) return;
+    initializedFixtureRef.current = fixture.id;
+
+    const draft = loadPersistedLiveDraft();
+    const { matchState: storedState, meta: storedMeta } =
+      getStore().getState().match;
+    const hasLiveSession =
+      (storedState.matchStarted &&
+        liveMetaMatches(storedMeta, liveSessionMeta)) ||
+      draftHasLiveMatch(draft, liveSessionMeta);
+    if (hasLiveSession) return;
+
     resetMatch();
     setPage("toss");
     setLineupStep("batsmen");
-    setTossWinnerId(null);
-    setTossDecision(null);
     setBattingFirstTeam(null);
     setBowlingFirstTeam(null);
     setInnings1AutoEnded(false);
     setRequireUndoAfterInningsBreak(false);
     setSubmitted(false);
-    return () => {
-      resetMatch();
-    };
-  }, [fixture.id, resetMatch]);
+  }, [fixture.id, liveSessionMeta, resetMatch]);
 
-  useEffect(() => {
-    if (page !== "boot-start") return;
-    if (!battingFirstTeam || !bowlingFirstTeam) return;
-    if (matchState.matchStarted) return;
-    if (!matchState.config) return;
-    if (
-      matchState.team1.id !== battingFirstTeam.id ||
-      matchState.team2.id !== bowlingFirstTeam.id
-    ) {
-      return;
+  const handleTossContinue = ({
+    battingTeam,
+    bowlingTeam,
+  }: {
+    battingTeam: Team;
+    bowlingTeam: Team;
+  }) => {
+    setBattingFirstTeam(battingTeam);
+    setBowlingFirstTeam(bowlingTeam);
+    setLiveSession(liveSessionMeta);
+    setTeam1(battingTeam);
+    setTeam2(bowlingTeam);
+    setMatchConfig({ totalOvers: overs, ballsPerOver });
+    const stored = getStore().getState().match.matchState;
+    if (!stored.matchStarted) {
+      startMatch();
     }
-    startMatch();
     setPage("lineup");
     setLineupStep("batsmen");
-  }, [battingFirstTeam, bowlingFirstTeam, matchState, page, startMatch]);
-
-  const handleTossContinue = () => {
-    if (!tossWinnerId || !tossDecision) return;
-    const winner = tossWinnerId === teamA.id ? teamA : teamB;
-    const loser = tossWinnerId === teamA.id ? teamB : teamA;
-    const batting = tossDecision === "bat" ? winner : loser;
-    const bowling = tossDecision === "bat" ? loser : winner;
-
-    setBattingFirstTeam(batting);
-    setBowlingFirstTeam(bowling);
-    setTeam1(batting);
-    setTeam2(bowling);
-    setMatchConfig({ totalOvers: overs, ballsPerOver });
-    setPage("boot-start");
   };
 
   const strikerName = useMemo(() => {
@@ -357,6 +424,7 @@ export default function TournamentMatchApp({
   const handleRainAbandon = () => {
     if (submitted) return;
     setSubmitted(true);
+    finalizeLiveMatch();
     onComplete(
       createRainAbandonedResult(matchState, teamA, teamB, {
         totalOvers: overs,
@@ -366,7 +434,48 @@ export default function TournamentMatchApp({
   };
 
   const handleMatchEnd = () => {
+    if (matchState.superOver?.active) {
+      completeSuperOver();
+    }
+    finalizeLiveMatch();
     setPage("finished");
+  };
+
+  const handleMatchTied = () => {
+    setTieIsSuperOver(Boolean(matchState.superOver?.active));
+    setShowTieDialog(true);
+  };
+
+  const handleAcceptDraw = () => {
+    setShowTieDialog(false);
+    if (tieIsSuperOver) {
+      completeSuperOver();
+    }
+    acceptMatchDraw();
+    finalizeLiveMatch();
+    setPage("finished");
+  };
+
+  const handleStartSuperOverPrompt = () => {
+    setShowTieDialog(false);
+    setShowSuperOverSetup(true);
+  };
+
+  const handleSuperOverSetupConfirm = ({
+    firstBattingTeamId,
+    ballsPerOver,
+  }: {
+    firstBattingTeamId: string;
+    ballsPerOver: number;
+  }) => {
+    setShowSuperOverSetup(false);
+    initSuperOver(firstBattingTeamId, ballsPerOver);
+    setPage("scoring");
+  };
+
+  const handleSuperOverInnings1End = () => {
+    switchSuperOverInnings();
+    setPage("scoring");
   };
 
   const handleInnings1AutoEnd = () => {
@@ -432,77 +541,16 @@ export default function TournamentMatchApp({
           title={`${teamA.name} vs ${teamB.name}`}
           backLabel="Back to fixtures"
         />
-        <CricketBroadcastCard accent className="p-5 space-y-4">
-          <div>
-            <CricketEyebrow className="mb-1">Tournament match setup</CricketEyebrow>
-            <h2 className="cricket-display text-xl font-semibold text-[var(--cricket-cream)]">
-              Toss and opening setup
-            </h2>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-sm text-[oklch(0.65_0.03_255)]">Toss won by</p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {[teamA, teamB].map((team) => (
-                <button
-                  key={team.id}
-                  type="button"
-                  className={`rounded-md border p-3 min-h-11 text-left transition touch-manipulation ${
-                    tossWinnerId === team.id
-                      ? "border-[oklch(0.6_0.1_85)] bg-[oklch(0.32_0.08_85/0.35)] text-[var(--cricket-cream)]"
-                      : "border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.02_255/0.6)] text-[oklch(0.65_0.03_255)] hover:border-[oklch(0.45_0.08_295/0.5)]"
-                  }`}
-                  onClick={() => setTossWinnerId(team.id)}
-                >
-                  {team.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-sm text-[oklch(0.65_0.03_255)]">Decision</p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <button
-                type="button"
-                className={`rounded-md border p-3 min-h-11 text-left transition touch-manipulation ${
-                  tossDecision === "bat"
-                    ? "border-[oklch(0.6_0.1_85)] bg-[oklch(0.32_0.08_85/0.35)] text-[var(--cricket-cream)]"
-                    : "border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.02_255/0.6)] text-[oklch(0.65_0.03_255)] hover:border-[oklch(0.45_0.08_295/0.5)]"
-                }`}
-                onClick={() => setTossDecision("bat")}
-              >
-                Bat first
-              </button>
-              <button
-                type="button"
-                className={`rounded-md border p-3 min-h-11 text-left transition touch-manipulation ${
-                  tossDecision === "bowl"
-                    ? "border-[oklch(0.6_0.1_85)] bg-[oklch(0.32_0.08_85/0.35)] text-[var(--cricket-cream)]"
-                    : "border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.02_255/0.6)] text-[oklch(0.65_0.03_255)] hover:border-[oklch(0.45_0.08_295/0.5)]"
-                }`}
-                onClick={() => setTossDecision("bowl")}
-              >
-                Bowl first
-              </button>
-            </div>
-          </div>
-
-          <CricketAddButton
-            type="button"
-            variant="tournament"
-            size="inline"
-            onClick={handleTossContinue}
-            disabled={!tossWinnerId || !tossDecision}
-          >
-            Continue
-          </CricketAddButton>
-        </CricketBroadcastCard>
+        <MatchTossSetup
+          teamA={teamA}
+          teamB={teamB}
+          variant="tournament"
+          eyebrow="Tournament match setup"
+          onContinue={handleTossContinue}
+        />
       </CricketPage>
     );
   }
-
-  if (page === "boot-start") return null;
 
   if (page === "lineup") {
     if (!battingFirstTeam || !bowlingFirstTeam) return null;
@@ -591,15 +639,33 @@ export default function TournamentMatchApp({
 
   if (page === "scoring") {
     return (
-      <ScoringBoard
-        banner={<TournamentFlowSteps current="Score" className="mb-1" />}
-        onMatchEnd={handleMatchEnd}
-        onViewScorecard={() => setPage("scorecard")}
-        onInnings1AutoEnd={handleInnings1AutoEnd}
-        lockActionsUntilUndo={requireUndoAfterInningsBreak}
-        onUnlockAfterUndo={handleUnlockAfterUndo}
-        onEndDueToRain={handleRainAbandon}
-      />
+      <>
+        <ScoringBoard
+          banner={<TournamentFlowSteps current="Score" className="mb-1" />}
+          onMatchEnd={handleMatchEnd}
+          onMatchTied={handleMatchTied}
+          onViewScorecard={() => setPage("scorecard")}
+          onInnings1AutoEnd={handleInnings1AutoEnd}
+          onSuperOverInnings1End={handleSuperOverInnings1End}
+          lockActionsUntilUndo={requireUndoAfterInningsBreak}
+          onUnlockAfterUndo={handleUnlockAfterUndo}
+          onEndDueToRain={handleRainAbandon}
+        />
+        <TieMatchDialog
+          open={showTieDialog}
+          onOpenChange={setShowTieDialog}
+          superOverContext={tieIsSuperOver}
+          onContinueAsDraw={handleAcceptDraw}
+          onStartSuperOver={handleStartSuperOverPrompt}
+        />
+        <SuperOverSetupDialog
+          open={showSuperOverSetup}
+          onOpenChange={setShowSuperOverSetup}
+          team1={{ id: teamA.id, name: teamA.name }}
+          team2={{ id: teamB.id, name: teamB.name }}
+          onConfirm={handleSuperOverSetupConfirm}
+        />
+      </>
     );
   }
 
@@ -638,13 +704,7 @@ export default function TournamentMatchApp({
           />
           <CricketDetailRow
             label="Result"
-            value={
-              resultPreview.winnerTeamId
-                ? resultPreview.winnerTeamId === teamA.id
-                  ? `${teamA.name} won`
-                  : `${teamB.name} won`
-                : "Match tied"
-            }
+            value={getMatchResult(matchState).text}
           />
         </div>
         <div className="flex flex-wrap gap-2">

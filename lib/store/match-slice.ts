@@ -1,5 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { BallData, MatchConfig, MatchState, Team } from "@/lib/cricket-types";
+import { createSuperOverInnings } from "@/lib/scoring-context";
+import { SUPER_OVER_MAX_BALLS } from "@/lib/super-over";
 
 export interface LiveMatchMeta {
   kind: "quick" | "tournament";
@@ -30,6 +32,7 @@ export const initialMatchState: MatchState = {
   innings2: null,
   currentInnings: 1,
   matchStarted: false,
+  superOver: null,
 };
 
 interface MatchSliceState {
@@ -41,6 +44,40 @@ const initialState: MatchSliceState = {
   matchState: initialMatchState,
   meta: null,
 };
+
+function isSuperOverScoring(state: MatchState): boolean {
+  return Boolean(state.superOver?.active && !state.superOver.completed);
+}
+
+function getRegularInningsKey(state: MatchState): "innings1" | "innings2" {
+  return state.currentInnings === 1 ? "innings1" : "innings2";
+}
+
+function getSuperOverInningsKey(
+  state: MatchState
+): "innings1" | "innings2" | null {
+  if (!state.superOver) return null;
+  return state.superOver.currentInnings === 1 ? "innings1" : "innings2";
+}
+
+function mutateActiveInnings(
+  state: MatchState,
+  mutate: (innings: NonNullable<MatchState["innings1"]>) => void
+) {
+  if (isSuperOverScoring(state) && state.superOver) {
+    const key = getSuperOverInningsKey(state);
+    if (!key) return;
+    const innings = state.superOver[key];
+    if (!innings) return;
+    mutate(innings);
+    return;
+  }
+
+  const key = getRegularInningsKey(state);
+  const innings = state[key];
+  if (!innings) return;
+  mutate(innings);
+}
 
 const matchSlice = createSlice({
   name: "match",
@@ -55,7 +92,10 @@ const matchSlice = createSlice({
       state,
       action: PayloadAction<{ matchState: MatchState; meta: LiveMatchMeta | null }>
     ) {
-      state.matchState = action.payload.matchState;
+      state.matchState = {
+        ...action.payload.matchState,
+        superOver: action.payload.matchState.superOver ?? null,
+      };
       state.meta = action.payload.meta;
     },
     resetLiveMatch(state) {
@@ -76,39 +116,74 @@ const matchSlice = createSlice({
       state.matchState = {
         ...prev,
         matchStarted: true,
-        innings1: {
-          teamId: prev.team1.id,
-          teamName: prev.team1.name,
-          balls: [],
-          currentBatsmanIndex: 0,
-          currentBowlerIndex: 0,
-          strikerPlayerId: "",
-          nonStrikerPlayerId: "",
-          currentBowlerPlayerId: "",
-        },
+        superOver: null,
+        innings1: createSuperOverInnings(prev.team1),
         innings2: null,
         currentInnings: 1,
       };
     },
-    addBall(state, action: PayloadAction<BallData>) {
-      const key =
-        state.matchState.currentInnings === 1 ? "innings1" : "innings2";
-      const currentInnings = state.matchState[key];
-      if (!currentInnings) return;
-      state.matchState[key] = {
-        ...currentInnings,
-        balls: [...currentInnings.balls, action.payload],
+    acceptMatchDraw(state) {
+      state.matchState.superOver = {
+        ballsPerOver: 0,
+        firstBattingTeamId: state.matchState.team2.id,
+        innings1: null,
+        innings2: null,
+        currentInnings: 1,
+        active: false,
+        completed: false,
+        settledAsDraw: true,
       };
     },
-    undoLastBall(state) {
-      const key =
-        state.matchState.currentInnings === 1 ? "innings1" : "innings2";
-      const currentInnings = state.matchState[key];
-      if (!currentInnings || currentInnings.balls.length === 0) return;
-      state.matchState[key] = {
-        ...currentInnings,
-        balls: currentInnings.balls.slice(0, -1),
+    initSuperOver(
+      state,
+      action: PayloadAction<{ firstBattingTeamId: string; ballsPerOver: number }>
+    ) {
+      const prev = state.matchState;
+      const battingTeam =
+        action.payload.firstBattingTeamId === prev.team1.id
+          ? prev.team1
+          : prev.team2;
+      const balls = Math.min(
+        Math.max(action.payload.ballsPerOver, 1),
+        SUPER_OVER_MAX_BALLS
+      );
+      state.matchState.superOver = {
+        ballsPerOver: balls,
+        firstBattingTeamId: action.payload.firstBattingTeamId,
+        innings1: createSuperOverInnings(battingTeam),
+        innings2: null,
+        currentInnings: 1,
+        active: true,
+        completed: false,
+        settledAsDraw: false,
       };
+    },
+    switchSuperOverInnings(state) {
+      const superOver = state.matchState.superOver;
+      if (!superOver?.active || !superOver.innings1) return;
+      const chaseTeam =
+        superOver.firstBattingTeamId === state.matchState.team1.id
+          ? state.matchState.team2
+          : state.matchState.team1;
+      superOver.currentInnings = 2;
+      superOver.innings2 = createSuperOverInnings(chaseTeam);
+    },
+    completeSuperOver(state) {
+      const superOver = state.matchState.superOver;
+      if (!superOver) return;
+      superOver.active = false;
+      superOver.completed = true;
+    },
+    addBall(state, action: PayloadAction<BallData>) {
+      mutateActiveInnings(state.matchState, (innings) => {
+        innings.balls.push(action.payload);
+      });
+    },
+    undoLastBall(state) {
+      mutateActiveInnings(state.matchState, (innings) => {
+        if (innings.balls.length === 0) return;
+        innings.balls.pop();
+      });
     },
     switchInnings(state) {
       const prev = state.matchState;
@@ -116,81 +191,47 @@ const matchSlice = createSlice({
       state.matchState = {
         ...prev,
         currentInnings: 2,
-        innings2: {
-          teamId: prev.team2.id,
-          teamName: prev.team2.name,
-          balls: [],
-          currentBatsmanIndex: 0,
-          currentBowlerIndex: 0,
-          strikerPlayerId: "",
-          nonStrikerPlayerId: "",
-          currentBowlerPlayerId: "",
-        },
+        innings2: createSuperOverInnings(prev.team2),
       };
     },
     setOpeningBatsmen(
       state,
       action: PayloadAction<{ strikerId: string; nonStrikerId: string }>
     ) {
-      const key =
-        state.matchState.currentInnings === 1 ? "innings1" : "innings2";
-      const currentInnings = state.matchState[key];
-      if (!currentInnings) return;
-      state.matchState[key] = {
-        ...currentInnings,
-        strikerPlayerId: action.payload.strikerId,
-        nonStrikerPlayerId: action.payload.nonStrikerId,
-      };
+      mutateActiveInnings(state.matchState, (innings) => {
+        innings.strikerPlayerId = action.payload.strikerId;
+        innings.nonStrikerPlayerId = action.payload.nonStrikerId;
+      });
     },
     setOpeningBowler(state, action: PayloadAction<string>) {
-      const key =
-        state.matchState.currentInnings === 1 ? "innings1" : "innings2";
-      const currentInnings = state.matchState[key];
-      if (!currentInnings) return;
-      state.matchState[key] = {
-        ...currentInnings,
-        currentBowlerPlayerId: action.payload,
-      };
+      mutateActiveInnings(state.matchState, (innings) => {
+        innings.currentBowlerPlayerId = action.payload;
+      });
     },
     setNextBowler(state, action: PayloadAction<string>) {
-      const key =
-        state.matchState.currentInnings === 1 ? "innings1" : "innings2";
-      const currentInnings = state.matchState[key];
-      if (!currentInnings) return;
-      state.matchState[key] = {
-        ...currentInnings,
-        lastBowlerPlayerId: currentInnings.currentBowlerPlayerId,
-        currentBowlerPlayerId: action.payload,
-      };
+      mutateActiveInnings(state.matchState, (innings) => {
+        innings.lastBowlerPlayerId = innings.currentBowlerPlayerId;
+        innings.currentBowlerPlayerId = action.payload;
+      });
     },
     setNextBatsman(
       state,
       action: PayloadAction<{ playerId: string; isStriker: boolean }>
     ) {
-      const key =
-        state.matchState.currentInnings === 1 ? "innings1" : "innings2";
-      const currentInnings = state.matchState[key];
-      if (!currentInnings) return;
-      state.matchState[key] = {
-        ...currentInnings,
-        strikerPlayerId: action.payload.isStriker
-          ? action.payload.playerId
-          : currentInnings.strikerPlayerId,
-        nonStrikerPlayerId: !action.payload.isStriker
-          ? action.payload.playerId
-          : currentInnings.nonStrikerPlayerId,
-      };
+      mutateActiveInnings(state.matchState, (innings) => {
+        if (action.payload.isStriker) {
+          innings.strikerPlayerId = action.payload.playerId;
+        } else {
+          innings.nonStrikerPlayerId = action.payload.playerId;
+        }
+      });
     },
     swapStrike(state) {
-      const key =
-        state.matchState.currentInnings === 1 ? "innings1" : "innings2";
-      const currentInnings = state.matchState[key];
-      if (!currentInnings) return;
-      state.matchState[key] = {
-        ...currentInnings,
-        strikerPlayerId: currentInnings.nonStrikerPlayerId,
-        nonStrikerPlayerId: currentInnings.strikerPlayerId,
-      };
+      mutateActiveInnings(state.matchState, (innings) => {
+        const prevStriker = innings.strikerPlayerId;
+        innings.strikerPlayerId = innings.nonStrikerPlayerId;
+        innings.nonStrikerPlayerId = prevStriker;
+      });
     },
   },
 });

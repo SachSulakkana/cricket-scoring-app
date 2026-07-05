@@ -1,13 +1,20 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import TournamentMatchApp from "@/components/TournamentMatchApp";
 import { Team } from "@/lib/cricket-types";
-import { routes } from "@/lib/app-routes";
+import {
+  getSafeReturnTo,
+  RETURN_TO_PARAM,
+  routes,
+  withReturnTo,
+} from "@/lib/app-routes";
 import { appToast } from "@/lib/app-toast";
-import { clearLiveMatchDraftLocal, clearLiveMatchDraftRemote } from "@/lib/live-match-draft";
+import { clearLiveMatchDraftPersistence } from "@/lib/live-match-draft";
 import { updateTournament } from "@/lib/roster-storage";
+import { getStore } from "@/lib/store/store";
+import { matchActions } from "@/lib/store/match-slice";
 import {
   afterMatchUpdate,
   tryAdvanceStage,
@@ -21,6 +28,8 @@ import { isTournamentTemplate } from "@/lib/tournament-template";
 
 export default function PlayTournamentFixturePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = getSafeReturnTo(searchParams.get(RETURN_TO_PARAM));
   const params = useParams();
   const id = typeof params.id === "string" ? params.id : "";
   const fixtureId = typeof params.fixtureId === "string" ? params.fixtureId : "";
@@ -59,6 +68,10 @@ export default function PlayTournamentFixturePage() {
     return null;
   }
 
+  const gameRoute = returnTo
+    ? withReturnTo(routes.playCustomTournamentGame(tournament.id), returnTo)
+    : routes.playCustomTournamentGame(tournament.id);
+
   return (
     <TournamentMatchApp
       fixture={fixture}
@@ -68,7 +81,7 @@ export default function PlayTournamentFixturePage() {
       ballsPerOver={tournament.ballsPerOver}
       tournamentId={tournament.id}
       tournamentName={tournament.name}
-      onBack={() => router.push(routes.playCustomTournamentGame(tournament.id))}
+      onBack={() => router.push(gameRoute)}
       onComplete={(result) => {
         void (async () => {
           let updated = {
@@ -88,8 +101,8 @@ export default function PlayTournamentFixturePage() {
           updated = advance.tournament;
           try {
             await updateTournament(updated);
-            clearLiveMatchDraftLocal();
-            void clearLiveMatchDraftRemote();
+            clearLiveMatchDraftPersistence();
+            getStore().dispatch(matchActions.resetLiveMatch());
             if (advance.championTeamId) {
               appToast.success("Tournament complete — champion crowned!");
             } else if (advance.advanced && advance.message) {
@@ -99,7 +112,7 @@ export default function PlayTournamentFixturePage() {
             } else {
               appToast.success("Match result saved");
             }
-            router.push(routes.playCustomTournamentGame(tournament.id));
+            router.push(gameRoute);
           } catch (err) {
             appToast.error(
               err instanceof Error

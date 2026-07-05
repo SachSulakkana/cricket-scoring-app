@@ -1,9 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import CustomTournamentGamePage from "@/components/CustomTournamentGamePage";
-import { routes } from "@/lib/app-routes";
+import {
+  getSafeReturnTo,
+  resolveBackRoute,
+  RETURN_TO_PARAM,
+  routes,
+  withReturnTo,
+} from "@/lib/app-routes";
 import { Team } from "@/lib/cricket-types";
 import { updateTournament } from "@/lib/roster-storage";
 import { useRosterHydrated, useTeams, useTournament } from "@/lib/store/roster-hooks";
@@ -13,9 +19,12 @@ import {
   getSelectedTeamIds,
   initializeTournamentPlay,
 } from "@/lib/tournament-stage-engine";
+import { isTournamentStarted } from "@/lib/tournament-play-status";
 
 export default function PlayCustomTournamentGamePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = getSafeReturnTo(searchParams.get(RETURN_TO_PARAM));
   const params = useParams();
   const id = typeof params.id === "string" ? params.id : "";
   const hydrated = useRosterHydrated();
@@ -80,14 +89,27 @@ export default function PlayCustomTournamentGamePage() {
     return null;
   }
 
+  const gameBackRoute = isTournamentStarted(tournament)
+    ? routes.playTournament
+    : routes.playCustomTournament(tournament.id);
+
   return (
     <CustomTournamentGamePage
       tournament={tournament}
       teams={selectedTeams}
       fixtures={tournament.fixtures}
-      onBack={() => router.push(routes.playCustomTournament(tournament.id))}
+      onBack={() =>
+        router.push(resolveBackRoute(gameBackRoute, returnTo))
+      }
       onPlayNow={(fixtureId) =>
-        router.push(routes.playCustomTournamentMatch(tournament.id, fixtureId))
+        router.push(
+          returnTo
+            ? withReturnTo(
+                routes.playCustomTournamentMatch(tournament.id, fixtureId),
+                returnTo
+              )
+            : routes.playCustomTournamentMatch(tournament.id, fixtureId)
+        )
       }
       onAdvanceStage={(next) => updateTournament(next)}
       onReorderFixtures={(nextFixtures) =>

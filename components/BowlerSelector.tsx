@@ -28,6 +28,8 @@ interface BowlerSelectorProps {
   disabledPlayerId?: string;
   onSubmit: (bowlerId: string) => void;
   isOpening?: boolean;
+  /** One bowler bowls all legal balls (super over). */
+  singleBowlerForInnings?: boolean;
 }
 
 export default function BowlerSelector({
@@ -35,6 +37,7 @@ export default function BowlerSelector({
   disabledPlayerId,
   onSubmit,
   isOpening = false,
+  singleBowlerForInnings = false,
 }: BowlerSelectorProps) {
   const [selectedBowler, setSelectedBowler] = useState<string | null>(null);
 
@@ -97,14 +100,20 @@ export default function BowlerSelector({
     <Card className="cricket-broadcast-card gap-0 border-0 py-0 shadow-none">
       <CardHeader className="px-5 pt-5">
         <CardTitle className="cricket-display text-[var(--cricket-cream)]">
-          {isOpening ? "Select Opening Bowler" : "Select Next Bowler"}
+          {singleBowlerForInnings
+            ? "Select super over bowler"
+            : isOpening
+              ? "Select Opening Bowler"
+              : "Select Next Bowler"}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex max-h-[min(72dvh,42rem)] flex-col gap-4 px-5 pb-5">
         <p className="text-sm text-slate-300">
-          {disabledPlayerId
-            ? "Click a player to select the next bowler. The previous bowler is disabled."
-            : "Click a player to select the opening bowler."}
+          {singleBowlerForInnings
+            ? "One bowler bowls the entire super over. Pick who will bowl all legal balls."
+            : disabledPlayerId
+              ? "Click a player to select the next bowler. The previous bowler is disabled."
+              : "Click a player to select the opening bowler."}
         </p>
 
         {selectedBowler && (

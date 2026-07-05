@@ -147,7 +147,7 @@ export default function LandingPage() {
             <LandingTile
               image="comingSoon"
               lines={["Match", "History"]}
-              subtitle="Saved quick matches"
+              subtitle="Quick & tournament runs"
               onClick={() => router.push(routes.quickMatchHistory)}
             />
             <LandingTile

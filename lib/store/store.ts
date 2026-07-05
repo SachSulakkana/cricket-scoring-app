@@ -1,6 +1,27 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { matchReducer } from "./match-slice";
+import type { MatchState } from "../cricket-types";
+import { loadLiveMatchDraftLocal } from "../live-match-draft";
+import { matchReducer, type LiveMatchMeta } from "./match-slice";
 import { rosterReducer } from "./roster-slice";
+
+function readPreloadedState():
+  | {
+      match: {
+        matchState: MatchState;
+        meta: LiveMatchMeta | null;
+      };
+    }
+  | undefined {
+  if (typeof window === "undefined") return undefined;
+  const draft = loadLiveMatchDraftLocal();
+  if (!draft?.matchState.matchStarted) return undefined;
+  return {
+    match: {
+      matchState: draft.matchState,
+      meta: draft.meta,
+    },
+  };
+}
 
 export function makeStore() {
   return configureStore({
@@ -8,6 +29,7 @@ export function makeStore() {
       roster: rosterReducer,
       match: matchReducer,
     },
+    preloadedState: readPreloadedState(),
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
         serializableCheck: false,
