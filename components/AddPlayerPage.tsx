@@ -294,7 +294,7 @@ export default function AddPlayerPage({
           type="button"
           onClick={handleSave}
           disabled={pending}
-          className="cricket-btn-play cricket-btn-play--quick w-full inline-flex items-center justify-center gap-2 disabled:opacity-70"
+          className="btn-12 btn-12--lg btn-12--full w-full inline-flex items-center justify-center gap-2 disabled:opacity-70"
         >
           {pending ? (
             <>

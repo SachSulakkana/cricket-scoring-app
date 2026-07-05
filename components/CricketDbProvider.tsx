@@ -11,7 +11,7 @@ export default function CricketDbProvider({
 }) {
   useEffect(() => {
     void initRosterStorage().catch((err: unknown) => {
-      console.error("Failed to open local database", err);
+      console.error("Failed to load roster from Firestore", err);
     });
   }, []);
 

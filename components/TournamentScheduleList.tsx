@@ -199,7 +199,7 @@ export default function TournamentScheduleList({
                     <button
                       type="button"
                       draggable={false}
-                      className="cricket-btn-add cricket-btn-add--inline cricket-btn-add--tournament !w-auto px-3 text-xs"
+                      className="btn-12 btn-12--sm !w-auto px-3 text-xs"
                       onClick={() => onSummary(fx.id)}
                     >
                       Match summary
@@ -207,7 +207,7 @@ export default function TournamentScheduleList({
                     <button
                       type="button"
                       draggable={false}
-                      className="cricket-btn-setup !w-auto !min-h-[2.2rem] px-3 text-xs"
+                      className="btn-12 btn-12--outline btn-12--md !w-auto !min-h-[2.2rem] px-3 text-xs"
                       onClick={() => onReplay(fx.id, fx.teamA.name, fx.teamB.name)}
                     >
                       Replay match

@@ -44,7 +44,7 @@ export default function SpectatorNavTabs({
           role="tab"
           aria-selected={active === tab.id}
           className={cn(
-            "spectator-nav-tab",
+            "spectator-nav-tab btn-12-exempt",
             active === tab.id && "spectator-nav-tab--active"
           )}
           onClick={() => onChange(tab.id)}

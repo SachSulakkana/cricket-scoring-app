@@ -626,7 +626,7 @@ export default function TournamentMatchApp({
             </CricketAddButton>
             <button
               type="button"
-              className="cricket-btn-setup !w-auto !min-h-[2.5rem] px-4"
+              className="btn-12 btn-12--outline btn-12--md !w-auto !min-h-[2.5rem] px-4"
               onClick={() => setLineupStep("batsmen")}
             >
               Edit selections
@@ -726,7 +726,7 @@ export default function TournamentMatchApp({
           </CricketAddButton>
           <button
             type="button"
-            className="cricket-btn-setup !w-auto !min-h-[2.5rem] px-4"
+            className="btn-12 btn-12--outline btn-12--md !w-auto !min-h-[2.5rem] px-4"
             onClick={onBack}
           >
             Cancel

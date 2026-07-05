@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { requireMutationAuth } from "@/lib/api-auth";
+import { parseJsonBody } from "@/lib/api-route-utils";
+import { quickMatchPostSchema } from "@/lib/api-schemas";
 import { listQuickMatches, saveQuickMatch } from "@/lib/firestore-db";
 import type { MatchState } from "@/lib/cricket-types";
 
@@ -18,28 +21,27 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const authError = requireMutationAuth(request);
+  if (authError) return authError;
+
   try {
-    const body = (await request.json()) as {
-      matchState?: MatchState;
-      label?: string;
-    };
-    if (!body.matchState?.team1?.name || !body.matchState?.team2?.name) {
+    const parsed = await parseJsonBody(request, quickMatchPostSchema);
+    if ("error" in parsed) return parsed.error;
+
+    const matchState = parsed.data.matchState as unknown as MatchState;
+    if (!matchState?.team1?.name || !matchState?.team2?.name) {
       return NextResponse.json(
         { error: "Valid matchState required" },
         { status: 400 }
       );
     }
-    const id = `quick-${Date.now()}`;
+
+    const id = crypto.randomUUID();
     const label =
-      body.label?.trim() ||
-      `${body.matchState.team1.name} vs ${body.matchState.team2.name}`;
+      parsed.data.label?.trim() ||
+      `${matchState.team1.name} vs ${matchState.team2.name}`;
     const createdAt = new Date().toISOString();
-    await saveQuickMatch(
-      id,
-      label,
-      JSON.stringify(body.matchState),
-      createdAt
-    );
+    await saveQuickMatch(id, label, JSON.stringify(matchState), createdAt);
     return NextResponse.json({ ok: true, id, label });
   } catch (error) {
     console.error("POST /api/matches/quick failed", error);

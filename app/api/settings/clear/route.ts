@@ -1,26 +1,21 @@
 import { NextResponse } from "next/server";
-import type { DataClearAction } from "@/lib/data-clear-types";
+import { requireMutationAuth } from "@/lib/api-auth";
+import { parseJsonBody } from "@/lib/api-route-utils";
+import { dataClearSchema } from "@/lib/api-schemas";
 import { runDataClear } from "@/lib/firestore-db";
 
 export const runtime = "nodejs";
 
-const ACTIONS = new Set<DataClearAction>([
-  "match-history",
-  "match-data",
-  "teams",
-  "players",
-  "all",
-]);
-
 export async function POST(request: Request) {
+  const authError = requireMutationAuth(request);
+  if (authError) return authError;
+
   try {
-    const body = (await request.json()) as { action?: string };
-    const action = body.action as DataClearAction;
-    if (!action || !ACTIONS.has(action)) {
-      return NextResponse.json({ error: "Invalid clear action" }, { status: 400 });
-    }
-    await runDataClear(action);
-    return NextResponse.json({ ok: true, action });
+    const parsed = await parseJsonBody(request, dataClearSchema);
+    if ("error" in parsed) return parsed.error;
+
+    await runDataClear(parsed.data.action);
+    return NextResponse.json({ ok: true, action: parsed.data.action });
   } catch (error) {
     console.error("POST /api/settings/clear failed", error);
     return NextResponse.json(

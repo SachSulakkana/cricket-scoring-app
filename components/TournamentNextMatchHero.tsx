@@ -54,7 +54,7 @@ export function TournamentNextMatchHero({
             type="button"
             draggable={false}
             onClick={onPlayNow}
-            className="cricket-btn-play cricket-btn-play--tournament flex w-full min-h-[3.25rem] items-center justify-center gap-2.5 text-base font-bold sm:min-h-[3.5rem] sm:text-lg"
+            className="btn-12 btn-12--lg btn-12--full flex w-full min-h-[3.25rem] items-center justify-center gap-2.5 text-base font-bold sm:min-h-[3.5rem] sm:text-lg"
           >
             <Play className="h-5 w-5 shrink-0 fill-current" aria-hidden />
             Play this match

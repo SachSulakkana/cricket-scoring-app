@@ -137,7 +137,7 @@ export default function DismissalModal({
             <Button
               onClick={onCancel}
               variant="outline"
-              className="flex-1 cricket-btn-setup !min-h-10"
+              className="flex-1 btn-12 btn-12--outline btn-12--md !min-h-10"
             >
               Cancel
             </Button>

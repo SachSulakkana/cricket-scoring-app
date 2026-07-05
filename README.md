@@ -1,105 +1,67 @@
-# 🏏 CrickScore
+# CrickScore
 
 CrickScore is a **ball-by-ball cricket scoring and tournament management system** built with **Next.js, React, and Cloud Firestore**.
 
-It supports quick matches, structured tournaments, player/team management, and full scorecard analytics — all running locally with persistent storage.
+It supports quick matches, structured tournaments, player/team management, live spectator views, and full scorecard analytics.
 
 ---
 
-## ✨ Features
+## Features
 
-### 🎯 Live Match Scoring
-- Ball-by-ball scoring system
-- Overs, innings, and strike rotation handling
-- Dismissals (bowled, lbw, caught, run-out, etc.)
-- Extras handling (wide, no-ball, bye, leg-bye)
-- Undo last ball support
-- Auto innings completion (overs / all-out / chase logic)
+### Live Match Scoring
+- Ball-by-ball scoring, extras, dismissals, undo
+- Auto innings completion (overs / all-out / chase)
+- Super over support
 
-### ⚡ Quick Match Mode
-- Fast setup without tournament rules
-- Ad-hoc teams and players
-- Full scorecard generation
-- Save match history locally
+### Quick Match Mode
+- Manual setup or roster team picker
+- Rain abandon
+- Save and delete match history
 
-### 🧑‍🤝‍🧑 Player & Team Management
+### Player and Team Management
 - Global player registry (CRUD)
-- Team creation with player assignment
-- CSV import for bulk data
-- Player sync across teams
+- Teams with player assignment and CSV import
 
-### 🏆 Tournament System
-- Multi-format tournaments:
-  - Round Robin
-  - League
-  - Knockout
-  - Group Stage
-  - Playoffs
-- Fixture generation engine
-- Standings calculation with Net Run Rate (NRR)
-- Stage progression automation
-- Tournament templates and instances
+### Tournament System
+- Round robin, league, knockout, group stage, playoffs
+- Fixture generation, NRR standings, stage progression
+- Per-fixture spectator deep links
 
-### 📊 Scorecards & Analytics
-- Batting & bowling tables
-- Over-by-over breakdown
-- Match summary view
-- Tournament statistics
-
-### 💾 Local-First Persistence
-- SQLite database (better-sqlite3)
-- Offline-first architecture
-- Local draft recovery system
-- Legacy localStorage migration support
+### Scorecards and Analytics
+- Batting and bowling tables, over-by-over breakdown, tournament stats
 
 ---
 
-## 🧱 Tech Stack
+## Tech Stack
 
-- **Framework:** Next.js 16 (App Router)
-- **UI:** React 19, Tailwind CSS 4
-- **Language:** TypeScript 5.7
-- **State Management:** Redux Toolkit + Context API
-- **Database:** SQLite (better-sqlite3, WAL mode)
-- **Forms:** react-hook-form + zod
-- **UI Components:** Radix UI / shadcn-style components
-- **Package Manager:** pnpm
+- Next.js 16 (App Router), React 19, TypeScript 5.7
+- Redux Toolkit + Context API
+- Cloud Firestore (Firebase Admin SDK on API routes)
+- Tailwind CSS 4, Radix UI, zod
 
 ---
 
-## 🏗️ Architecture Overview
+## Getting Started
 
-CrickScore is built using a **modular cricket domain architecture**:
-
-- 🧠 Match Engine → ball-by-ball scoring logic  
-- 🧑‍🤝‍🧑 Roster System → players & teams management  
-- 🏆 Tournament Engine → fixtures, stages, standings  
-- 💾 Persistence Layer → SQLite + API routes  
-- 🎨 UI Layer → modular cricket UI components  
+1. Copy `.env.example` to `.env.local` and fill in Firebase credentials.
+2. `pnpm install`
+3. `pnpm dev`
+4. Optional: set `CRICKET_API_SECRET` on the server and the same value under **Settings → API access**.
 
 ---
 
-## 📂 Project Structure
+## Scripts
 
-```bash
-boundary-xi/
-├── app/                 # Next.js routes + API
-│   ├── quick-match/
-│   ├── players/
-│   ├── teams/
-│   ├── tournament/
-│   └── api/
-│
-├── components/         # UI + feature components
-├── hooks/              # Custom React hooks
-├── lib/
-│   ├── cricket-types.ts
-│   ├── cricket-context.tsx
-│   ├── sqlite-db.ts
-│   ├── roster-storage.ts
-│   ├── scorecard-stats.ts
-│   └── tournament-stage-engine/
-│
-├── data/
-│   └── cricket.db     # SQLite database (local)
-└── public/
+| Script | Description |
+|--------|-------------|
+| `pnpm dev` | Development server |
+| `pnpm build` | Production build |
+| `pnpm typecheck` | TypeScript check |
+| `pnpm test` | Unit tests |
+| `pnpm lint` | ESLint |
+
+---
+
+## API Security
+
+Mutating API routes accept an optional shared secret via `Authorization: Bearer …` or `x-api-key`. When `CRICKET_API_SECRET` is unset, auth is disabled for local development. Set it before public deployment.

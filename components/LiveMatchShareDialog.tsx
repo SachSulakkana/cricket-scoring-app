@@ -11,12 +11,14 @@ import {
 } from "@/components/ui/dialog";
 import { getSpectatorLiveUrl } from "@/lib/app-routes";
 import { appToast } from "@/lib/app-toast";
+import type { LiveMatchMeta } from "@/lib/store/match-slice";
 
 interface LiveMatchShareDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   team1Name: string;
   team2Name: string;
+  meta?: LiveMatchMeta | null;
 }
 
 async function copyText(text: string): Promise<boolean> {
@@ -46,16 +48,24 @@ export default function LiveMatchShareDialog({
   onOpenChange,
   team1Name,
   team2Name,
+  meta,
 }: LiveMatchShareDialogProps) {
   const [url, setUrl] = useState("");
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setUrl(getSpectatorLiveUrl());
+      const context =
+        meta?.kind === "tournament"
+          ? {
+              tournamentId: meta.tournamentId,
+              fixtureId: meta.fixtureId,
+            }
+          : undefined;
+      setUrl(getSpectatorLiveUrl(undefined, context));
       setCopied(false);
     }
-  }, [open]);
+  }, [open, meta]);
 
   const handleCopy = async () => {
     if (!url) return;

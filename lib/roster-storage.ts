@@ -24,6 +24,7 @@ import type {
   TournamentMatchSnapshot,
 } from "./roster-types";
 import { DEFAULT_FORMAT_PRESET_ID } from "./tournament-format-presets";
+import { authenticatedFetch } from "./api-client";
 
 function dispatch(action: Parameters<ReturnType<typeof getStore>["dispatch"]>[0]) {
   getStore().dispatch(action);
@@ -281,13 +282,7 @@ function markClientMigrated() {
 }
 
 async function apiFetch(path: string, init?: RequestInit) {
-  const res = await fetch(path, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
+  const res = await authenticatedFetch(path, init);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(

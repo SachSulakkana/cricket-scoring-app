@@ -1,17 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Database, History, Settings } from "lucide-react";
+import { AlertTriangle, Database, History, KeyRound, Settings } from "lucide-react";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import RefreshRosterButton from "@/components/RefreshRosterButton";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   clearAppData,
   DATA_CLEAR_OPTIONS,
   type DataClearAction,
 } from "@/lib/clear-app-data";
 import { appToast } from "@/lib/app-toast";
+import {
+  getStoredApiSecret,
+  setStoredApiSecret,
+} from "@/lib/api-client";
 import {
   CricketBroadcastCard,
   CricketDetailRow,
@@ -51,6 +57,20 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
     null
   );
   const [clearing, setClearing] = useState(false);
+  const [apiSecret, setApiSecret] = useState("");
+
+  useEffect(() => {
+    setApiSecret(getStoredApiSecret());
+  }, []);
+
+  const saveApiSecret = () => {
+    setStoredApiSecret(apiSecret);
+    appToast.success(
+      apiSecret.trim()
+        ? "API secret saved for this browser"
+        : "API secret cleared"
+    );
+  };
 
   const pendingOption = DATA_CLEAR_OPTIONS.find(
     (o) => o.action === pendingAction
@@ -96,6 +116,30 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
       </CricketBroadcastCard>
 
       <CricketBroadcastCard className="p-5 space-y-3 mb-4">
+        <div className="flex items-start gap-2.5">
+          <KeyRound className="h-5 w-5 shrink-0 text-[var(--cricket-gold)] mt-0.5" />
+          <div>
+            <CricketEyebrow className="mb-1">API access</CricketEyebrow>
+            <p className="text-xs text-[oklch(0.55_0.03_255)] leading-relaxed">
+              If the server sets <code className="text-[0.65rem]">CRICKET_API_SECRET</code>,
+              enter the same value here so this browser can save roster and match data.
+            </p>
+          </div>
+        </div>
+        <Input
+          type="password"
+          value={apiSecret}
+          onChange={(e) => setApiSecret(e.target.value)}
+          placeholder="Optional API secret"
+          className="cricket-form-input"
+          autoComplete="off"
+        />
+        <Button type="button" variant="secondary" onClick={saveApiSecret}>
+          Save API secret
+        </Button>
+      </CricketBroadcastCard>
+
+      <CricketBroadcastCard className="p-5 space-y-3 mb-4">
         <CricketEyebrow>Data</CricketEyebrow>
         <SettingsLinkRow
           href={routes.quickMatchHistory}
@@ -124,7 +168,7 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
               Clear data
             </CricketEyebrow>
             <p className="text-xs text-[oklch(0.55_0.03_255)] leading-relaxed">
-              These actions permanently delete data from your local database.
+              These actions permanently delete data from Firestore.
               You will be asked to confirm each one.
             </p>
           </div>
@@ -139,13 +183,15 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
               onClick={() => setPendingAction(option.action)}
               className={
                 option.variant === "destructive"
-                  ? "settings-clear-btn settings-clear-btn--full w-full text-left"
-                  : "settings-clear-btn w-full text-left"
+                  ? "settings-clear-btn settings-clear-btn--full btn-12 btn-12--destructive btn-12--full w-full text-left"
+                  : "settings-clear-btn btn-12 btn-12--sm w-full text-left"
               }
             >
-              <span className="block text-sm font-semibold">{option.label}</span>
-              <span className="block text-xs opacity-80 mt-0.5 font-normal">
-                {option.description}
+              <span className="btn-12__label block w-full">
+                <span className="block text-sm font-semibold">{option.label}</span>
+                <span className="block text-xs opacity-80 mt-0.5 font-normal normal-case">
+                  {option.description}
+                </span>
               </span>
             </button>
           ))}

@@ -80,19 +80,23 @@ export default function LiveMatchCard({
         <div className="live-match-card__actions">
           <button
             type="button"
-            className="live-match-card__watch-btn"
+            className="live-match-card__watch-btn btn-12 btn-12--md btn-12--full"
             onClick={onWatch}
           >
-            {complete ? "View scorecard" : "Watch live"}
+            <span className="btn-12__label">
+              {complete ? "View scorecard" : "Watch live"}
+            </span>
           </button>
           <button
             type="button"
-            className="live-match-card__share-btn"
+            className="live-match-card__share-btn btn-12 btn-12--icon"
             onClick={() => setShareOpen(true)}
             aria-label="Share live link"
             title="Share link"
           >
-            <Share2 size={18} strokeWidth={2.25} aria-hidden />
+            <span className="btn-12__label">
+              <Share2 size={18} strokeWidth={2.25} aria-hidden />
+            </span>
           </button>
         </div>
       </CricketBroadcastCard>
@@ -102,6 +106,7 @@ export default function LiveMatchCard({
         onOpenChange={setShareOpen}
         team1Name={matchState.team1.name}
         team2Name={matchState.team2.name}
+        meta={meta}
       />
     </>
   );

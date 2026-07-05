@@ -1,5 +1,6 @@
 import type { MatchState } from "./cricket-types";
 import type { LiveMatchMeta } from "./store/match-slice";
+import { authenticatedFetch } from "./api-client";
 
 const LOCAL_DRAFT_KEY = "cricket-live-match-draft-v1";
 
@@ -7,6 +8,13 @@ export interface LiveMatchDraft {
   matchState: MatchState;
   meta: LiveMatchMeta | null;
   updatedAt: string;
+}
+
+export class LiveDraftSyncError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "LiveDraftSyncError";
+  }
 }
 
 export function saveLiveMatchDraftLocal(
@@ -53,18 +61,31 @@ export async function saveLiveMatchDraftRemote(
   meta: LiveMatchMeta | null
 ): Promise<void> {
   if (!matchState.matchStarted) {
-    await fetch("/api/matches/draft", { method: "DELETE" }).catch(() => {});
+    const res = await authenticatedFetch("/api/matches/draft", { method: "DELETE" });
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      throw new LiveDraftSyncError(
+        body.error ?? "Could not clear live match draft on server"
+      );
+    }
     return;
   }
-  await fetch("/api/matches/draft", {
+
+  const res = await authenticatedFetch("/api/matches/draft", {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       matchState,
       meta,
       updatedAt: new Date().toISOString(),
     }),
-  }).catch(() => {});
+  });
+
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new LiveDraftSyncError(
+      body.error ?? "Could not save live match draft to server"
+    );
+  }
 }
 
 export async function loadLiveMatchDraftRemote(): Promise<LiveMatchDraft | null> {
@@ -79,7 +100,13 @@ export async function loadLiveMatchDraftRemote(): Promise<LiveMatchDraft | null>
 }
 
 export async function clearLiveMatchDraftRemote(): Promise<void> {
-  await fetch("/api/matches/draft", { method: "DELETE" }).catch(() => {});
+  const res = await authenticatedFetch("/api/matches/draft", { method: "DELETE" });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new LiveDraftSyncError(
+      body.error ?? "Could not clear live match draft on server"
+    );
+  }
 }
 
 /** Pick newest draft between local and server. */

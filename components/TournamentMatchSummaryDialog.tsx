@@ -19,6 +19,9 @@ import TournamentMatchScorecardView from "@/components/TournamentMatchScorecardV
 import { appToast } from "@/lib/app-toast";
 import type { SuperOverState, Team } from "@/lib/cricket-types";
 import { countsAsWicket } from "@/lib/cricket-types";
+import { hasPersistedSuperOver } from "@/lib/match-snapshot";
+import { exportTournamentMatchPdf } from "@/lib/pdf-export";
+import type { TournamentFixture } from "@/lib/roster-types";
 
 interface TournamentMatchSummaryDialogProps {
   open: boolean;
@@ -74,7 +77,7 @@ export default function TournamentMatchSummaryDialog({
       config: result.scorecard.config,
     })
       .then(() => appToast.success("Match scorecard PDF downloaded"))
-      .catch((err) =>
+      .catch((err: unknown) =>
         appToast.error(
           err instanceof Error ? err.message : "Could not export PDF"
         )

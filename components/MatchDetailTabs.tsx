@@ -24,7 +24,7 @@ export default function MatchDetailTabs({
           type="button"
           onClick={() => onChange("summary")}
           className={cn(
-            "cricket-tab flex-1 sm:flex-none min-h-10",
+            "cricket-tab btn-12-exempt flex-1 sm:flex-none min-h-10",
             active === "summary" && "cricket-tab--active"
           )}
         >
@@ -35,7 +35,7 @@ export default function MatchDetailTabs({
           onClick={() => !scorecardDisabled && onChange("scorecard")}
           disabled={scorecardDisabled}
           className={cn(
-            "cricket-tab flex-1 sm:flex-none min-h-10",
+            "cricket-tab btn-12-exempt flex-1 sm:flex-none min-h-10",
             active === "scorecard" && "cricket-tab--active",
             scorecardDisabled && "cricket-tab--disabled"
           )}

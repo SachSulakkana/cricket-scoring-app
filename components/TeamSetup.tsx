@@ -5,9 +5,19 @@ import { Pencil } from "lucide-react";
 import { CricketAddButton } from "@/components/cricket-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCricket } from "@/lib/cricket-context";
 import { Team, Player } from "@/lib/cricket-types";
+import { useTeams } from "@/lib/store/roster-hooks";
+import Link from "next/link";
+import { routes } from "@/lib/app-routes";
 
 interface TeamSetupProps {
   onNext: () => void;
@@ -15,6 +25,7 @@ interface TeamSetupProps {
 
 export default function TeamSetup({ onNext }: TeamSetupProps) {
   const { setTeam1, setTeam2, setMatchConfig } = useCricket();
+  const savedTeams = useTeams();
   const [step, setStep] = useState<"team1" | "team2" | "config" | "confirm">("team1");
   const [teamName, setTeamName] = useState("");
   const [players, setPlayers] = useState<Player[]>([]);
@@ -42,6 +53,13 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
 
   const removePlayer = (id: string) => {
     setPlayers(players.filter((p) => p.id !== id));
+  };
+
+  const loadSavedTeam = (teamId: string) => {
+    const team = savedTeams.find((entry) => entry.id === teamId);
+    if (!team || team.players.length < 2) return;
+    setTeamName(team.name);
+    setPlayers([...team.players]);
   };
 
   const handleTeamComplete = () => {
@@ -149,10 +167,36 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
                 {step === "team1" ? "Team 1 Setup" : "Team 2 Setup"}
               </CardTitle>
               <CardDescription className="text-slate-400">
-                Enter team name and select {step === "team1" ? "" : ""} players
+                Enter team details or pick a saved squad from your roster
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {savedTeams.length > 0 ? (
+                <div>
+                  <label className="cricket-form-label">Pick from roster</label>
+                  <Select onValueChange={loadSavedTeam}>
+                    <SelectTrigger className="cricket-form-input w-full">
+                      <SelectValue placeholder="Choose a saved team (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {savedTeams.map((team) => (
+                        <SelectItem key={team.id} value={team.id}>
+                          {team.name} ({team.players.length} players)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400">
+                  No saved teams yet.{" "}
+                  <Link href={routes.teams} className="text-[var(--cricket-gold)] underline">
+                    Create teams
+                  </Link>{" "}
+                  to reuse squads here.
+                </p>
+              )}
+
               <div>
                 <label className="cricket-form-label">
                   Team Name
@@ -273,7 +317,7 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
 
               <Button
                 onClick={handleConfigComplete}
-                className="w-full cricket-btn-play cricket-btn-play--quick"
+                className="w-full btn-12 btn-12--lg btn-12--full"
               >
                 {editingFromConfirm === "config"
                   ? "Save Match Config"
@@ -374,7 +418,7 @@ export default function TeamSetup({ onNext }: TeamSetupProps) {
 
               <Button
                 onClick={handleConfirmStartMatch}
-                className="w-full cricket-btn-play cricket-btn-play--quick"
+                className="w-full btn-12 btn-12--lg btn-12--full"
               >
                 Continue to toss
               </Button>

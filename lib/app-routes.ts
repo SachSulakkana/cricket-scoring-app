@@ -15,8 +15,6 @@ export const routes = {
   playTournament: "/tournament/play",
   playTournamentNew: "/tournament/play/new",
   playTournamentNewCustom: "/tournament/play/new/custom",
-  playTournamentPreset: (preset: string) =>
-    `/tournament/play/${encodeURIComponent(preset)}`,
   playCustomTournament: (id: string) =>
     `/tournament/play/custom/${encodeURIComponent(id)}`,
   playCustomTournamentGame: (id: string) =>
@@ -57,8 +55,19 @@ export function resolveBackRoute(
 }
 
 /** Full URL for the read-only spectator view (pass origin on server if needed). */
-export function getSpectatorLiveUrl(origin?: string): string {
+export function getSpectatorLiveUrl(
+  origin?: string,
+  context?: { tournamentId?: string; fixtureId?: string }
+): string {
   const base =
     origin ?? (typeof window !== "undefined" ? window.location.origin : "");
-  return `${base}${routes.liveWatch}`;
+  const params = new URLSearchParams();
+  if (context?.tournamentId) {
+    params.set("tournament", context.tournamentId);
+  }
+  if (context?.fixtureId) {
+    params.set("fixture", context.fixtureId);
+  }
+  const qs = params.toString();
+  return `${base}${routes.liveWatch}${qs ? `?${qs}` : ""}`;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   CricketBackButton,
   CricketBroadcastCard,
@@ -38,6 +38,28 @@ import {
   getLegalBalls,
 } from "@/lib/spectator-live-stats";
 import { cn } from "@/lib/utils";
+
+function useEffectiveSpectatorMeta(
+  draftMeta: LiveMatchMeta | null | undefined
+): LiveMatchMeta | null {
+  const searchParams = useSearchParams();
+  const urlTournamentId =
+    searchParams.get("tournament") ?? searchParams.get("tournamentId") ?? "";
+  const urlFixtureId =
+    searchParams.get("fixture") ?? searchParams.get("fixtureId") ?? "";
+
+  return useMemo(() => {
+    if (draftMeta?.kind === "tournament") return draftMeta;
+    if (urlTournamentId) {
+      return {
+        kind: "tournament",
+        tournamentId: urlTournamentId,
+        fixtureId: urlFixtureId || undefined,
+      };
+    }
+    return draftMeta ?? null;
+  }, [draftMeta, urlTournamentId, urlFixtureId]);
+}
 
 function getBattingTeam(matchState: MatchState) {
   return matchState.currentInnings === 1 ? matchState.team1 : matchState.team2;
@@ -541,6 +563,7 @@ function MatchCompleteView({
 export default function SpectatorView() {
   const router = useRouter();
   const { draft, loading, error, refresh, source } = useLiveMatchSnapshot();
+  const effectiveMeta = useEffectiveSpectatorMeta(draft?.meta ?? null);
   const [tab, setTab] = useState<SpectatorMatchTab>("live");
 
   const onBack = () => router.push(routes.live);
@@ -661,7 +684,7 @@ export default function SpectatorView() {
     return (
       <WaitingState
         matchState={liveView.matchState}
-        meta={draft.meta}
+        meta={effectiveMeta}
         tab={tab}
         onTabChange={setTab}
         onBack={onBack}
@@ -677,7 +700,7 @@ export default function SpectatorView() {
     return (
       <InningsBreakView
         matchState={liveView.matchState}
-        meta={draft.meta}
+        meta={effectiveMeta}
         tab={tab}
         onTabChange={setTab}
         onBack={onBack}
@@ -693,7 +716,7 @@ export default function SpectatorView() {
     return (
       <MatchCompleteView
         matchState={liveView.matchState}
-        meta={draft.meta}
+        meta={effectiveMeta}
         tab={tab}
         onTabChange={setTab}
         onBack={onBack}
@@ -735,14 +758,14 @@ export default function SpectatorView() {
     getLegalBalls(currentInnings),
     ballsPerOver
   );
-  const isTournament = draft.meta?.kind === "tournament";
+  const isTournament = effectiveMeta?.kind === "tournament";
 
   const liveContent = (
     <>
       <div className="spectator-hero">
         <div className="spectator-hero__status">
           <CricketLivePill />
-          <MatchMetaLabel meta={draft.meta} />
+          <MatchMetaLabel meta={effectiveMeta} />
         </div>
 
         <p className="spectator-hero__innings">
@@ -880,7 +903,7 @@ export default function SpectatorView() {
       <SpectatorTabPanels
         tab={tab}
         matchState={matchState}
-        meta={draft.meta}
+        meta={effectiveMeta}
         liveContent={liveContent}
         scoresheet={scoresheet}
       />

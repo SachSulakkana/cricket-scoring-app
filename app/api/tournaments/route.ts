@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
+import { requireMutationAuth } from "@/lib/api-auth";
+import { parseJsonBody } from "@/lib/api-route-utils";
+import { tournamentSchema } from "@/lib/api-schemas";
 import { saveTournament } from "@/lib/firestore-db";
 import type { DbTournament } from "@/lib/firestore-db";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const authError = requireMutationAuth(request);
+  if (authError) return authError;
+
   try {
-    const tournament = (await request.json()) as DbTournament;
-    await saveTournament(tournament);
+    const parsed = await parseJsonBody(request, tournamentSchema);
+    if ("error" in parsed) return parsed.error;
+
+    await saveTournament(parsed.data as DbTournament);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("POST /api/tournaments failed", error);

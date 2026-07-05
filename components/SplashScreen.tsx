@@ -6,7 +6,7 @@ import AppLogo from "@/components/AppLogo";
 import { APP_NAME_DISPLAY } from "@/lib/app-brand";
 
 const LOAD_STEPS = [
-  { id: "db", label: "Opening local database" },
+  { id: "db", label: "Connecting to Firestore" },
   { id: "roster", label: "Loading players & teams" },
   { id: "tournaments", label: "Syncing tournaments & fixtures" },
   { id: "ready", label: "Preparing your scoreboard" },

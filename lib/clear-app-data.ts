@@ -4,6 +4,7 @@ import {
   clearLiveMatchDraftLocal,
   clearLiveMatchDraftRemote,
 } from "@/lib/live-match-draft";
+import { authenticatedFetch } from "@/lib/api-client";
 import { reloadRosterFromServer } from "@/lib/roster-storage";
 import type { DataClearAction } from "@/lib/data-clear-types";
 import { getStore } from "@/lib/store/store";
@@ -51,9 +52,8 @@ export const DATA_CLEAR_OPTIONS: {
 ];
 
 export async function clearAppData(action: DataClearAction): Promise<void> {
-  const res = await fetch("/api/settings/clear", {
+  const res = await authenticatedFetch("/api/settings/clear", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action }),
   });
   if (!res.ok) {

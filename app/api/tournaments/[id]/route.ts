@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { deleteTournament, getTournament, listTeams, saveTournament } from "@/lib/firestore-db";
+import { requireMutationAuth } from "@/lib/api-auth";
+import { parseJsonBody } from "@/lib/api-route-utils";
+import { tournamentSchema } from "@/lib/api-schemas";
+import {
+  deleteTournament,
+  getTournament,
+  listTeams,
+  saveTournament,
+} from "@/lib/firestore-db";
 import type { DbTournament } from "@/lib/firestore-db";
 
 export const runtime = "nodejs";
@@ -30,13 +38,18 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = requireMutationAuth(request);
+  if (authError) return authError;
+
   try {
     const { id } = await params;
-    const tournament = (await request.json()) as DbTournament;
-    if (tournament.id !== id) {
+    const parsed = await parseJsonBody(request, tournamentSchema);
+    if ("error" in parsed) return parsed.error;
+
+    if (parsed.data.id !== id) {
       return NextResponse.json({ error: "ID mismatch" }, { status: 400 });
     }
-    await saveTournament(tournament);
+    await saveTournament(parsed.data as DbTournament);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("PUT /api/tournaments/[id] failed", error);
@@ -48,9 +61,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = requireMutationAuth(request);
+  if (authError) return authError;
+
   try {
     const { id } = await params;
     await deleteTournament(id);

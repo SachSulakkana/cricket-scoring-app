@@ -115,6 +115,8 @@ async function saveTournamentFixtures(
   tournamentId: string,
   fixtures: unknown[]
 ): Promise<void> {
+  if (fixtures.length === 0) return;
+
   const ref = tournamentFixturesRef(tournamentId);
   const existing = await ref.get();
   const nextIds = new Set(
@@ -190,15 +192,15 @@ async function hydrateTournamentDoc(row: Record<string, unknown>): Promise<DbTou
       ? row.current_stage_index
       : undefined;
 
-  const groupAssignments =
+  const groupAssignments: Record<string, string> | undefined =
     row.group_assignments_json &&
     typeof row.group_assignments_json === "object" &&
     !Array.isArray(row.group_assignments_json)
-      ? Object.fromEntries(
+      ? (Object.fromEntries(
           Object.entries(row.group_assignments_json as Record<string, unknown>).filter(
             ([k, v]) => typeof k === "string" && typeof v === "string"
           )
-        )
+        ) as Record<string, string>)
       : undefined;
 
   const championTeamId =
@@ -278,29 +280,53 @@ export async function savePlayer(player: Player): Promise<void> {
 
 export async function bulkImportPlayers(players: Player[]): Promise<number> {
   if (players.length === 0) return 0;
-  const batch = getDb().batch();
-  for (const player of players) {
-    batch.set(
-      getDb().collection(COLLECTIONS.players).doc(player.id),
-      playerToRow(player)
-    );
+  for (let i = 0; i < players.length; i += BATCH_WRITE_LIMIT) {
+    const batch = getDb().batch();
+    for (const player of players.slice(i, i + BATCH_WRITE_LIMIT)) {
+      batch.set(
+        getDb().collection(COLLECTIONS.players).doc(player.id),
+        playerToRow(player)
+      );
+    }
+    await batch.commit();
   }
-  await batch.commit();
   return players.length;
 }
 
 export async function deletePlayer(playerId: string): Promise<void> {
-  await getDb().collection(COLLECTIONS.players).doc(playerId).delete();
+  const db = getDb();
   const teams = await listTeams();
-  const updates = teams
-    .filter((team) => team.players.some((p) => p.id === playerId))
-    .map((team) =>
-      saveTeam({
+  const affected = teams.filter((team) =>
+    team.players.some((p) => p.id === playerId)
+  );
+
+  type PlayerDeleteOp =
+    | { type: "delete"; ref: DocumentReference }
+    | { type: "set"; ref: DocumentReference; data: ReturnType<typeof teamToRow> };
+
+  const ops: PlayerDeleteOp[] = [
+    {
+      type: "delete",
+      ref: db.collection(COLLECTIONS.players).doc(playerId),
+    },
+    ...affected.map((team) => ({
+      type: "set" as const,
+      ref: db.collection(COLLECTIONS.teams).doc(team.id),
+      data: teamToRow({
         ...team,
         players: team.players.filter((p) => p.id !== playerId),
-      })
-    );
-  await Promise.all(updates);
+      }),
+    })),
+  ];
+
+  for (let i = 0; i < ops.length; i += BATCH_WRITE_LIMIT) {
+    const batch = db.batch();
+    for (const op of ops.slice(i, i + BATCH_WRITE_LIMIT)) {
+      if (op.type === "delete") batch.delete(op.ref);
+      else batch.set(op.ref, op.data);
+    }
+    await batch.commit();
+  }
 }
 
 export async function syncPlayerInTeams(player: Player): Promise<void> {
@@ -332,11 +358,16 @@ export async function saveTeam(team: Team): Promise<void> {
 
 export async function bulkImportTeams(teams: Team[]): Promise<number> {
   if (teams.length === 0) return 0;
-  const batch = getDb().batch();
-  for (const team of teams) {
-    batch.set(getDb().collection(COLLECTIONS.teams).doc(team.id), teamToRow(team));
+  for (let i = 0; i < teams.length; i += BATCH_WRITE_LIMIT) {
+    const batch = getDb().batch();
+    for (const team of teams.slice(i, i + BATCH_WRITE_LIMIT)) {
+      batch.set(
+        getDb().collection(COLLECTIONS.teams).doc(team.id),
+        teamToRow(team)
+      );
+    }
+    await batch.commit();
   }
-  await batch.commit();
   return teams.length;
 }
 
@@ -358,11 +389,11 @@ export async function getTournament(id: string): Promise<DbTournament | undefine
 
 export async function saveTournament(tournament: DbTournament): Promise<void> {
   const fixtures = tournament.fixtures ?? [];
+  await saveTournamentFixtures(tournament.id, fixtures);
   await getDb()
     .collection(COLLECTIONS.tournaments)
     .doc(tournament.id)
     .set(tournamentToRow(tournament));
-  await saveTournamentFixtures(tournament.id, fixtures);
 }
 
 export async function deleteTournament(tournamentId: string): Promise<void> {
@@ -482,6 +513,14 @@ export async function getQuickMatchById(
   };
 }
 
+export async function deleteQuickMatch(id: string): Promise<boolean> {
+  const ref = getDb().collection(COLLECTIONS.savedMatches).doc(id);
+  const snap = await ref.get();
+  if (!snap.exists || snap.data()?.kind !== "quick") return false;
+  await ref.delete();
+  return true;
+}
+
 export async function listQuickMatches(limit = 50): Promise<DbQuickMatchListItem[]> {
   const rows = await listCollection<{
     id: string;
@@ -574,11 +613,13 @@ async function clearCollection(name: string): Promise<number> {
   }
 
   const snapshot = await getDb().collection(name).get();
-  const batch = getDb().batch();
-  for (const doc of snapshot.docs) {
-    batch.delete(doc.ref);
+  for (let i = 0; i < snapshot.docs.length; i += BATCH_WRITE_LIMIT) {
+    const batch = getDb().batch();
+    for (const doc of snapshot.docs.slice(i, i + BATCH_WRITE_LIMIT)) {
+      batch.delete(doc.ref);
+    }
+    await batch.commit();
   }
-  await batch.commit();
   return snapshot.size;
 }
 

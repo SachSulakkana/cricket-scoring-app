@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { requireMutationAuth } from "@/lib/api-auth";
+import { parseJsonBody } from "@/lib/api-route-utils";
+import { teamSchema } from "@/lib/api-schemas";
 import { deleteTeam, saveTeam } from "@/lib/firestore-db";
 import type { Team } from "@/lib/cricket-types";
 
@@ -8,13 +11,18 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = requireMutationAuth(request);
+  if (authError) return authError;
+
   try {
     const { id } = await params;
-    const team = (await request.json()) as Team;
-    if (team.id !== id) {
+    const parsed = await parseJsonBody(request, teamSchema);
+    if ("error" in parsed) return parsed.error;
+
+    if (parsed.data.id !== id) {
       return NextResponse.json({ error: "ID mismatch" }, { status: 400 });
     }
-    await saveTeam(team);
+    await saveTeam(parsed.data as Team);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("PUT /api/teams/[id] failed", error);
@@ -26,9 +34,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = requireMutationAuth(request);
+  if (authError) return authError;
+
   try {
     const { id } = await params;
     await deleteTeam(id);

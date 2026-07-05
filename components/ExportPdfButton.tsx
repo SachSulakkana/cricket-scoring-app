@@ -26,10 +26,10 @@ export default function ExportPdfButton({
       disabled={loading}
       className={cn(
         variant === "tournament"
-          ? "cricket-btn-add cricket-btn-add--tournament"
+          ? "btn-12 btn-12--md btn-12--full"
           : variant === "outline"
-            ? "cricket-btn-setup !w-auto !min-h-9 px-3 text-xs font-semibold"
-            : "cricket-btn-setup",
+            ? "btn-12 btn-12--outline btn-12--md !w-auto !min-h-9 px-3 text-xs font-semibold"
+            : "btn-12 btn-12--outline btn-12--md",
         variant !== "outline" && "w-full !min-h-11",
         "inline-flex items-center justify-center gap-1.5 text-sm font-bold",
         className

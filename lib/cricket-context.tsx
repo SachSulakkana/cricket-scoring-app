@@ -75,7 +75,16 @@ export function CricketProvider({ children }: { children: React.ReactNode }) {
 
   const persistDraft = useCallback((state: MatchState, meta: LiveMatchMeta | null) => {
     saveLiveMatchDraftLocal(state, meta);
-    void saveLiveMatchDraftRemote(state, meta);
+    void saveLiveMatchDraftRemote(state, meta).catch((err) => {
+      console.error("Live draft sync failed", err);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("cricket-live-draft-sync-error", {
+            detail: err instanceof Error ? err.message : "Sync failed",
+          })
+        );
+      }
+    });
   }, []);
 
   const flushPersistDraft = useCallback(() => {

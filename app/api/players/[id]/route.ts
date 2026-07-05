@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { requireMutationAuth } from "@/lib/api-auth";
+import { parseJsonBody } from "@/lib/api-route-utils";
+import { playerSchema } from "@/lib/api-schemas";
 import {
   deletePlayer,
   savePlayer,
@@ -12,14 +15,19 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = requireMutationAuth(request);
+  if (authError) return authError;
+
   try {
     const { id } = await params;
-    const player = (await request.json()) as Player;
-    if (player.id !== id) {
+    const parsed = await parseJsonBody(request, playerSchema);
+    if ("error" in parsed) return parsed.error;
+
+    if (parsed.data.id !== id) {
       return NextResponse.json({ error: "ID mismatch" }, { status: 400 });
     }
-    await savePlayer(player);
-    await syncPlayerInTeams(player);
+    await savePlayer(parsed.data as Player);
+    await syncPlayerInTeams(parsed.data as Player);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("PUT /api/players/[id] failed", error);
@@ -31,9 +39,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = requireMutationAuth(request);
+  if (authError) return authError;
+
   try {
     const { id } = await params;
     await deletePlayer(id);

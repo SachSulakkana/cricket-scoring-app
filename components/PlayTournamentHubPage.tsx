@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Play, Trash2, Trophy } from "lucide-react";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import RefreshRosterButton from "@/components/RefreshRosterButton";
+import { Button } from "@/components/ui/button";
 import {
   CricketAddButton,
   CricketBroadcastCard,
@@ -67,16 +68,18 @@ function OngoingTournamentCard({
         deleting && "opacity-60 pointer-events-none"
       )}
     >
-      <button
+      <Button
         type="button"
+        variant="destructive"
+        size="icon-sm"
         onClick={onDelete}
         disabled={deleting}
-        className="roster-card__menu-btn absolute top-3 right-3 z-10 min-h-11 min-w-11 border-[oklch(0.5_0.14_25/0.5)] text-[oklch(0.78_0.12_25)] hover:border-[oklch(0.62_0.18_25)] hover:bg-[oklch(0.28_0.1_25/0.55)] touch-manipulation"
+        className="absolute top-3 right-3 z-10 touch-manipulation"
         aria-label={`Delete ${tournament.name}`}
         title="Delete tournament"
       >
-        <Trash2 className="h-4 w-4" />
-      </button>
+        <Trash2 className="h-4 w-4" aria-hidden />
+      </Button>
 
       <div className="flex items-start gap-3 pr-10">
         <div className="shrink-0 rounded-xl border border-[oklch(0.55_0.12_75/0.35)] bg-[oklch(0.28_0.08_75/0.35)] p-3">
@@ -117,7 +120,7 @@ function OngoingTournamentCard({
         onClick={onResume}
         disabled={deleting}
         className={cn(
-          "mt-4 w-full cricket-btn-add cricket-btn-add--inline cricket-btn-add--tournament",
+          "mt-4 w-full btn-12 btn-12--sm",
           "!min-h-10 justify-center"
         )}
       >

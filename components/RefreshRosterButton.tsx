@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
 import CricketLoader from "@/components/CricketLoader";
+import { Button } from "@/components/ui/button";
 import { appToast } from "@/lib/app-toast";
 import { reloadRosterFromServer } from "@/lib/roster-storage";
 
@@ -22,9 +23,9 @@ export default function RefreshRosterButton() {
   };
 
   return (
-    <button
+    <Button
       type="button"
-      className="cricket-btn-import inline-flex items-center gap-1.5"
+      size="icon-sm"
       disabled={loading}
       onClick={handleRefresh}
       title="Reload all players, teams, and tournaments from the database"
@@ -33,9 +34,8 @@ export default function RefreshRosterButton() {
       {loading ? (
         <CricketLoader size="sm" />
       ) : (
-        <RefreshCw className="h-3.5 w-3.5 shrink-0" />
+        <RefreshCw className="h-4 w-4 shrink-0" aria-hidden />
       )}
-      <span className="refresh-roster-btn__label">Refresh data</span>
-    </button>
+    </Button>
   );
 }

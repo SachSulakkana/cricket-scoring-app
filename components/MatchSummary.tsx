@@ -235,7 +235,7 @@ export default function MatchSummary({
               type="button"
               onClick={handleSaveToDatabase}
               disabled={saving}
-              className="cricket-btn-add cricket-btn-add--tournament w-full !min-h-12 inline-flex items-center justify-center gap-2 text-base"
+              className="btn-12 btn-12--md btn-12--full w-full !min-h-12 inline-flex items-center justify-center gap-2 text-base"
             >
               {saving ? (
                 <>
@@ -268,14 +268,14 @@ export default function MatchSummary({
             <button
               type="button"
               onClick={onUseSameTeams}
-              className="cricket-btn-play cricket-btn-play--quick w-full"
+              className="btn-12 btn-12--lg btn-12--full w-full"
             >
               Rematch — same teams
             </button>
             <button
               type="button"
               onClick={onCreateNewTeams}
-              className="cricket-btn-setup w-full !min-h-[3.25rem] !text-base"
+              className="btn-12 btn-12--outline btn-12--md w-full !min-h-[3.25rem] !text-base"
             >
               New teams
             </button>

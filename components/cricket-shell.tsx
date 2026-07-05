@@ -54,11 +54,13 @@ export function CricketBackButton({
       aria-label={ariaLabel}
       title={ariaLabel}
       className={cn(
-        "cricket-btn-back inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-xl leading-none touch-manipulation",
+        "btn-12 btn-12--icon btn-12-exempt touch-manipulation",
         className
       )}
     >
-      <span aria-hidden>←</span>
+      <span className="btn-12__label text-xl leading-none" aria-hidden>
+        ←
+      </span>
     </button>
   );
 }
@@ -116,7 +118,7 @@ export function CricketFormFieldError({ children }: { children: React.ReactNode 
 export function CricketAddButton({
   children,
   className,
-  variant = "player",
+  variant: _variant = "player",
   size = "header",
   type = "button",
   ...props
@@ -128,18 +130,15 @@ export function CricketAddButton({
     <button
       type={type}
       className={cn(
-        "cricket-btn-add",
-        size === "header" && "cricket-btn-add--header",
-        size === "inline" && "cricket-btn-add--inline",
-        size === "full" && "cricket-btn-add--full",
-        variant === "player" && "cricket-btn-add--player",
-        variant === "team" && "cricket-btn-add--team",
-        variant === "tournament" && "cricket-btn-add--tournament",
+        "btn-12",
+        size === "header" && "btn-12--sm",
+        size === "inline" && "btn-12--md",
+        size === "full" && "btn-12--lg btn-12--full",
         className
       )}
       {...props}
     >
-      {children}
+      <span className="btn-12__label inline-flex items-center gap-2">{children}</span>
     </button>
   );
 }

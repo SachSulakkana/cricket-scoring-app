@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { requireMutationAuth } from "@/lib/api-auth";
+import { parseJsonBody } from "@/lib/api-route-utils";
+import { liveDraftPutSchema } from "@/lib/api-schemas";
 import {
   clearLiveMatchDraft,
   getLiveMatchDraft,
@@ -30,19 +33,17 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  const authError = requireMutationAuth(request);
+  if (authError) return authError;
+
   try {
-    const body = (await request.json()) as {
-      matchState?: unknown;
-      meta?: unknown;
-      updatedAt?: string;
-    };
-    if (!body.matchState) {
-      return NextResponse.json({ error: "matchState required" }, { status: 400 });
-    }
+    const parsed = await parseJsonBody(request, liveDraftPutSchema);
+    if ("error" in parsed) return parsed.error;
+
     await saveLiveMatchDraft(
-      body.matchState,
-      body.meta ?? null,
-      body.updatedAt ?? new Date().toISOString()
+      parsed.data.matchState,
+      parsed.data.meta ?? null,
+      parsed.data.updatedAt
     );
     return NextResponse.json({ ok: true });
   } catch (error) {
@@ -54,7 +55,10 @@ export async function PUT(request: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
+  const authError = requireMutationAuth(request);
+  if (authError) return authError;
+
   try {
     await clearLiveMatchDraft();
     return NextResponse.json({ ok: true });

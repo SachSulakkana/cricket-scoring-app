@@ -56,7 +56,7 @@ function LandingTile({
       disabled={disabled}
       aria-label={`${lines[0]}${lines[1] ? ` ${lines[1]}` : ""}${subtitle ? `. ${subtitle}` : ""}`}
       className={[
-        "landing-tile",
+        "landing-tile btn-12-exempt",
         tall ? "landing-tile--tall" : "landing-tile--short",
         accent === "hero" && "landing-tile--hero",
         accent === "quick" && "landing-tile--quick",
@@ -145,7 +145,7 @@ export default function LandingPage() {
               onClick={() => router.push(routes.live)}
             />
             <LandingTile
-              image="comingSoon"
+              image="quickMatch"
               lines={["Match", "History"]}
               subtitle="Quick & tournament runs"
               onClick={() => router.push(routes.quickMatchHistory)}

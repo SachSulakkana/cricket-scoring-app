@@ -119,7 +119,7 @@ export default function ReplacementBatsmanModal({
               className={cn(
                 "w-full py-6 text-lg font-bold",
                 isSubmitEnabled
-                  ? "cricket-btn-play cricket-btn-play--quick"
+                  ? "btn-12 btn-12--lg btn-12--full"
                   : "cursor-not-allowed bg-[oklch(0.2_0.03_255)] text-[oklch(0.5_0.03_255)]"
               )}
             >
