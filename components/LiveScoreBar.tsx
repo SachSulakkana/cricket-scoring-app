@@ -94,18 +94,15 @@ function BattersPanel({
 
 function buildContextItems(
   chaseInfo: LiveChaseInfo | null,
-  currentRunRate: string,
-  currentOvers: string
+  currentRunRate: string
 ): string[] {
   if (chaseInfo) {
     return [
-      `REQ RR ${chaseInfo.requiredRunRate}`,
-      `TARGET ${chaseInfo.target} · ${chaseInfo.runsNeeded} OFF ${chaseInfo.ballsRemaining}`,
-      `REQ RR ${chaseInfo.requiredRunRate}`,
       `CRR ${chaseInfo.currentRunRate}`,
+      `NEED ${chaseInfo.runsNeeded} FROM ${chaseInfo.oversRemaining} OV`,
     ];
   }
-  return [`CRR ${currentRunRate}`, `OVERS ${currentOvers}`];
+  return [`CRR ${currentRunRate}`];
 }
 
 function RotatingContext({ items }: { items: string[] }) {
@@ -403,11 +400,7 @@ export default function LiveScoreBar({
           overs={view.currentOvers}
           footer={
             <RotatingContext
-              items={buildContextItems(
-                view.chaseInfo,
-                view.currentRunRate,
-                view.currentOvers
-              )}
+              items={buildContextItems(view.chaseInfo, view.currentRunRate)}
             />
           }
         />

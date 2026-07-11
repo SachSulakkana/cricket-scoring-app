@@ -166,7 +166,7 @@
       opacity 0.2s ease;
   }
 
-  .btn-12:hover:not(:disabled),
+  .btn-12:not(.btn-12--destructive):hover:not(:disabled),
   button:not(.btn-12-exempt):not(.btn-12):not(.cricket-scorecard-expand-btn):not(.roster-card__menu-btn):not(.tournament-stage-card__remove):not(.tournament-team-slot__clear):not(.landing-tile):not(.spectator-nav-tab):not(.cricket-tab):not([role='tab']):not([data-slot='select-trigger']):not([data-slot='tabs-trigger']):not([data-slot='dialog-close']):hover:not(:disabled) {
     background-color: oklch(0.48 0.17 295);
     border-color: oklch(0.62 0.18 295);
@@ -199,7 +199,7 @@
     color: inherit;
   }
 
-  .btn-12:hover:not(:disabled) .btn-12__label,
+  .btn-12:not(.btn-12--destructive):hover:not(:disabled) .btn-12__label,
   button:not(.btn-12-exempt):not(.btn-12):not(.cricket-scorecard-expand-btn):not(.roster-card__menu-btn):not(.tournament-stage-card__remove):not(.tournament-team-slot__clear):not(.landing-tile):not(.spectator-nav-tab):not(.cricket-tab):not([role='tab']):not([data-slot='select-trigger']):not([data-slot='tabs-trigger']):not([data-slot='dialog-close']):hover:not(:disabled) .btn-12__label {
     color: var(--cricket-cream);
   }
@@ -244,8 +244,8 @@
     );
   }
 
-  .btn-12:hover::after,
-  .btn-12:hover::before,
+  .btn-12:not(.btn-12--destructive):hover::after,
+  .btn-12:not(.btn-12--destructive):hover::before,
   button:not(.btn-12-exempt):not(.btn-12):not(.cricket-scorecard-expand-btn):not(.roster-card__menu-btn):not(.tournament-stage-card__remove):not(.tournament-team-slot__clear):not(.landing-tile):not(.spectator-nav-tab):not(.cricket-tab):not([role='tab']):not([data-slot='select-trigger']):not([data-slot='tabs-trigger']):not([data-slot='dialog-close']):hover:not(:disabled)::after,
   button:not(.btn-12-exempt):not(.btn-12):not(.cricket-scorecard-expand-btn):not(.roster-card__menu-btn):not(.tournament-stage-card__remove):not(.tournament-team-slot__clear):not(.landing-tile):not(.spectator-nav-tab):not(.cricket-tab):not([role='tab']):not([data-slot='select-trigger']):not([data-slot='tabs-trigger']):not([data-slot='dialog-close']):hover:not(:disabled)::before {
     --progress: 0;
@@ -334,31 +334,31 @@
 
   .btn-12--destructive,
   .btn-12.btn-12--destructive {
-    background-color: #000;
-    border-color: oklch(0.62 0.22 25);
-    color: oklch(0.68 0.22 25);
+    background-color: #dc2626;
+    border-color: #b91c1c;
+    color: #ffffff;
   }
 
   .btn-12--destructive svg,
   .btn-12.btn-12--destructive svg {
-    color: oklch(0.68 0.22 25);
+    color: #ffffff;
     stroke: currentColor;
   }
 
   .btn-12--destructive .btn-12__label,
   .btn-12.btn-12--destructive .btn-12__label {
-    color: oklch(0.68 0.22 25);
+    color: #ffffff;
   }
 
   .btn-12--destructive::before,
   .btn-12.btn-12--destructive::before {
     background: linear-gradient(
       90deg,
-      oklch(0.72 0.18 25 / 0.35) 25%,
+      rgb(255 255 255 / 0.22) 25%,
       transparent 0,
       transparent 50%,
-      oklch(0.72 0.18 25 / 0.35) 0,
-      oklch(0.72 0.18 25 / 0.35) 75%,
+      rgb(255 255 255 / 0.22) 0,
+      rgb(255 255 255 / 0.22) 75%,
       transparent 0
     );
   }
@@ -369,26 +369,36 @@
       90deg,
       transparent 0,
       transparent 25%,
-      oklch(0.82 0.12 25 / 0.3) 0,
-      oklch(0.82 0.12 25 / 0.3) 50%,
+      rgb(255 255 255 / 0.16) 0,
+      rgb(255 255 255 / 0.16) 50%,
       transparent 0,
       transparent 75%,
-      oklch(0.82 0.12 25 / 0.3) 0
+      rgb(255 255 255 / 0.16) 0
     );
   }
 
   .btn-12--destructive:hover:not(:disabled),
   .btn-12.btn-12--destructive:hover:not(:disabled) {
-    background-color: oklch(0.52 0.22 25);
-    border-color: oklch(0.68 0.22 25);
-    color: var(--cricket-cream);
+    background-color: #ef4444;
+    border-color: #dc2626;
+    color: #ffffff;
   }
 
   .btn-12--destructive:hover:not(:disabled) svg,
   .btn-12.btn-12--destructive:hover:not(:disabled) svg,
   .btn-12--destructive:hover:not(:disabled) .btn-12__label,
-  .btn-12.btn-12--destructive:hover:not(:disabled) .btn-12__label {
-    color: var(--cricket-cream);
+  .btn-12.btn-12--destructive:hover:not(:disabled) .btn-12__label,
+  .btn-12--destructive:hover:not(:disabled) .btn-12__label *,
+  .btn-12.btn-12--destructive:hover:not(:disabled) .btn-12__label * {
+    color: #ffffff;
+  }
+
+  .btn-12--destructive:hover::after,
+  .btn-12--destructive:hover::before,
+  .btn-12.btn-12--destructive:hover::after,
+  .btn-12.btn-12--destructive:hover::before {
+    --progress: 0;
+    opacity: 1;
   }
 
   .btn-12--ghost,

@@ -57,6 +57,7 @@ export type LiveChaseInfo = {
   target: number;
   runsNeeded: number;
   ballsRemaining: number;
+  oversRemaining: string;
   currentRunRate: string;
   requiredRunRate: string;
   requiredLine: string;
@@ -194,11 +195,16 @@ function buildChaseInfo(matchState: MatchState): LiveChaseInfo | null {
     ballsRemaining > 0
       ? ((runsNeeded / ballsRemaining) * ballsPerOver).toFixed(2)
       : "0.00";
+  const oversRemaining = formatOversFromLegalBalls(
+    ballsRemaining,
+    ballsPerOver
+  );
 
   return {
     target,
     runsNeeded,
     ballsRemaining,
+    oversRemaining,
     currentRunRate: getCurrentRunRate(innings2, ballsPerOver),
     requiredRunRate,
     requiredLine: `Required ${runsNeeded} runs in ${ballsRemaining} balls`,
