@@ -2,6 +2,8 @@ export const routes = {
   home: "/",
   live: "/live",
   liveWatch: "/live/watch",
+  liveEmbed: "/live/embed",
+  liveEmbedPreview: "/live/embed/preview",
   settings: "/settings",
   quickMatch: "/quick-match",
   quickMatchHistory: "/quick-match/history",
@@ -70,4 +72,40 @@ export function getSpectatorLiveUrl(
   }
   const qs = params.toString();
   return `${base}${routes.liveWatch}${qs ? `?${qs}` : ""}`;
+}
+
+/** Full URL for the OBS / stream overlay score bar. */
+export function getSpectatorEmbedUrl(
+  origin?: string,
+  context?: { tournamentId?: string; fixtureId?: string }
+): string {
+  const base =
+    origin ?? (typeof window !== "undefined" ? window.location.origin : "");
+  const params = new URLSearchParams();
+  if (context?.tournamentId) {
+    params.set("tournament", context.tournamentId);
+  }
+  if (context?.fixtureId) {
+    params.set("fixture", context.fixtureId);
+  }
+  const qs = params.toString();
+  return `${base}${routes.liveEmbed}${qs ? `?${qs}` : ""}`;
+}
+
+/** Full URL for the in-app stream overlay preview (black background). */
+export function getSpectatorEmbedPreviewUrl(
+  origin?: string,
+  context?: { tournamentId?: string; fixtureId?: string }
+): string {
+  const base =
+    origin ?? (typeof window !== "undefined" ? window.location.origin : "");
+  const params = new URLSearchParams();
+  if (context?.tournamentId) {
+    params.set("tournament", context.tournamentId);
+  }
+  if (context?.fixtureId) {
+    params.set("fixture", context.fixtureId);
+  }
+  const qs = params.toString();
+  return `${base}${routes.liveEmbedPreview}${qs ? `?${qs}` : ""}`;
 }

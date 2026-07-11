@@ -8,6 +8,7 @@ import {
   DismissalType,
   ExtraType,
 } from "@/lib/cricket-types";
+import { getDismissalReplacementEnd } from "@/lib/spectator-live-stats";
 import DismissalModal from "./DismissalModal";
 import CricketLoader from "@/components/CricketLoader";
 import ReplacementBatsmanModal from "./ReplacementBatsmanModal";
@@ -46,6 +47,11 @@ export default function BallEntry({
   const [showBowlerSelector, setShowBowlerSelector] = useState(false);
   const [pendingExtraType, setPendingExtraType] = useState<ExtraType | null>(null);
   const [overthrowBatRuns, setOverthrowBatRuns] = useState<number | null>(null);
+  const [pendingRunOutDismissal, setPendingRunOutDismissal] = useState<{
+    dismissalType: DismissalType;
+    dismissedPlayerId: string;
+    fielderId?: string;
+  } | null>(null);
 
   if (!currentInnings || !scoring) return null;
 
@@ -243,19 +249,42 @@ export default function BallEntry({
     dismissedPlayerId: string,
     fielderId?: string
   ) => {
+    if (dismissalType === "run-out") {
+      setShowDismissalModal(false);
+      setPendingRunOutDismissal({
+        dismissalType,
+        dismissedPlayerId,
+        fielderId,
+      });
+      return;
+    }
+
+    recordDismissalBall(dismissalType, dismissedPlayerId, fielderId, 0);
+  };
+
+  const recordDismissalBall = (
+    dismissalType: DismissalType,
+    dismissedPlayerId: string,
+    fielderId: string | undefined,
+    completedRuns: number
+  ) => {
     if (!strikerInfo || !bowlerInfo) return;
 
-    const isStrikerDismissed = strikerInfo.id === dismissedPlayerId;
     const dismissedPlayer = battingTeam.players.find(
       (p) => p.id === dismissedPlayerId
     );
     const fielder = fielderId
       ? bowlingTeam.players.find((p) => p.id === fielderId)
       : undefined;
+    const wasStrikerAtStart = strikerInfo.id === dismissedPlayerId;
+    const dismissedAtStrikerEnd = getDismissalReplacementEnd(
+      wasStrikerAtStart,
+      completedRuns
+    );
 
     const newBall = {
       id: `${currentInnings.teamId}-${currentBallNumber}`,
-      runs: 0,
+      runs: completedRuns,
       extra: "none" as const,
       extraRuns: 0,
       dismissal: dismissalType,
@@ -268,13 +297,30 @@ export default function BallEntry({
     };
 
     addBall(newBall);
+
+    if (completedRuns % 2 === 1) {
+      swapStrike();
+    }
+
     setShowDismissalModal(false);
+    setPendingRunOutDismissal(null);
     setDismissedPlayerInfo({
       playerId: dismissedPlayerId,
       name: dismissedPlayer?.name || "",
-      isStriker: isStrikerDismissed,
+      isStriker: dismissedAtStrikerEnd,
     });
     setShowReplacementModal(true);
+  };
+
+  const handleRunOutRunsConfirm = (completedRuns: number) => {
+    if (!pendingRunOutDismissal) return;
+
+    recordDismissalBall(
+      pendingRunOutDismissal.dismissalType,
+      pendingRunOutDismissal.dismissedPlayerId,
+      pendingRunOutDismissal.fielderId,
+      completedRuns
+    );
   };
 
   const handleReplacementConfirm = (playerId: string) => {
@@ -508,6 +554,38 @@ export default function BallEntry({
           disabledPlayerId={currentInnings.currentBowlerPlayerId}
           onSubmit={handleNextBowler}
         />
+      )}
+
+      {pendingRunOutDismissal && (
+        <div className="cricket-modal-overlay fixed inset-0 flex items-center justify-center z-50 p-4">
+          <div className="cricket-modal w-full max-w-md p-5 space-y-4">
+            <p className="cricket-display text-center text-lg font-semibold text-[var(--cricket-cream)]">
+              Run out — runs completed before dismissal?
+            </p>
+            <p className="text-center text-sm text-[oklch(0.72_0.04_300)]">
+              Only count runs already completed, not the run being attempted.
+            </p>
+            <div className="cricket-run-grid">
+              {[0, 1, 2, 3, 4, 5, 6].map((runs) => (
+                <button
+                  key={runs}
+                  type="button"
+                  onClick={() => handleRunOutRunsConfirm(runs)}
+                  className="cricket-run-btn btn-12--compact"
+                >
+                  {runs}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="btn-12 btn-12--outline btn-12--md w-full"
+              onClick={() => setPendingRunOutDismissal(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
 
       {pendingExtraType && (

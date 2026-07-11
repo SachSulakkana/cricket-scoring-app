@@ -59,7 +59,7 @@ export const tournamentSchema = z.object({
   totalOvers: z.number().int().min(1).max(100),
   ballsPerOver: z.number().int().min(1).max(12),
   teamCount: z.number().int().min(2).max(64),
-  stageCount: z.number().int().min(1).max(10),
+  stageCount: z.number().int().min(0).max(10),
   stages: z.array(tournamentStageSchema),
   selectedTeamIds: z.array(z.string()),
   fixtures: z.array(z.unknown()).max(500),

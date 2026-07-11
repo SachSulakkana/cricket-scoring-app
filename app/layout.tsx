@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Oswald, Source_Sans_3 } from 'next/font/google'
+import { Nunito, Oswald, Source_Sans_3 } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { CricketProvider } from '@/lib/cricket-context'
 import AppToaster from '@/components/AppToaster'
@@ -19,6 +19,12 @@ const body = Source_Sans_3({
   subsets: ['latin'],
   variable: '--font-body',
   weight: ['400', '500', '600', '700'],
+})
+
+const rounded = Nunito({
+  subsets: ['latin'],
+  variable: '--font-rounded',
+  weight: ['600', '700', '800', '900'],
 })
 
 export const viewport = {
@@ -54,7 +60,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${display.variable} ${body.variable}`}
+      className={`dark ${display.variable} ${body.variable} ${rounded.variable}`}
       suppressHydrationWarning
     >
       <body className="font-sans antialiased" suppressHydrationWarning>

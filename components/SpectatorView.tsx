@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   CricketBackButton,
   CricketBroadcastCard,
@@ -22,52 +22,22 @@ import {
 } from "@/components/SpectatorTournamentPanels";
 import CricketLoader from "@/components/CricketLoader";
 import { useLiveMatchSnapshot } from "@/hooks/use-live-match-snapshot";
-import { useSpectatorTournament } from "@/hooks/use-spectator-tournament";
+import { useEffectiveSpectatorMeta } from "@/hooks/use-spectator-meta";
 import { routes } from "@/lib/app-routes";
-import { getMatchResult, isMatchComplete } from "@/lib/match-result";
+import { deriveLiveScoreView } from "@/lib/live-score-view";
+import { getMatchResult } from "@/lib/match-result";
 import type { MatchState } from "@/lib/cricket-types";
 import type { LiveMatchMeta } from "@/lib/store/match-slice";
 import {
   formatBallChip,
   formatOversFromLegalBalls,
-  getBatsmanRuns,
-  getBowlerStats,
   getCurrentOverProgress,
   getInningsRuns,
   getInningsWickets,
   getLegalBalls,
 } from "@/lib/spectator-live-stats";
 import { cn } from "@/lib/utils";
-
-function useEffectiveSpectatorMeta(
-  draftMeta: LiveMatchMeta | null | undefined
-): LiveMatchMeta | null {
-  const searchParams = useSearchParams();
-  const urlTournamentId =
-    searchParams.get("tournament") ?? searchParams.get("tournamentId") ?? "";
-  const urlFixtureId =
-    searchParams.get("fixture") ?? searchParams.get("fixtureId") ?? "";
-
-  return useMemo(() => {
-    if (draftMeta?.kind === "tournament") return draftMeta;
-    if (urlTournamentId) {
-      return {
-        kind: "tournament",
-        tournamentId: urlTournamentId,
-        fixtureId: urlFixtureId || undefined,
-      };
-    }
-    return draftMeta ?? null;
-  }, [draftMeta, urlTournamentId, urlFixtureId]);
-}
-
-function getBattingTeam(matchState: MatchState) {
-  return matchState.currentInnings === 1 ? matchState.team1 : matchState.team2;
-}
-
-function getBowlingTeam(matchState: MatchState) {
-  return matchState.currentInnings === 1 ? matchState.team2 : matchState.team1;
-}
+import { useSpectatorTournament } from "@/hooks/use-spectator-tournament";
 
 function formatUpdatedAt(iso: string): string {
   try {
@@ -570,97 +540,9 @@ export default function SpectatorView() {
 
   const liveView = useMemo(() => {
     if (!draft?.matchState?.matchStarted) return null;
-
-    const matchState = draft.matchState;
-
-    if (isMatchComplete(matchState)) {
-      return { kind: "complete" as const, matchState };
-    }
-
-    const currentInnings =
-      matchState.currentInnings === 1 ? matchState.innings1 : matchState.innings2;
-    if (!currentInnings) return { kind: "waiting" as const, matchState };
-
-    const ballsPerOver = matchState.config?.ballsPerOver ?? 6;
-    const battingTeam = getBattingTeam(matchState);
-    const bowlingTeam = getBowlingTeam(matchState);
-
-    const striker = battingTeam.players.find(
-      (p) => p.id === currentInnings.strikerPlayerId
-    );
-    const nonStriker = battingTeam.players.find(
-      (p) => p.id === currentInnings.nonStrikerPlayerId
-    );
-    const bowler = bowlingTeam.players.find(
-      (p) => p.id === currentInnings.currentBowlerPlayerId
-    );
-
-    const lineupReady = Boolean(striker && bowler);
-    if (!lineupReady) {
-      const innings1Complete = Boolean(matchState.innings1?.balls.length);
-      if (innings1Complete && matchState.currentInnings === 2) {
-        return { kind: "inningsBreak" as const, matchState };
-      }
-      return { kind: "waiting" as const, matchState };
-    }
-
-    const strikerRuns = getBatsmanRuns(currentInnings, striker?.name);
-    const nonStrikerRuns = getBatsmanRuns(currentInnings, nonStriker?.name);
-    const bowlerStats = getBowlerStats(currentInnings, bowler?.name);
-    const { overNumber, ballsInOver } = getCurrentOverProgress(
-      currentInnings,
-      ballsPerOver
-    );
-
-    const innings1Runs = getInningsRuns(matchState.innings1);
-    const innings1Wickets = getInningsWickets(matchState.innings1);
-    const innings2Runs = getInningsRuns(matchState.innings2);
-    const innings2Wickets = getInningsWickets(matchState.innings2);
-
-    const recentBalls = currentInnings.balls.slice(-8);
-
-    let chaseText: string | null = null;
-    if (
-      matchState.currentInnings === 2 &&
-      matchState.innings1 &&
-      matchState.config &&
-      !isMatchComplete(matchState)
-    ) {
-      const target = innings1Runs + 1;
-      const runsNeeded = Math.max(target - innings2Runs, 0);
-      const totalLegalBalls =
-        matchState.config.totalOvers * matchState.config.ballsPerOver;
-      const ballsRemaining = Math.max(
-        totalLegalBalls - getLegalBalls(matchState.innings2),
-        0
-      );
-      const oversRemaining = formatOversFromLegalBalls(
-        ballsRemaining,
-        ballsPerOver
-      );
-      chaseText = `${matchState.team2.name} need ${runsNeeded} from ${oversRemaining} overs`;
-    }
-
-    return {
-      kind: "live" as const,
-      matchState,
-      currentInnings,
-      ballsPerOver,
-      striker,
-      nonStriker,
-      bowler,
-      strikerRuns,
-      nonStrikerRuns,
-      bowlerStats,
-      overNumber,
-      ballsInOver,
-      innings1Runs,
-      innings1Wickets,
-      innings2Runs,
-      innings2Wickets,
-      recentBalls,
-      chaseText,
-    };
+    const derived = deriveLiveScoreView(draft.matchState);
+    if (derived.kind === "none") return null;
+    return derived;
   }, [draft]);
 
   if (loading) {
@@ -736,21 +618,27 @@ export default function SpectatorView() {
     matchState,
     currentInnings,
     ballsPerOver,
-    striker,
-    nonStriker,
-    bowler,
-    strikerRuns,
-    nonStrikerRuns,
-    bowlerStats,
-    overNumber,
-    ballsInOver,
-    innings1Runs,
-    innings1Wickets,
-    innings2Runs,
-    innings2Wickets,
-    recentBalls,
-    chaseText,
+    batters,
+    bowlerName,
+    bowlerRuns,
+    bowlerWickets,
+    ticker: chaseText,
   } = liveView;
+
+  const striker = batters.find((batter) => batter.isStriker);
+  const nonStriker = batters.find((batter) => !batter.isStriker);
+  const strikerRuns = striker?.runs ?? 0;
+  const nonStrikerRuns = nonStriker?.runs ?? 0;
+  const bowlerStats = { runsConceded: bowlerRuns, wickets: bowlerWickets };
+  const { overNumber, ballsInOver } = getCurrentOverProgress(
+    currentInnings,
+    ballsPerOver
+  );
+  const innings1Runs = getInningsRuns(matchState.innings1);
+  const innings1Wickets = getInningsWickets(matchState.innings1);
+  const innings2Runs = getInningsRuns(matchState.innings2);
+  const innings2Wickets = getInningsWickets(matchState.innings2);
+  const recentBalls = currentInnings.balls.slice(-8);
 
   const currentRuns = getInningsRuns(currentInnings);
   const currentWickets = getInningsWickets(currentInnings);
@@ -843,7 +731,7 @@ export default function SpectatorView() {
         <div className="cricket-bowler-panel mx-3 mb-3">
           <p className="cricket-panel-label text-[var(--cricket-gold)]">Bowler</p>
           <p className="cricket-score text-lg text-[var(--cricket-cream)] mt-1">
-            {bowler?.name}{" "}
+            {bowlerName}{" "}
             <span className="text-[oklch(0.7_0.08_75)]">
               ({bowlerStats.runsConceded}-{bowlerStats.wickets})
             </span>

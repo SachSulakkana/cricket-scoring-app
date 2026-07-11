@@ -112,9 +112,13 @@ export default function SpectatorScoresheet({
                       )}
                     >
                       <div className="cricket-score text-base text-[var(--cricket-cream)]">
-                        {ball.extra === "overthrow"
-                          ? ball.runs + ball.extraRuns
-                          : ball.runs}
+                        {ball.dismissal === "run-out"
+                          ? ball.runs > 0
+                            ? `${ball.runs}W`
+                            : "W"
+                          : ball.extra === "overthrow"
+                            ? ball.runs + ball.extraRuns
+                            : ball.runs}
                       </div>
                       {ball.extra !== "none" && (
                         <div className="text-[0.6rem] font-bold text-[var(--cricket-gold)]">

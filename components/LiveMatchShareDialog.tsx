@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getSpectatorLiveUrl } from "@/lib/app-routes";
+import { getSpectatorEmbedPreviewUrl, getSpectatorEmbedUrl, getSpectatorLiveUrl } from "@/lib/app-routes";
 import { appToast } from "@/lib/app-toast";
 import type { LiveMatchMeta } from "@/lib/store/match-slice";
 
@@ -43,29 +43,16 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
-export default function LiveMatchShareDialog({
-  open,
-  onOpenChange,
-  team1Name,
-  team2Name,
-  meta,
-}: LiveMatchShareDialogProps) {
-  const [url, setUrl] = useState("");
+function ShareUrlField({
+  id,
+  label,
+  url,
+}: {
+  id: string;
+  label: string;
+  url: string;
+}) {
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      const context =
-        meta?.kind === "tournament"
-          ? {
-              tournamentId: meta.tournamentId,
-              fixtureId: meta.fixtureId,
-            }
-          : undefined;
-      setUrl(getSpectatorLiveUrl(undefined, context));
-      setCopied(false);
-    }
-  }, [open, meta]);
 
   const handleCopy = async () => {
     if (!url) return;
@@ -80,6 +67,64 @@ export default function LiveMatchShareDialog({
   };
 
   return (
+    <div className="live-share-dialog__field">
+      <label htmlFor={id} className="live-share-dialog__label">
+        {label}
+      </label>
+      <div className="live-share-dialog__row">
+        <input
+          id={id}
+          type="text"
+          readOnly
+          value={url}
+          className="live-share-dialog__url"
+          onFocus={(e) => e.currentTarget.select()}
+        />
+        <button
+          type="button"
+          className="live-share-dialog__copy-btn"
+          onClick={() => void handleCopy()}
+          aria-label={copied ? "Link copied" : "Copy link"}
+          title={copied ? "Copied" : "Copy link"}
+        >
+          {copied ? (
+            <Check size={18} strokeWidth={2.25} aria-hidden />
+          ) : (
+            <Copy size={18} strokeWidth={2.25} aria-hidden />
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function LiveMatchShareDialog({
+  open,
+  onOpenChange,
+  team1Name,
+  team2Name,
+  meta,
+}: LiveMatchShareDialogProps) {
+  const [watchUrl, setWatchUrl] = useState("");
+  const [embedUrl, setEmbedUrl] = useState("");
+  const [previewUrl, setPreviewUrl] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      const context =
+        meta?.kind === "tournament"
+          ? {
+              tournamentId: meta.tournamentId,
+              fixtureId: meta.fixtureId,
+            }
+          : undefined;
+      setWatchUrl(getSpectatorLiveUrl(undefined, context));
+      setEmbedUrl(getSpectatorEmbedUrl(undefined, context));
+      setPreviewUrl(getSpectatorEmbedPreviewUrl(undefined, context));
+    }
+  }, [open, meta]);
+
+  return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="live-share-dialog border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.025_255)] text-[var(--cricket-cream)] sm:max-w-md">
         <DialogHeader>
@@ -91,34 +136,30 @@ export default function LiveMatchShareDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="live-share-dialog__field">
-          <label htmlFor="live-share-url" className="live-share-dialog__label">
-            Match link
-          </label>
-          <div className="live-share-dialog__row">
-            <input
-              id="live-share-url"
-              type="text"
-              readOnly
-              value={url}
-              className="live-share-dialog__url"
-              onFocus={(e) => e.currentTarget.select()}
-            />
-            <button
-              type="button"
-              className="live-share-dialog__copy-btn"
-              onClick={() => void handleCopy()}
-              aria-label={copied ? "Link copied" : "Copy link"}
-              title={copied ? "Copied" : "Copy link"}
-            >
-              {copied ? (
-                <Check size={18} strokeWidth={2.25} aria-hidden />
-              ) : (
-                <Copy size={18} strokeWidth={2.25} aria-hidden />
-              )}
-            </button>
-          </div>
+        <ShareUrlField id="live-share-url" label="Watch link" url={watchUrl} />
+
+        <ShareUrlField
+          id="live-embed-url"
+          label="Stream overlay (OBS)"
+          url={embedUrl}
+        />
+
+        <div className="live-share-dialog__preview">
+          <a
+            href={previewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="live-share-dialog__preview-btn"
+          >
+            <ExternalLink size={16} strokeWidth={2.25} aria-hidden />
+            Preview overlay on black background
+          </a>
         </div>
+
+        <p className="live-share-dialog__hint">
+          In OBS, Streamlabs, or vMix: add a Browser Source, paste the overlay
+          URL, and set size to about 1920×150 with a transparent background.
+        </p>
       </DialogContent>
     </Dialog>
   );

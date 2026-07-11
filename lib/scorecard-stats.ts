@@ -3,6 +3,7 @@ import {
   countsAsBowlerWicket,
   countsAsWicket,
 } from "./cricket-types";
+import { formatWideNoBallChip } from "./spectator-live-stats";
 
 export interface BattingRow {
   name: string;
@@ -167,10 +168,15 @@ export function getBowlerBallByBall(innings: InningsData, bowlerName: string) {
   return innings.balls
     .filter((ball) => ball.bowlerName === bowlerName)
     .map((ball) => {
-      if (countsAsWicket(ball.dismissal)) return "W";
+      if (countsAsWicket(ball.dismissal)) {
+        if (ball.dismissal === "run-out") {
+          return ball.runs > 0 ? `${ball.runs}W` : "W";
+        }
+        return "W";
+      }
       if (ball.dismissal === "retired-hurt") return "RH";
-      if (ball.extra === "wide") return `${ball.extraRuns}Wd`;
-      if (ball.extra === "no-ball") return `${ball.extraRuns}Nb`;
+      if (ball.extra === "wide") return formatWideNoBallChip(ball.extraRuns, "Wd");
+      if (ball.extra === "no-ball") return formatWideNoBallChip(ball.extraRuns, "Nb");
       if (ball.extra === "bye") return `${ball.extraRuns}B`;
       if (ball.extra === "leg-bye") return `${ball.extraRuns}Lb`;
       if (ball.extra === "overthrow") return `${ball.runs + ball.extraRuns}OT`;
