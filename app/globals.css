@@ -3996,65 +3996,41 @@
     position: relative;
     width: 100%;
     max-width: 120rem;
+    min-width: 0;
     margin: 0 auto;
     box-sizing: border-box;
+    --lsb-purple: #2a0055;
+    --lsb-purple-deep: #1a0033;
+    --lsb-pink: #ff007f;
+    --lsb-yellow: #ffd700;
+    --lsb-ink: #1a0033;
+    --lsb-muted: #4a2d73;
+    --lsb-white: #ffffff;
   }
 
-  .live-score-bar__live-badge {
-    position: fixed;
-    top: 0.65rem;
-    right: 0.85rem;
-    left: auto;
-    z-index: 20;
-    padding: 0.22rem 0.65rem;
-    border-radius: 0.35rem;
-    background: var(--cricket-live);
-    box-shadow: 0 0.15rem 0.65rem oklch(0.58 0.24 25 / 0.45);
-    font-family: var(--font-display), sans-serif;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    color: white;
-    pointer-events: none;
-  }
-
-  .live-score-bar-shell {
-    --lsb-blue-start: #0052d4;
-    --lsb-blue-end: #4364f7;
-    --lsb-blue-deep: #0041a8;
-    --lsb-navy-start: #0f2027;
-    --lsb-navy-end: #203a43;
-    --lsb-panel-bg: #f5f5f5;
-    --lsb-text-dark: #1e293b;
-    --lsb-text-muted: #64748b;
-    --lsb-text-score: #ffffff;
-  }
 
   .live-score-bar {
-    --lsb-h: 5.7rem;
-    --lsb-blue-start: #0052d4;
-    --lsb-blue-end: #4364f7;
-    --lsb-blue-deep: #0041a8;
-    --lsb-navy-start: #0f2027;
-    --lsb-navy-end: #203a43;
-    --lsb-panel-bg: #f5f5f5;
-    --lsb-text-dark: #1e293b;
-    --lsb-text-muted: #64748b;
-    --lsb-text-score: #ffffff;
+    --lsb-h: 6.75rem;
+    --lsb-score-chevron: 0.78rem;
+    position: relative;
     display: grid;
     grid-template-columns:
-      minmax(4rem, 6rem)
-      minmax(0, 1fr)
-      minmax(8rem, 15rem)
-      minmax(0, 1fr)
-      minmax(4rem, 6rem);
+      minmax(6.5rem, 9rem)
+      0.68rem
+      minmax(5rem, 1fr)
+      1.5fr
+      minmax(5rem, 1fr)
+      0.68rem
+      minmax(6.5rem, 9rem);
     align-items: stretch;
     width: 100%;
     max-width: 100%;
     min-height: var(--lsb-h);
-    background: var(--lsb-panel-bg);
-    box-shadow: 0 -0.2rem 1rem rgb(0 0 0 / 0.28);
-    color: var(--lsb-text-dark);
+    background: var(--lsb-white);
+    border-top: 3px solid var(--lsb-pink);
+    border-bottom: 3px solid var(--lsb-pink);
+    box-shadow: 0 0.35rem 1rem rgb(0 0 0 / 0.18);
+    color: var(--lsb-ink);
     font-family: var(--font-rounded), "Segoe UI", system-ui, -apple-system,
       sans-serif;
     pointer-events: auto;
@@ -4065,105 +4041,131 @@
   .live-score-bar--idle {
     grid-template-columns: 1fr;
     justify-items: center;
-    background: linear-gradient(
-      180deg,
-      var(--lsb-blue-start),
-      var(--lsb-blue-end)
-    );
+    background: var(--lsb-purple);
+    border-color: var(--lsb-pink);
   }
 
-  .live-score-bar__team {
+  .live-score-bar__flag {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.45rem;
-    padding: 0 0.85rem;
+    gap: 0.22rem;
+    min-width: 0;
     min-height: var(--lsb-h);
-    color: white;
+    padding: 0.35rem 0.55rem;
+    background: var(--lsb-white);
+    text-align: center;
   }
 
-  .live-score-bar__team--bat {
-    background: linear-gradient(
-      135deg,
-      var(--lsb-blue-start) 0%,
-      var(--lsb-blue-end) 100%
-    );
-    clip-path: polygon(0 0, calc(100% - 0.85rem) 0, 100% 100%, 0 100%);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18);
-  }
-
-  .live-score-bar__team--bowl {
-    background: linear-gradient(
-      135deg,
-      var(--lsb-navy-start) 0%,
-      var(--lsb-navy-end) 100%
-    );
-    clip-path: polygon(0.85rem 0, 100% 0, 100% 100%, 0 100%);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
-  }
-
-  .live-score-bar__team-code {
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    line-height: 1;
-    text-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
-  }
-
-  .live-score-bar__shield {
-    display: grid;
-    place-items: center;
-    width: 2.45rem;
-    height: 2.9rem;
-    clip-path: polygon(50% 0%, 100% 18%, 100% 72%, 50% 100%, 0% 72%, 0% 18%);
-    background: rgb(255 255 255 / 0.14);
-    overflow: hidden;
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.22);
-  }
-
-  .live-score-bar__shield-img {
+  .live-score-bar__flag-mark {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    min-height: 2.1rem;
   }
 
-  .live-score-bar__shield-initials {
-    font-size: 0.72rem;
+  .live-score-bar__flag-img {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 2.35rem;
+    object-fit: contain;
+  }
+
+  .live-score-bar__flag-fallback {
+    display: inline-grid;
+    place-items: center;
+    min-width: 2.35rem;
+    min-height: 2.1rem;
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.35rem;
+    background: rgb(42 0 85 / 0.08);
+    font-size: 1.02rem;
     font-weight: 800;
     letter-spacing: 0.04em;
-    color: white;
+    color: var(--lsb-purple);
+  }
+
+  .live-score-bar__flag-name {
+    display: -webkit-box;
+    width: 100%;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--lsb-ink);
+    text-align: center;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  .live-score-bar__chevron-edge {
+    position: relative;
+    min-height: var(--lsb-h);
+    background: var(--lsb-white);
+    overflow: hidden;
+  }
+
+  .live-score-bar__chevron-edge--right {
+    background:
+      linear-gradient(
+        135deg,
+        var(--lsb-purple) 48%,
+        transparent 48%
+      )
+      0 0 / 0.72rem 0.72rem repeat-y,
+      var(--lsb-white);
+  }
+
+  .live-score-bar__chevron-edge--left {
+    background:
+      linear-gradient(
+        -135deg,
+        var(--lsb-purple) 48%,
+        transparent 48%
+      )
+      0 0 / 0.72rem 0.72rem repeat-y,
+      var(--lsb-white);
   }
 
   .live-score-bar__panel {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 0.15rem;
+    gap: 0.1rem;
     min-width: 0;
-    padding: 0.35rem 0.75rem;
+    padding: 0.45rem 0.8rem;
     overflow: hidden;
-    background: linear-gradient(180deg, #ffffff 0%, var(--lsb-panel-bg) 100%);
+    background: var(--lsb-white);
   }
 
   .live-score-bar__panel--bat {
-    display: flex;
     justify-content: center;
-    padding-right: 0.6rem;
-    background: linear-gradient(90deg, #eef1f5 0%, #ffffff 100%);
+    padding-right: 0.55rem;
+    max-width: 13.5rem;
   }
 
   .live-score-bar__panel--bowl {
+    position: relative;
     align-items: flex-end;
-    padding-left: 0.6rem;
-    background: linear-gradient(90deg, #ffffff 0%, #eef1f5 100%);
+    padding-left: 0.55rem;
+    max-width: 13.5rem;
+    justify-self: end;
   }
 
   .live-score-bar__batter {
     display: flex;
     align-items: baseline;
-    gap: 0.45rem;
+    justify-content: space-between;
+    gap: 0.75rem;
     min-width: 0;
-    font-size: 0.9rem;
+    width: 100%;
+    font-size: 0.92rem;
     line-height: 1.35;
   }
 
@@ -4174,18 +4176,14 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     font-weight: 600;
-    color: var(--lsb-text-muted);
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.01em;
+    color: var(--lsb-muted);
+    font-size: 0.84rem;
   }
 
   .live-score-bar__batter--striker .live-score-bar__batter-name {
     font-weight: 700;
     font-size: 0.92rem;
-    text-transform: none;
-    letter-spacing: 0;
-    color: #33507a;
+    color: var(--lsb-ink);
   }
 
   .live-score-bar__batter-score {
@@ -4193,41 +4191,32 @@
     font-size: 1rem;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
-    color: var(--lsb-blue-deep);
+    color: var(--lsb-ink);
   }
 
   .live-score-bar__batter--striker .live-score-bar__batter-score {
-    font-size: 1.15rem;
-  }
-
-  .live-score-bar__batter-balls {
-    margin-left: 0.15rem;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--lsb-text-muted);
+    font-size: 1.08rem;
   }
 
   .live-score-bar__bowler {
     display: flex;
     align-items: baseline;
-    gap: 0.45rem;
+    justify-content: space-between;
+    gap: 0.75rem;
     width: 100%;
-    justify-content: flex-end;
-    font-size: 0.9rem;
+    font-size: 0.92rem;
     line-height: 1.35;
   }
 
   .live-score-bar__bowler-name {
-    flex: 0 1 auto;
+    flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-weight: 700;
-    color: #33507a;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.01em;
+    color: var(--lsb-ink);
+    font-size: 0.88rem;
   }
 
   .live-score-bar__bowler-figures {
@@ -4235,14 +4224,16 @@
     font-size: 1rem;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
-    color: var(--lsb-blue-deep);
+    color: var(--lsb-ink);
   }
 
   .live-score-bar__bowler-overs {
-    margin-left: 0.1rem;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--lsb-text-muted);
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .live-score-bar__balls {
@@ -4250,16 +4241,15 @@
     flex-wrap: nowrap;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.38rem;
+    gap: 0.32rem;
     width: 100%;
-    margin-top: 0.12rem;
+    margin-top: 0.1rem;
     overflow-x: auto;
     scrollbar-width: none;
-    font-size: 0.95rem;
+    font-size: 0.68rem;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0;
-    color: var(--lsb-text-dark);
+    color: var(--lsb-ink);
   }
 
   .live-score-bar__balls::-webkit-scrollbar {
@@ -4270,22 +4260,22 @@
     display: inline-grid;
     flex-shrink: 0;
     place-items: center;
-    min-width: 1.7rem;
-    height: 1.7rem;
-    padding: 0 0.18rem;
+    min-width: 1.45rem;
+    height: 1.45rem;
+    padding: 0 0.14rem;
     border-radius: 999px;
-    border: 2px solid var(--lsb-blue-start);
+    border: 2px solid var(--lsb-purple);
     background: transparent;
-    font-size: 0.72rem;
+    font-size: 0.62rem;
     font-weight: 800;
     line-height: 1;
-    color: var(--lsb-blue-deep);
+    color: var(--lsb-purple);
   }
 
   .live-score-bar__ball--four,
   .live-score-bar__ball--six {
-    border-color: var(--lsb-blue-start);
-    background: var(--lsb-blue-start);
+    border-color: var(--lsb-purple);
+    background: var(--lsb-purple);
     color: #ffffff;
   }
 
@@ -4297,94 +4287,192 @@
 
   .live-score-bar__ball--dot {
     padding: 0;
-    width: 1.7rem;
-    min-width: 1.7rem;
-    border-color: var(--lsb-blue-start);
+    width: 1.45rem;
+    min-width: 1.45rem;
+    border-color: var(--lsb-purple);
     background: transparent;
     color: transparent;
   }
 
   .live-score-bar__ball-dot {
-    width: 0.58rem;
-    height: 0.58rem;
+    width: 0.5rem;
+    height: 0.5rem;
     border-radius: 999px;
-    background: var(--lsb-blue-start);
+    background: var(--lsb-purple);
   }
 
   .live-score-bar__ball--extra {
-    font-size: 0.62rem;
+    font-size: 0.56rem;
     letter-spacing: -0.02em;
-    color: var(--lsb-blue-deep);
+    color: var(--lsb-purple);
   }
 
   .live-score-bar__placeholder {
-    font-size: 0.8rem;
+    font-size: 0.88rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--lsb-text-muted);
+    color: var(--lsb-muted);
   }
 
   .live-score-bar__center {
     position: relative;
-    z-index: 3;
+    z-index: 4;
     display: flex;
     flex-direction: column;
     align-items: stretch;
     min-width: 0;
-    background: #ffffff;
+    min-height: var(--lsb-h);
+    background: var(--lsb-purple);
+    color: #ffffff;
+    overflow: visible;
+    clip-path: polygon(
+      0 50%,
+      4.5% 0,
+      95.5% 0,
+      100% 50%,
+      95.5% 100%,
+      4.5% 100%
+    );
+    box-shadow: 0 0.2rem 0.85rem rgb(42 0 85 / 0.45);
+  }
+
+  .live-score-bar__center::after {
+    content: "";
+    position: absolute;
+    left: 4%;
+    right: 4%;
+    bottom: 0;
+    height: 3px;
+    background: var(--lsb-pink);
+    pointer-events: none;
   }
 
   .live-score-bar__center--solo {
-    width: min(42rem, 92vw);
+    width: min(44rem, 93vw);
+    min-width: 15rem;
     margin: 0.5rem auto;
-    background: transparent;
+    clip-path: polygon(0 50%, 3.5% 0, 96.5% 0, 100% 50%, 96.5% 100%, 3.5% 100%);
   }
 
   .live-score-bar__center-main {
     display: flex;
+    align-items: center;
+    justify-content: flex-end;
     flex: 1;
+    min-height: 3.55rem;
+    padding: 0.48rem 1.6rem 0.2rem;
+  }
+
+  .live-score-bar__score-cluster {
+    --lsb-score-chevron: 0.78rem;
+    display: inline-flex;
+    align-items: stretch;
+    min-height: 2.55rem;
+    filter: drop-shadow(0 0.12rem 0.35rem rgb(0 0 0 / 0.22));
+  }
+
+  .live-score-bar__score-cluster--anchored {
+    position: absolute;
+    left: 50%;
+    top: calc((var(--lsb-h) - 1.35rem) / 2);
+    z-index: 6;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .live-score-bar__score-block {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
-    min-height: 3.9rem;
-    margin-top: -0.85rem;
-    padding: 0.4rem 0.95rem 0.35rem;
-    background: linear-gradient(
-      180deg,
-      var(--lsb-blue-start) 0%,
-      var(--lsb-blue-deep) 100%
-    );
+    min-width: 4.5rem;
+    padding: 0.28rem 1.15rem 0.28rem 1.35rem;
+    background: var(--lsb-pink);
+    font-size: 2.2rem;
+    font-weight: 900;
+    letter-spacing: 0.015em;
+    line-height: 1;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
     clip-path: polygon(
-      12% 0,
-      88% 0,
-      100% 22%,
-      100% 100%,
-      0 100%,
-      0 22%
+      0 50%,
+      var(--lsb-score-chevron) 0,
+      calc(100% - var(--lsb-score-chevron)) 0,
+      100% 50%,
+      calc(100% - var(--lsb-score-chevron)) 100%,
+      var(--lsb-score-chevron) 100%
     );
-    box-shadow:
-      0 0.2rem 0.75rem rgb(0 65 168 / 0.45),
-      inset 0 1px 0 rgb(255 255 255 / 0.2);
+  }
+
+  .live-score-bar__badge {
+    position: relative;
+    z-index: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.35rem;
+    margin-left: calc(-1 * var(--lsb-score-chevron));
+    padding: 0.28rem 1rem 0.28rem 1.05rem;
+    background: var(--lsb-yellow);
+    font-size: 0.88rem;
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    color: var(--lsb-purple-deep);
+    clip-path: polygon(
+      0 0,
+      calc(100% - var(--lsb-score-chevron)) 0,
+      100% 50%,
+      calc(100% - var(--lsb-score-chevron)) 100%,
+      0 100%,
+      var(--lsb-score-chevron) 50%
+    );
+  }
+
+  .live-score-bar__overs-block {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.28);
+  }
+
+  .live-score-bar__overs-value {
+    font-size: 1.9rem;
+    font-weight: 900;
+    line-height: 1;
+    color: #ffffff;
+  }
+
+  .live-score-bar__overs-label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.025em;
+    color: rgb(255 255 255 / 0.9);
   }
 
   .live-score-bar__center-footer {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 1.45rem;
-    padding: 0.14rem 0.45rem 0.24rem;
-    background: #ffffff;
+    min-height: 1.28rem;
+    padding: 0 0.85rem 0.32rem;
+    background: transparent;
   }
 
   .live-score-bar__center-footer-text {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.74rem;
+    max-width: 100%;
+    font-size: 0.8rem;
     font-weight: 700;
-    letter-spacing: 0.02em;
-    color: var(--lsb-blue-deep);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.9);
     animation: live-score-context-swap 0.4s ease;
   }
 
@@ -4397,22 +4485,6 @@
       opacity: 1;
       transform: translateY(0);
     }
-  }
-
-  .live-score-bar__score {
-    font-size: 2.15rem;
-    font-weight: 900;
-    letter-spacing: 0.005em;
-    line-height: 1;
-    color: var(--lsb-text-score);
-    text-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
-  }
-
-  .live-score-bar__overs {
-    font-size: 1.4rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    color: rgb(255 255 255 / 0.95);
   }
 
   .live-score-bar--event-dimmed {
@@ -4432,17 +4504,17 @@
   }
 
   .live-score-bar-shell--event-four {
-    --event-bg-a: #0a5be0;
-    --event-bg-b: #0041a8;
-    --event-accent: #9dc0ff;
+    --event-bg-a: var(--lsb-pink);
+    --event-bg-b: #c40063;
+    --event-accent: #ffd1e8;
     --event-ink: #ffffff;
   }
 
   .live-score-bar-shell--event-six {
-    --event-bg-a: #f6b32b;
-    --event-bg-b: #c67f00;
-    --event-accent: #ffe6ad;
-    --event-ink: #ffffff;
+    --event-bg-a: var(--lsb-yellow);
+    --event-bg-b: #d4a800;
+    --event-accent: #fff4bf;
+    --event-ink: var(--lsb-purple-deep);
   }
 
   .live-score-bar-shell--event-wicket {
@@ -4456,9 +4528,9 @@
   .live-score-bar-shell--event-bye,
   .live-score-bar-shell--event-leg-bye {
     --event-bg-a: #ffffff;
-    --event-bg-b: #eaf1ff;
-    --event-accent: #0a5be0;
-    --event-ink: #0a3ca8;
+    --event-bg-b: #f7e9ff;
+    --event-accent: var(--lsb-pink);
+    --event-ink: var(--lsb-purple);
   }
 
   .live-score-bar-shell--event-no-ball {
@@ -4958,33 +5030,68 @@
   @media (max-width: 900px) {
     .live-score-bar {
       --lsb-h: auto;
-      grid-template-columns: 4.25rem 1fr auto;
+      --lsb-score-chevron: 0.62rem;
+      grid-template-columns: minmax(5.75rem, 7.5rem) 0.55rem 1fr auto;
       grid-template-rows: auto auto;
     }
 
-    .live-score-bar__team--bowl,
+    .live-score-bar__flag:last-child,
+    .live-score-bar__chevron-edge--left,
     .live-score-bar__panel--bowl {
       display: none;
     }
 
-    .live-score-bar__team--bat {
+    .live-score-bar__flag:first-child {
       grid-row: span 2;
-      clip-path: polygon(0 0, calc(100% - 0.55rem) 0, 100% 100%, 0 100%);
+    }
+
+    .live-score-bar__chevron-edge--right {
+      grid-row: span 2;
     }
 
     .live-score-bar__panel--bat {
-      grid-column: 2 / 4;
+      grid-column: 3 / 5;
       grid-row: 1;
     }
 
     .live-score-bar__center {
-      grid-column: 2 / 4;
+      grid-column: 3 / 5;
       grid-row: 2;
+      clip-path: none;
+      min-height: auto;
+      min-width: 0;
+      width: 100%;
     }
 
     .live-score-bar__center-main {
-      margin-top: 0;
-      clip-path: none;
+      justify-content: center;
+      min-height: auto;
+      padding: 0.65rem 1rem 0.3rem;
+    }
+
+    .live-score-bar__score-cluster--anchored {
+      top: 42%;
+    }
+
+    .live-score-bar__overs-block {
+      justify-self: center;
+    }
+
+    .live-score-bar__flag-name {
+      font-size: 0.84rem;
+    }
+
+    .live-score-bar__score-block {
+      font-size: 1.72rem;
+      min-width: 4rem;
+    }
+
+    .live-score-bar__overs-value {
+      font-size: 1.48rem;
+    }
+
+    .live-score-bar__center-footer-text {
+      font-size: 0.76rem;
     }
   }
 

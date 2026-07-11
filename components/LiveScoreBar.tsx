@@ -17,57 +17,46 @@ type EventHighlight = ReturnType<typeof useLiveScoreEventHighlight>;
 function formatPlayerShort(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length >= 2) {
-    return `${parts[0]![0]}.${parts[parts.length - 1]!.toUpperCase()}`;
+    return `${parts[0]![0]}.${parts[parts.length - 1]}`;
   }
-  return name.toUpperCase();
+  return name;
 }
 
-function TeamPanel({
-  team,
-  side,
-}: {
-  team: { name: string; logoUrl?: string };
-  side: "bat" | "bowl";
-}) {
+function TeamFlag({ team }: { team: { name: string; logoUrl?: string } }) {
   const abbrev = teamAbbrev(team.name);
-  const initials = abbrev.slice(0, 3);
 
-  const shield = (
-    <div className="live-score-bar__shield" aria-hidden>
-      {team.logoUrl ? (
-        <Image
-          src={team.logoUrl}
-          alt=""
-          width={40}
-          height={40}
-          className="live-score-bar__shield-img"
-          unoptimized
-        />
-      ) : (
-        <span className="live-score-bar__shield-initials">{initials}</span>
-      )}
+  return (
+    <div className="live-score-bar__flag">
+      <div className="live-score-bar__flag-mark" aria-hidden>
+        {team.logoUrl ? (
+          <Image
+            src={team.logoUrl}
+            alt=""
+            width={56}
+            height={40}
+            className="live-score-bar__flag-img"
+            unoptimized
+          />
+        ) : (
+          <span className="live-score-bar__flag-fallback">{abbrev}</span>
+        )}
+      </div>
+      <span className="live-score-bar__flag-name">{team.name}</span>
     </div>
   );
+}
 
+function ChevronEdge({ direction }: { direction: "left" | "right" }) {
   return (
     <div
       className={cn(
-        "live-score-bar__team",
-        side === "bat" ? "live-score-bar__team--bat" : "live-score-bar__team--bowl"
+        "live-score-bar__chevron-edge",
+        direction === "left"
+          ? "live-score-bar__chevron-edge--left"
+          : "live-score-bar__chevron-edge--right"
       )}
-    >
-      {side === "bat" ? (
-        <>
-          {shield}
-          <span className="live-score-bar__team-code">{abbrev}</span>
-        </>
-      ) : (
-        <>
-          <span className="live-score-bar__team-code">{abbrev}</span>
-          {shield}
-        </>
-      )}
-    </div>
+      aria-hidden
+    />
   );
 }
 
@@ -90,14 +79,11 @@ function BattersPanel({
             )}
           >
             <span className="live-score-bar__batter-name">
-              {batter.isStriker ? batter.name : formatPlayerShort(batter.name)}
-              {batter.isStriker ? "*" : ""}
+              {formatPlayerShort(batter.name)}
+              {batter.isStriker ? " *" : ""}
             </span>
             <span className="live-score-bar__batter-score">
-              {batter.runs}
-              <span className="live-score-bar__batter-balls">
-                ({batter.balls})
-              </span>
+              {batter.runs} ({batter.balls})
             </span>
           </div>
         ))
@@ -112,7 +98,6 @@ function buildContextItems(
   currentOvers: string
 ): string[] {
   if (chaseInfo) {
-    // Required run rate is the headline stat, so it appears most often.
     return [
       `REQ RR ${chaseInfo.requiredRunRate}`,
       `TARGET ${chaseInfo.target} · ${chaseInfo.runsNeeded} OFF ${chaseInfo.ballsRemaining}`,
@@ -134,20 +119,61 @@ function RotatingContext({ items }: { items: string[] }) {
   );
 }
 
-function CenterPanel({
+function formatOversDisplay(overs: string): { value: string; label: string | null } {
+  if (overs === "FT" || overs === "—") {
+    return { value: overs, label: null };
+  }
+  const cleaned = overs.replace(/\s*(OV|OVERS?)$/i, "").trim();
+  return { value: cleaned || overs, label: "Overs" };
+}
+
+function ScoreCluster({
   score,
+  badge,
+  anchored = false,
+}: {
+  score: string;
+  badge?: string | null;
+  anchored?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "live-score-bar__score-cluster",
+        anchored && "live-score-bar__score-cluster--anchored"
+      )}
+    >
+      <span className="live-score-bar__score-block">{score}</span>
+      {badge ? (
+        <span
+          className="live-score-bar__badge"
+          aria-label={badge.startsWith("In") ? `Innings ${badge.slice(-1)}` : undefined}
+        >
+          {badge}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function CenterPanel({
   overs,
   footer,
 }: {
-  score: string;
   overs: string;
   footer: ReactNode;
 }) {
+  const oversDisplay = formatOversDisplay(overs);
+
   return (
     <div className="live-score-bar__center">
       <div className="live-score-bar__center-main">
-        <span className="live-score-bar__score">{score}</span>
-        <span className="live-score-bar__overs">{overs}</span>
+        <span className="live-score-bar__overs-block">
+          <span className="live-score-bar__overs-value">{oversDisplay.value}</span>
+          {oversDisplay.label ? (
+            <span className="live-score-bar__overs-label">{oversDisplay.label}</span>
+          ) : null}
+        </span>
       </div>
       <div className="live-score-bar__center-footer">
         {typeof footer === "string" ? (
@@ -178,8 +204,7 @@ function BowlerPanel({
       <div className="live-score-bar__bowler">
         <span className="live-score-bar__bowler-name">{formatPlayerShort(name)}</span>
         <span className="live-score-bar__bowler-figures">
-          {runs}-{wickets}
-          <span className="live-score-bar__bowler-overs">({overs})</span>
+          {wickets}-{runs}
         </span>
       </div>
       <div className="live-score-bar__balls" aria-label="Current over">
@@ -205,16 +230,17 @@ function BowlerPanel({
           )
         )}
       </div>
+      <span className="live-score-bar__bowler-overs" aria-hidden>
+        {overs}
+      </span>
     </div>
   );
 }
 
 function LiveScoreBarShell({
-  showLive,
   eventHighlight,
   children,
 }: {
-  showLive?: boolean;
   eventHighlight?: EventHighlight;
   children: ReactNode;
 }) {
@@ -227,11 +253,6 @@ function LiveScoreBarShell({
           `live-score-bar-shell--event-${eventHighlight.event.kind}`
       )}
     >
-      {showLive ? (
-        <span className="live-score-bar__live-badge" aria-label="Live match">
-          LIVE
-        </span>
-      ) : null}
       {eventHighlight ? (
         <LiveScoreEventOverlay
           event={eventHighlight.event}
@@ -244,19 +265,26 @@ function LiveScoreBarShell({
 }
 
 function BarLayout({
-  showLive,
   eventHighlight,
   children,
 }: {
-  showLive?: boolean;
   eventHighlight?: EventHighlight;
   children: ReactNode;
 }) {
   return (
-    <LiveScoreBarShell showLive={showLive} eventHighlight={eventHighlight}>
+    <LiveScoreBarShell eventHighlight={eventHighlight}>
       {children}
     </LiveScoreBarShell>
   );
+}
+
+function getCenterBadge(view: LiveScoreView): string | null {
+  if (view.kind === "live") {
+    return view.chaseInfo ? "In 2" : "In 1";
+  }
+  if (view.kind === "inningsBreak") return "BREAK";
+  if (view.kind === "complete") return "FT";
+  return null;
 }
 
 export default function LiveScoreBar({
@@ -271,7 +299,7 @@ export default function LiveScoreBar({
       <div className="live-score-bar live-score-bar--idle" role="status">
         <div className="live-score-bar__center live-score-bar__center--solo">
           <div className="live-score-bar__center-main">
-            <span className="live-score-bar__score">—</span>
+            <span className="live-score-bar__score-block">—</span>
           </div>
           <div className="live-score-bar__center-footer">
             <span className="live-score-bar__center-footer-text">
@@ -287,15 +315,18 @@ export default function LiveScoreBar({
     return (
       <BarLayout>
         <div className="live-score-bar" role="status">
-          <TeamPanel team={view.battingTeam} side="bat" />
+          <TeamFlag team={view.battingTeam} />
+          <ChevronEdge direction="right" />
           <div className="live-score-bar__panel live-score-bar__panel--bat">
             <span className="live-score-bar__placeholder">—</span>
           </div>
-          <CenterPanel score="—" overs="—" footer={view.ticker} />
+          <CenterPanel overs="—" footer={view.ticker} />
           <div className="live-score-bar__panel live-score-bar__panel--bowl">
             <span className="live-score-bar__placeholder">—</span>
           </div>
-          <TeamPanel team={view.bowlingTeam} side="bowl" />
+          <ChevronEdge direction="left" />
+          <TeamFlag team={view.bowlingTeam} />
+          <ScoreCluster score="—" anchored />
         </div>
       </BarLayout>
     );
@@ -303,21 +334,24 @@ export default function LiveScoreBar({
 
   if (view.kind === "inningsBreak") {
     return (
-      <BarLayout showLive>
+      <BarLayout>
         <div className="live-score-bar" role="status">
-          <TeamPanel team={view.battingTeam} side="bat" />
+          <TeamFlag team={view.battingTeam} />
+          <ChevronEdge direction="right" />
           <div className="live-score-bar__panel live-score-bar__panel--bat">
             <span className="live-score-bar__placeholder">INNINGS BREAK</span>
           </div>
-          <CenterPanel
-            score={`${view.innings1Runs}-${view.innings1Wickets}`}
-            overs={`${view.innings1Overs} OV`}
-            footer={view.ticker}
-          />
+          <CenterPanel overs={`${view.innings1Overs} OV`} footer={view.ticker} />
           <div className="live-score-bar__panel live-score-bar__panel--bowl">
             <span className="live-score-bar__placeholder">—</span>
           </div>
-          <TeamPanel team={view.bowlingTeam} side="bowl" />
+          <ChevronEdge direction="left" />
+          <TeamFlag team={view.bowlingTeam} />
+          <ScoreCluster
+            score={`${view.innings1Runs}-${view.innings1Wickets}`}
+            badge={getCenterBadge(view)}
+            anchored
+          />
         </div>
       </BarLayout>
     );
@@ -327,30 +361,33 @@ export default function LiveScoreBar({
     return (
       <BarLayout>
         <div className="live-score-bar live-score-bar--complete" role="status">
-          <TeamPanel team={view.matchState.team1} side="bat" />
+          <TeamFlag team={view.matchState.team1} />
+          <ChevronEdge direction="right" />
           <div className="live-score-bar__panel live-score-bar__panel--bat">
             <span className="live-score-bar__placeholder">
               {view.innings1Runs}-{view.innings1Wickets}
             </span>
           </div>
-          <CenterPanel
-            score={`${view.innings2Runs}-${view.innings2Wickets}`}
-            overs="FT"
-            footer={view.ticker}
-          />
+          <CenterPanel overs="FT" footer={view.ticker} />
           <div className="live-score-bar__panel live-score-bar__panel--bowl">
             <span className="live-score-bar__placeholder">
               {view.innings2Runs}-{view.innings2Wickets}
             </span>
           </div>
-          <TeamPanel team={view.matchState.team2} side="bowl" />
+          <ChevronEdge direction="left" />
+          <TeamFlag team={view.matchState.team2} />
+          <ScoreCluster
+            score={`${view.innings2Runs}-${view.innings2Wickets}`}
+            badge={getCenterBadge(view)}
+            anchored
+          />
         </div>
       </BarLayout>
     );
   }
 
   return (
-    <BarLayout showLive eventHighlight={eventHighlight}>
+    <BarLayout eventHighlight={eventHighlight}>
       <div
         className={cn(
           "live-score-bar",
@@ -359,10 +396,10 @@ export default function LiveScoreBar({
         role="status"
         aria-live="polite"
       >
-        <TeamPanel team={view.battingTeam} side="bat" />
+        <TeamFlag team={view.battingTeam} />
+        <ChevronEdge direction="right" />
         <BattersPanel batters={view.batters} />
         <CenterPanel
-          score={`${view.currentRuns}-${view.currentWickets}`}
           overs={view.currentOvers}
           footer={
             <RotatingContext
@@ -381,7 +418,13 @@ export default function LiveScoreBar({
           overs={view.bowlerOvers}
           overBalls={view.overBalls}
         />
-        <TeamPanel team={view.bowlingTeam} side="bowl" />
+        <ChevronEdge direction="left" />
+        <TeamFlag team={view.bowlingTeam} />
+        <ScoreCluster
+          score={`${view.currentRuns}-${view.currentWickets}`}
+          badge={getCenterBadge(view)}
+          anchored
+        />
       </div>
     </BarLayout>
   );
