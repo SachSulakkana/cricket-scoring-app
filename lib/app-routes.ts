@@ -4,6 +4,10 @@ export const routes = {
   liveWatch: "/live/watch",
   liveEmbed: "/live/embed",
   liveEmbedPreview: "/live/embed/preview",
+  liveEmbedBatting: "/live/embed/batting",
+  liveEmbedBowling: "/live/embed/bowling",
+  liveEmbedPoints: "/live/embed/points",
+  liveEmbedNextMatch: "/live/embed/next-match",
   settings: "/settings",
   quickMatch: "/quick-match",
   quickMatchHistory: "/quick-match/history",
@@ -56,13 +60,16 @@ export function resolveBackRoute(
   return returnTo ?? defaultRoute;
 }
 
-/** Full URL for the read-only spectator view (pass origin on server if needed). */
-export function getSpectatorLiveUrl(
-  origin?: string,
-  context?: { tournamentId?: string; fixtureId?: string }
-): string {
-  const base =
-    origin ?? (typeof window !== "undefined" ? window.location.origin : "");
+export type SpectatorUrlContext = {
+  tournamentId?: string;
+  fixtureId?: string;
+};
+
+function getSpectatorOrigin(origin?: string): string {
+  return origin ?? (typeof window !== "undefined" ? window.location.origin : "");
+}
+
+function buildSpectatorQuery(context?: SpectatorUrlContext): string {
   const params = new URLSearchParams();
   if (context?.tournamentId) {
     params.set("tournament", context.tournamentId);
@@ -71,41 +78,69 @@ export function getSpectatorLiveUrl(
     params.set("fixture", context.fixtureId);
   }
   const qs = params.toString();
-  return `${base}${routes.liveWatch}${qs ? `?${qs}` : ""}`;
+  return qs ? `?${qs}` : "";
+}
+
+function getSpectatorUrl(
+  path: string,
+  origin?: string,
+  context?: SpectatorUrlContext
+): string {
+  return `${getSpectatorOrigin(origin)}${path}${buildSpectatorQuery(context)}`;
+}
+
+/** Full URL for the read-only spectator view (pass origin on server if needed). */
+export function getSpectatorLiveUrl(
+  origin?: string,
+  context?: SpectatorUrlContext
+): string {
+  return getSpectatorUrl(routes.liveWatch, origin, context);
 }
 
 /** Full URL for the OBS / stream overlay score bar. */
 export function getSpectatorEmbedUrl(
   origin?: string,
-  context?: { tournamentId?: string; fixtureId?: string }
+  context?: SpectatorUrlContext
 ): string {
-  const base =
-    origin ?? (typeof window !== "undefined" ? window.location.origin : "");
-  const params = new URLSearchParams();
-  if (context?.tournamentId) {
-    params.set("tournament", context.tournamentId);
-  }
-  if (context?.fixtureId) {
-    params.set("fixture", context.fixtureId);
-  }
-  const qs = params.toString();
-  return `${base}${routes.liveEmbed}${qs ? `?${qs}` : ""}`;
+  return getSpectatorUrl(routes.liveEmbed, origin, context);
 }
 
 /** Full URL for the in-app stream overlay preview (black background). */
 export function getSpectatorEmbedPreviewUrl(
   origin?: string,
-  context?: { tournamentId?: string; fixtureId?: string }
+  context?: SpectatorUrlContext
 ): string {
-  const base =
-    origin ?? (typeof window !== "undefined" ? window.location.origin : "");
-  const params = new URLSearchParams();
-  if (context?.tournamentId) {
-    params.set("tournament", context.tournamentId);
-  }
-  if (context?.fixtureId) {
-    params.set("fixture", context.fixtureId);
-  }
-  const qs = params.toString();
-  return `${base}${routes.liveEmbedPreview}${qs ? `?${qs}` : ""}`;
+  return getSpectatorUrl(routes.liveEmbedPreview, origin, context);
+}
+
+/** Full URL for the OBS batting scorecard overlay (current innings). */
+export function getSpectatorEmbedBattingUrl(
+  origin?: string,
+  context?: SpectatorUrlContext
+): string {
+  return getSpectatorUrl(routes.liveEmbedBatting, origin, context);
+}
+
+/** Full URL for the OBS bowling scorecard overlay (current innings). */
+export function getSpectatorEmbedBowlingUrl(
+  origin?: string,
+  context?: SpectatorUrlContext
+): string {
+  return getSpectatorUrl(routes.liveEmbedBowling, origin, context);
+}
+
+/** Full URL for the OBS tournament points table overlay. */
+export function getSpectatorEmbedPointsUrl(
+  origin?: string,
+  context?: SpectatorUrlContext
+): string {
+  return getSpectatorUrl(routes.liveEmbedPoints, origin, context);
+}
+
+/** Full URL for the OBS next match overlay. */
+export function getSpectatorEmbedNextMatchUrl(
+  origin?: string,
+  context?: SpectatorUrlContext
+): string {
+  return getSpectatorUrl(routes.liveEmbedNextMatch, origin, context);
 }

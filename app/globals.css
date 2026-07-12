@@ -2284,6 +2284,11 @@
     font-weight: 600;
   }
 
+  .cricket-scorecard-batter-meta--pending {
+    color: oklch(0.58 0.03 255);
+    font-style: italic;
+  }
+
   .cricket-scorecard-stat-bold {
     font-weight: 700;
     color: var(--cricket-cream);
@@ -3868,10 +3873,48 @@
     color: oklch(0.58 0.04 255);
   }
 
-  /* ── Live score bar (OBS / stream overlay) ── */
-  body:has(.live-embed-root):not(:has(.live-embed-preview)) {
-    background: transparent !important;
+  .live-share-dialog__section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-top: 0.35rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid oklch(0.28 0.04 255 / 0.65);
+  }
+
+  .live-share-dialog__section-title {
     margin: 0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--cricket-gold-dim);
+  }
+
+  .live-share-dialog__section-text {
+    margin: -0.35rem 0 0;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: oklch(0.58 0.04 255);
+  }
+
+  .live-share-dialog__field-hint {
+    margin: -0.15rem 0 0.1rem;
+    font-size: 0.66rem;
+    line-height: 1.35;
+    color: oklch(0.5 0.04 255);
+  }
+
+  /* ── Live score bar (OBS / stream overlay) ── */
+  body:has(.live-embed-root):not(:has(.live-embed-preview)),
+  html:has(.live-embed-root):not(:has(.live-embed-preview)),
+  body:has(.live-embed-panel-root):not(:has(.live-embed-preview)),
+  html:has(.live-embed-panel-root):not(:has(.live-embed-preview)) {
+    background: transparent !important;
+    width: 100%;
+    min-width: 100%;
+    margin: 0;
+    padding: 0;
     overflow: hidden;
   }
 
@@ -3972,14 +4015,26 @@
   .live-embed-root {
     position: fixed;
     inset: auto 0 0;
+    left: 0;
+    right: 0;
     display: flex;
-    align-items: flex-end;
-    justify-content: center;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-end;
     min-height: 0;
-    width: 100%;
+    width: 100vw;
+    max-width: 100vw;
     padding: 0;
     background: transparent;
     pointer-events: none;
+  }
+
+  .live-embed-root > .live-score-bar-shell {
+    flex: 0 0 auto;
+    align-self: stretch;
+    width: 100%;
+    max-width: none;
+    margin: 0;
   }
 
   .live-embed-root--loading {
@@ -4000,6 +4055,846 @@
   .live-embed-preview .live-embed-root--loading {
     min-height: 5.5rem;
     background: oklch(0.08 0.02 295);
+  }
+
+  .live-embed-panel-root {
+    position: fixed;
+    inset: 0 auto auto 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100vw;
+    max-width: 100vw;
+    min-height: 0;
+    padding: 0;
+    background: transparent;
+    pointer-events: none;
+  }
+
+  .live-embed-panel-root--centered {
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem;
+    background: oklch(0.02 0.01 280 / 0.42);
+  }
+
+  .live-embed-panel-root--centered:has(.live-embed-next-match) {
+    background: oklch(0.02 0.01 280 / 0.35);
+  }
+
+  .live-embed-panel-root--centered:has(.live-embed-points) {
+    background: oklch(0.02 0.01 280 / 0.35);
+  }
+
+  .live-embed-panel-root--centered:has(.live-embed-scorecard) {
+    background: oklch(0.02 0.01 280 / 0.35);
+  }
+
+  .live-embed-panel-root--centered:has(.live-embed-scorecard--full) {
+    align-items: stretch;
+    justify-content: stretch;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+    padding: clamp(0.65rem, 1.25vw, 1rem);
+  }
+
+  .live-embed-panel-root--loading {
+    min-height: 8rem;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: oklch(0.06 0.02 295 / 0.92);
+  }
+
+  .live-embed-panel-root--centered.live-embed-panel-root--loading,
+  .live-embed-panel-root--centered:has(.live-embed-panel-root__empty) {
+    min-height: 100vh;
+    height: 100vh;
+    background: oklch(0.02 0.01 280 / 0.42);
+  }
+
+  .live-embed-panel-root__empty {
+    margin: 0;
+    padding: 1rem;
+    font-size: 0.82rem;
+    color: oklch(0.72 0.03 255);
+    text-align: center;
+  }
+
+  .live-embed-scorecard {
+    width: min(84rem, 96vw);
+    padding: clamp(2.25rem, 4.5vw, 3.5rem) clamp(2rem, 5vw, 3.75rem);
+    --lsb-purple: #2a0055;
+    --lsb-purple-deep: #1a0033;
+    --lsb-pink: #ff007f;
+    --lsb-yellow: #ffd700;
+    --lsb-ink: #1a0033;
+    --lsb-muted: #4a2d73;
+    --lsb-white: #ffffff;
+    --lsb-panel: oklch(0.97 0.012 295);
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    color: var(--lsb-ink);
+    background: var(--lsb-white);
+    border: 1px solid oklch(0.88 0.02 295);
+    border-top: 5px solid var(--lsb-pink);
+    border-bottom: 5px solid var(--lsb-pink);
+    border-radius: 0.75rem;
+    box-shadow:
+      0 20px 60px oklch(0 0 0 / 0.28),
+      0 0 0 1px oklch(1 0 0 / 0.65) inset;
+  }
+
+  .live-embed-scorecard__title {
+    margin: 0 0 clamp(1.25rem, 2.5vw, 2rem);
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(2.25rem, 3.8vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--lsb-purple);
+  }
+
+  .live-embed-scorecard--full {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    flex: 1;
+    align-self: stretch;
+    border-radius: 0.5rem;
+  }
+
+  .live-embed-scorecard--fit-batting {
+    padding: clamp(0.55rem, 1vh, 0.85rem) clamp(0.75rem, 1.35vw, 1.15rem);
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-section {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-table {
+    --embed-table-row-unit: calc((100vh - 15.5rem) / var(--embed-table-rows, 14));
+    flex: 1;
+    height: 100%;
+    table-layout: fixed;
+    font-size: clamp(1.05rem, calc(var(--embed-table-row-unit) * 0.52), 1.35rem);
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-table thead th {
+    padding: clamp(0.28rem, calc(var(--embed-table-row-unit) * 0.12), 0.55rem) 0.35rem;
+    font-size: clamp(0.72rem, 0.68em, 0.92rem);
+    letter-spacing: 0.03em;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-table thead th:first-child,
+  .live-embed-scorecard--fit-batting .cricket-scorecard-table tbody td:first-child {
+    padding-left: clamp(0.55rem, 0.85vw, 0.85rem);
+    width: 46%;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-table tbody tr {
+    height: clamp(1.65rem, calc(var(--embed-table-row-unit) * 0.68), 2rem);
+    max-height: clamp(1.65rem, calc(var(--embed-table-row-unit) * 0.68), 2rem);
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-table tbody td {
+    padding: clamp(0.12rem, calc(var(--embed-table-row-unit) * 0.06), 0.28rem) 0.3rem;
+    vertical-align: middle;
+    line-height: 1.15;
+    border-bottom-width: 0;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-batter-line {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.12em 0.25em;
+    min-width: 0;
+    line-height: 1;
+    overflow: hidden;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-batter-name {
+    font-size: 1em;
+    line-height: 1.15;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-batter-meta {
+    margin-top: 0;
+    font-size: clamp(0.72rem, 0.72em, 0.88rem);
+    line-height: 1.15;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-batter-meta::before {
+    content: "· ";
+    opacity: 0.65;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-stat-bold {
+    font-size: 1.05em;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-summary-row td {
+    padding-top: clamp(0.15rem, calc(var(--embed-table-row-unit) * 0.08), 0.35rem);
+    padding-bottom: clamp(0.15rem, calc(var(--embed-table-row-unit) * 0.08), 0.35rem);
+    line-height: 1.15;
+    border-bottom-width: 0;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-summary-detail {
+    font-size: clamp(0.8rem, 0.78em, 1rem);
+    line-height: 1.15;
+  }
+
+  .live-embed-scorecard__matchup {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.25em 0.65em;
+    margin: 0 0 clamp(0.5rem, 1vw, 0.85rem);
+    text-align: center;
+    line-height: 1.15;
+  }
+
+  .live-embed-scorecard__team {
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(2.25rem, 4vw, 3.75rem);
+    font-weight: 800;
+    color: var(--lsb-purple);
+  }
+
+  .live-embed-scorecard__vs {
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.85rem, 3.25vw, 3rem);
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: var(--lsb-yellow);
+    text-shadow: 0 1px 0 var(--lsb-purple);
+  }
+
+  .live-embed-scorecard__title--kind {
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
+    font-size: clamp(1.35rem, 2.25vw, 2rem);
+    letter-spacing: 0.14em;
+    color: var(--lsb-pink);
+  }
+
+  .live-embed-scorecard__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .live-embed-scorecard--full .cricket-scorecard-sheet {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .live-embed-scorecard--full .cricket-scorecard-section {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .live-embed-scorecard .cricket-scorecard-sheet {
+    overflow: hidden;
+    border-radius: 0.5rem;
+    border: 2px solid var(--lsb-pink);
+    background: var(--lsb-panel);
+    max-width: none;
+  }
+
+  .live-embed-scorecard .cricket-scorecard-innings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: clamp(0.85rem, 1.5vw, 1.25rem) clamp(1rem, 2vw, 1.5rem);
+    background: var(--lsb-pink);
+    border-bottom: 2px solid var(--lsb-purple);
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.15rem, 2vw, 1.65rem);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--lsb-white);
+  }
+
+  .live-embed-scorecard .cricket-scorecard-innings-header__score {
+    font-family: var(--font-score), var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.25rem, 2.2vw, 1.85rem);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--lsb-white);
+    white-space: nowrap;
+  }
+
+  .live-embed-scorecard .cricket-scorecard-section {
+    border-bottom: none;
+  }
+
+  .live-embed-scorecard .cricket-scorecard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.2rem, 2vw, 1.75rem);
+  }
+
+  .live-embed-scorecard .cricket-scorecard-table thead th {
+    padding: clamp(0.8rem, 1.4vw, 1.15rem) clamp(0.65rem, 1.1vw, 0.95rem);
+    font-size: clamp(0.95rem, 1.55vw, 1.35rem);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: right;
+    color: var(--lsb-purple);
+    background: oklch(0.99 0.008 295);
+    border-bottom: 2px solid oklch(0.9 0.02 295);
+  }
+
+  .live-embed-scorecard .cricket-scorecard-table thead th:first-child {
+    text-align: left;
+    padding-left: clamp(1rem, 1.8vw, 1.5rem);
+  }
+
+  .live-embed-scorecard .cricket-scorecard-table tbody td {
+    padding: clamp(0.75rem, 1.3vw, 1.1rem) clamp(0.65rem, 1.1vw, 0.95rem);
+    text-align: right;
+    vertical-align: top;
+    font-variant-numeric: tabular-nums;
+    color: var(--lsb-ink);
+    border-bottom: 1px solid oklch(0.9 0.015 295);
+  }
+
+  .live-embed-scorecard .cricket-scorecard-table tbody tr:not(.cricket-scorecard-summary-row):nth-child(even) td {
+    background: oklch(0.99 0.008 295);
+  }
+
+  .live-embed-scorecard .cricket-scorecard-table tbody tr:not(.cricket-scorecard-summary-row):nth-child(odd) td {
+    background: var(--lsb-white);
+  }
+
+  .live-embed-scorecard .cricket-scorecard-table tbody tr:not(.cricket-scorecard-summary-row):hover td {
+    background: oklch(0.96 0.02 295);
+  }
+
+  .live-embed-scorecard .cricket-scorecard-table tbody td:first-child {
+    text-align: left;
+    padding-left: clamp(1rem, 1.8vw, 1.5rem);
+  }
+
+  .live-embed-scorecard .cricket-scorecard-batter-name,
+  .live-embed-scorecard .cricket-scorecard-bowler-name {
+    font-size: clamp(1.2rem, 2vw, 1.7rem);
+    font-weight: 700;
+    color: var(--lsb-purple);
+    line-height: 1.2;
+  }
+
+  .live-embed-scorecard .cricket-scorecard-batter-meta {
+    margin-top: 0.2rem;
+    font-size: clamp(0.85rem, 1.35vw, 1.05rem);
+    line-height: 1.3;
+    color: var(--lsb-muted);
+  }
+
+  .live-embed-scorecard .cricket-scorecard-batter-meta--live {
+    color: var(--lsb-pink);
+    font-weight: 700;
+  }
+
+  .live-embed-scorecard .cricket-scorecard-batter-meta--pending {
+    color: var(--lsb-muted);
+    font-style: italic;
+    font-weight: 600;
+  }
+
+  .live-embed-scorecard .cricket-scorecard-stat-bold {
+    font-family: var(--font-score), var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.25rem, 2.1vw, 1.85rem);
+    font-weight: 800;
+    color: var(--lsb-purple);
+  }
+
+  .live-embed-scorecard .cricket-scorecard-summary-row td {
+    background: oklch(0.94 0.02 295) !important;
+    font-weight: 700;
+    color: var(--lsb-purple);
+    border-bottom: 1px solid oklch(0.88 0.02 295) !important;
+  }
+
+  .live-embed-scorecard .cricket-scorecard-summary-detail {
+    font-size: clamp(0.9rem, 1.4vw, 1.1rem);
+    font-weight: 600;
+    color: var(--lsb-muted);
+    text-align: left !important;
+  }
+
+  .live-embed-scorecard .cricket-scorecard-yet-to-bat {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.85rem;
+    padding: clamp(0.75rem, 1.3vw, 1rem) clamp(1rem, 1.8vw, 1.5rem);
+    font-size: clamp(0.95rem, 1.5vw, 1.15rem);
+    border-top: 1px solid oklch(0.9 0.015 295);
+    background: var(--lsb-white);
+  }
+
+  .live-embed-scorecard .cricket-scorecard-yet-to-bat__label {
+    font-weight: 800;
+    color: var(--lsb-muted);
+    text-transform: uppercase;
+    font-size: clamp(0.8rem, 1.25vw, 0.95rem);
+    letter-spacing: 0.08em;
+    width: 100%;
+    margin-bottom: 0.15rem;
+  }
+
+  .live-embed-scorecard .cricket-scorecard-yet-to-bat__player {
+    color: var(--lsb-purple);
+    font-weight: 600;
+  }
+
+  /* Batting embed table: compact rows (must follow general scorecard table rules) */
+  .live-embed-scorecard--fit-batting .cricket-scorecard-table {
+    font-size: clamp(1.05rem, calc(var(--embed-table-row-unit) * 0.52), 1.35rem);
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-table thead th {
+    padding: clamp(0.28rem, calc(var(--embed-table-row-unit) * 0.12), 0.55rem) 0.35rem;
+    font-size: clamp(0.72rem, 0.68em, 0.92rem);
+    border-bottom-width: 1px;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-table tbody tr {
+    height: clamp(1.65rem, calc(var(--embed-table-row-unit) * 0.68), 2rem);
+    max-height: clamp(1.65rem, calc(var(--embed-table-row-unit) * 0.68), 2rem);
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-table tbody td {
+    padding: clamp(0.12rem, calc(var(--embed-table-row-unit) * 0.06), 0.28rem) 0.3rem;
+    vertical-align: middle;
+    border-bottom-width: 0;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-table tbody td:first-child {
+    padding-left: clamp(0.55rem, 0.85vw, 0.85rem);
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-batter-name,
+  .live-embed-scorecard--fit-batting .cricket-scorecard-bowler-name {
+    font-size: 1em;
+    line-height: 1.15;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-batter-meta {
+    margin-top: 0;
+    font-size: clamp(0.72rem, 0.72em, 0.88rem);
+    line-height: 1.15;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-stat-bold {
+    font-size: 1.05em;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-summary-row td {
+    padding-top: clamp(0.15rem, calc(var(--embed-table-row-unit) * 0.08), 0.35rem);
+    padding-bottom: clamp(0.15rem, calc(var(--embed-table-row-unit) * 0.08), 0.35rem);
+    border-bottom-width: 0 !important;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-summary-detail {
+    font-size: clamp(0.8rem, 0.78em, 1rem);
+    line-height: 1.15;
+  }
+
+  .live-embed-scorecard .cricket-scorecard-did-not-bat-banner td {
+    background: var(--lsb-pink) !important;
+    color: var(--lsb-white) !important;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    border-bottom: 2px solid var(--lsb-purple) !important;
+  }
+
+  .live-embed-scorecard .cricket-scorecard-did-not-bat-player td {
+    background: oklch(0.99 0.008 295) !important;
+    color: var(--lsb-purple);
+    border-bottom: 1px solid oklch(0.92 0.015 295) !important;
+  }
+
+  .live-embed-scorecard .cricket-scorecard-did-not-bat-player td:first-child {
+    text-align: left;
+    font-weight: 700;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-did-not-bat-banner td {
+    padding: clamp(0.12rem, calc(var(--embed-table-row-unit) * 0.06), 0.28rem) 0.3rem;
+    font-size: clamp(0.78rem, 0.72em, 1rem);
+    line-height: 1.15;
+    vertical-align: middle;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-did-not-bat-player td {
+    padding: clamp(0.12rem, calc(var(--embed-table-row-unit) * 0.06), 0.28rem) 0.3rem;
+    vertical-align: middle;
+    line-height: 1.15;
+  }
+
+  .live-embed-scorecard--fit-batting .cricket-scorecard-did-not-bat-player td:first-child {
+    padding-left: clamp(0.55rem, 0.85vw, 0.85rem);
+  }
+
+  .live-embed-points {
+    width: min(84rem, 96vw);
+    padding: clamp(2.25rem, 4.5vw, 3.5rem) clamp(2rem, 5vw, 3.75rem);
+    --lsb-purple: #2a0055;
+    --lsb-purple-deep: #1a0033;
+    --lsb-pink: #ff007f;
+    --lsb-yellow: #ffd700;
+    --lsb-ink: #1a0033;
+    --lsb-muted: #4a2d73;
+    --lsb-white: #ffffff;
+    --lsb-panel: oklch(0.97 0.012 295);
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    color: var(--lsb-ink);
+    background: var(--lsb-white);
+    border: 1px solid oklch(0.88 0.02 295);
+    border-top: 5px solid var(--lsb-pink);
+    border-bottom: 5px solid var(--lsb-pink);
+    border-radius: 0.75rem;
+    box-shadow:
+      0 20px 60px oklch(0 0 0 / 0.28),
+      0 0 0 1px oklch(1 0 0 / 0.65) inset;
+  }
+
+  .live-embed-points__title {
+    margin: 0 0 clamp(1.25rem, 2.5vw, 2rem);
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(2.25rem, 3.8vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--lsb-purple);
+  }
+
+  .live-embed-points__empty {
+    margin: 0;
+    font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+    color: var(--lsb-muted);
+    text-align: center;
+  }
+
+  .live-embed-points .spectator-stats-table-wrap {
+    overflow: hidden;
+    border-radius: 0.5rem;
+    border: 2px solid var(--lsb-pink);
+    background: var(--lsb-panel);
+  }
+
+  .live-embed-points .spectator-stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.5rem, 2.6vw, 2.35rem);
+  }
+
+  .live-embed-points .spectator-stats-table thead th {
+    padding: clamp(0.95rem, 1.6vw, 1.35rem) clamp(0.75rem, 1.3vw, 1.1rem);
+    font-size: clamp(1.15rem, 2vw, 1.65rem);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: right;
+    color: var(--lsb-white);
+    background: var(--lsb-pink);
+    border-bottom: 2px solid var(--lsb-purple);
+  }
+
+  .live-embed-points .spectator-stats-table thead th:first-child {
+    text-align: left;
+    padding-left: clamp(1.1rem, 2vw, 1.75rem);
+  }
+
+  .live-embed-points .spectator-stats-table tbody td {
+    padding: clamp(0.9rem, 1.5vw, 1.35rem) clamp(0.75rem, 1.3vw, 1.1rem);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--lsb-ink);
+    border-bottom: 1px solid oklch(0.9 0.015 295);
+  }
+
+  .live-embed-points .spectator-stats-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .live-embed-points .spectator-stats-table tbody tr:nth-child(even) td {
+    background: oklch(0.99 0.008 295);
+  }
+
+  .live-embed-points .spectator-stats-table tbody td:first-child {
+    text-align: left;
+    padding-left: clamp(1.1rem, 2vw, 1.75rem);
+    font-size: clamp(1.55rem, 2.7vw, 2.45rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--lsb-purple);
+  }
+
+  .live-embed-points .spectator-stats-table__rank {
+    display: inline-flex;
+    min-width: 2rem;
+    margin-right: 0.55rem;
+    font-family: var(--font-score), var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.2rem, 2vw, 1.65rem);
+    font-weight: 800;
+    color: var(--lsb-pink);
+  }
+
+  .live-embed-points .spectator-stats-table__pts {
+    font-family: var(--font-score), var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.65rem, 2.8vw, 2.5rem);
+    font-weight: 800;
+    color: var(--lsb-purple);
+  }
+
+  .live-embed-points .spectator-stats-table__nrr {
+    font-family: var(--font-score), var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.45rem, 2.4vw, 2.15rem);
+    font-weight: 700;
+    color: var(--lsb-muted);
+  }
+
+  @keyframes live-embed-next-match-logo-flip {
+    from {
+      transform: rotateY(0deg);
+    }
+
+    to {
+      transform: rotateY(360deg);
+    }
+  }
+
+  .live-embed-next-match {
+    width: min(84rem, 96vw);
+    padding: 0;
+    text-align: center;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .live-embed-next-match__section {
+    padding: clamp(2.25rem, 4.5vw, 3.5rem) clamp(2rem, 5vw, 3.75rem);
+    border-radius: 0.75rem;
+    --lsb-purple: #2a0055;
+    --lsb-purple-deep: #1a0033;
+    --lsb-pink: #ff007f;
+    --lsb-yellow: #ffd700;
+    --lsb-ink: #1a0033;
+    --lsb-muted: #4a2d73;
+    --lsb-white: #ffffff;
+    --lsb-panel: oklch(0.97 0.012 295);
+    color: var(--lsb-ink);
+    background: var(--lsb-white);
+    border: 1px solid oklch(0.88 0.02 295);
+    border-top: 5px solid var(--lsb-pink);
+    border-bottom: 5px solid var(--lsb-pink);
+    box-shadow:
+      0 20px 60px oklch(0 0 0 / 0.28),
+      0 0 0 1px oklch(1 0 0 / 0.65) inset;
+  }
+
+  .live-embed-next-match__eyebrow {
+    margin: 0;
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(2.25rem, 3.8vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--lsb-pink);
+  }
+
+  .live-embed-next-match__stage {
+    margin: 0.75rem 0 0;
+    font-size: clamp(1.35rem, 2.2vw, 2rem);
+    font-weight: 600;
+    color: var(--lsb-muted);
+  }
+
+  .live-embed-next-match__eyebrow--live {
+    color: var(--lsb-pink);
+  }
+
+  .live-embed-next-match__team-score {
+    margin: 0.35rem 0 0;
+    font-family: var(--font-score), var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.85rem, 3vw, 2.85rem);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+    color: var(--lsb-purple);
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+
+  .live-embed-next-match__chase {
+    margin: clamp(1.35rem, 2.5vw, 2rem) 0 0;
+    padding: clamp(0.75rem, 1.4vw, 1.1rem) clamp(1rem, 2vw, 1.5rem);
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.85rem, 3.2vw, 3rem);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    color: var(--lsb-white);
+    text-align: center;
+    letter-spacing: 0.03em;
+    background: linear-gradient(
+      90deg,
+      var(--lsb-purple) 0%,
+      oklch(0.32 0.12 295) 50%,
+      var(--lsb-purple) 100%
+    );
+    border-radius: 0.4rem;
+    box-shadow: inset 0 0 0 2px oklch(1 0 0 / 0.12);
+  }
+
+  .live-embed-next-match__faceoff {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: clamp(2.5rem, 6vw, 5.5rem);
+    margin-top: clamp(1.75rem, 3.2vw, 2.75rem);
+    padding: clamp(1.25rem, 2.5vw, 2rem) clamp(0.75rem, 1.5vw, 1.25rem);
+    border-radius: 0.5rem;
+    background: var(--lsb-panel);
+    border: 2px solid var(--lsb-pink);
+  }
+
+  .live-embed-next-match__team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.15rem;
+    flex: 1;
+    min-width: 0;
+    max-width: 22rem;
+  }
+
+  .live-embed-next-match__flip {
+    width: clamp(9rem, 13vw, 13.5rem);
+    height: clamp(9rem, 13vw, 13.5rem);
+    perspective: 1200px;
+  }
+
+  .live-embed-next-match__flip-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    animation: live-embed-next-match-logo-flip 7.5s linear infinite;
+    will-change: transform;
+  }
+
+  .live-embed-next-match__disc {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    background: var(--lsb-white);
+    box-shadow:
+      0 14px 48px oklch(0 0 0 / 0.45),
+      0 0 0 4px var(--lsb-pink);
+  }
+
+  .live-embed-next-match__disc--front {
+    transform: rotateY(0deg);
+  }
+
+  .live-embed-next-match__disc--back {
+    transform: rotateY(180deg);
+  }
+
+  .live-embed-next-match__disc-img {
+    width: clamp(6.5rem, 9.5vw, 9rem);
+    height: clamp(6.5rem, 9.5vw, 9rem);
+    object-fit: contain;
+  }
+
+  .live-embed-next-match__disc-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(6.5rem, 9.5vw, 9rem);
+    height: clamp(6.5rem, 9.5vw, 9rem);
+    border-radius: 50%;
+    background: rgb(42 0 85 / 0.08);
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(2rem, 3.5vw, 2.75rem);
+    font-weight: 800;
+    color: var(--lsb-purple);
+  }
+
+  .live-embed-next-match__disc-icon {
+    width: clamp(3.25rem, 5vw, 4rem);
+    height: clamp(3.25rem, 5vw, 4rem);
+  }
+
+  .live-embed-next-match__team-name {
+    margin: 0;
+    max-width: 20rem;
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.5rem, 2.5vw, 2.35rem);
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--lsb-purple);
+    text-align: center;
+  }
+
+  .live-embed-next-match__vs {
+    margin: clamp(3.75rem, 7vw, 5.5rem) 0 0;
+    flex-shrink: 0;
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(2.5rem, 4.5vw, 4rem);
+    font-weight: 800;
+    color: var(--lsb-yellow);
+    text-shadow: 0 1px 0 var(--lsb-purple);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .live-embed-next-match__flip-inner {
+      animation: none;
+      transform: rotateY(0deg);
+    }
   }
 
   .live-score-bar-shell {
@@ -5103,6 +5998,75 @@
     .live-score-bar__center-footer-text {
       font-size: 0.76rem;
     }
+  }
+
+  /* OBS / stream overlay always uses the full broadcast layout */
+  .live-embed-root .live-score-bar {
+    --lsb-h: 6.75rem;
+    --lsb-score-chevron: 0.78rem;
+    display: grid;
+    grid-template-columns:
+      minmax(6.5rem, 9rem)
+      0.68rem
+      minmax(5rem, 1fr)
+      1.5fr
+      minmax(5rem, 1fr)
+      0.68rem
+      minmax(6.5rem, 9rem);
+    grid-template-rows: none;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .live-embed-root .live-score-bar__flag:last-child {
+    display: flex;
+  }
+
+  .live-embed-root .live-score-bar__chevron-edge--left {
+    display: block;
+  }
+
+  .live-embed-root .live-score-bar__panel--bowl {
+    display: flex;
+  }
+
+  .live-embed-root .live-score-bar__flag:first-child,
+  .live-embed-root .live-score-bar__chevron-edge--right {
+    grid-row: auto;
+  }
+
+  .live-embed-root .live-score-bar__panel--bat {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .live-embed-root .live-score-bar__center {
+    grid-column: auto;
+    grid-row: auto;
+    clip-path: polygon(
+      0 50%,
+      4.5% 0,
+      95.5% 0,
+      100% 50%,
+      95.5% 100%,
+      4.5% 100%
+    );
+    min-height: var(--lsb-h);
+    width: auto;
+  }
+
+  .live-embed-root .live-score-bar__center-main {
+    justify-content: flex-end;
+    min-height: 3.55rem;
+    padding: 0.48rem 1.6rem 0.2rem;
+  }
+
+  .live-embed-root .live-score-bar__score-cluster--anchored {
+    top: calc((var(--lsb-h) - 1.35rem) / 2);
+  }
+
+  .live-embed-root .live-score-bar__overs-block {
+    justify-self: end;
   }
 
   /* ── Spectator (mobile-first live view) ── */

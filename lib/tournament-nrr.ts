@@ -14,6 +14,12 @@ export function formatTournamentNrr(nrr: number | null): string {
   return `${nrr >= 0 ? "+" : ""}${nrr.toFixed(3)}`;
 }
 
+/** Points table display — show zeroed NRR before any match is played. */
+export function formatStandingNrr(nrr: number | null, played: number): string {
+  if (played === 0) return "+0.000";
+  return formatTournamentNrr(nrr);
+}
+
 export function computeTournamentNrr(totals: TeamNrrTotals): number | null {
   const { runsScored, oversFaced, runsConceded, oversBowled } = totals;
   if (oversFaced <= 0 || oversBowled <= 0) return null;

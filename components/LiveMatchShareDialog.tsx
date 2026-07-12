@@ -9,7 +9,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getSpectatorEmbedPreviewUrl, getSpectatorEmbedUrl, getSpectatorLiveUrl } from "@/lib/app-routes";
+import {
+  getSpectatorEmbedBattingUrl,
+  getSpectatorEmbedBowlingUrl,
+  getSpectatorEmbedNextMatchUrl,
+  getSpectatorEmbedPointsUrl,
+  getSpectatorEmbedPreviewUrl,
+  getSpectatorEmbedUrl,
+  getSpectatorLiveUrl,
+  type SpectatorUrlContext,
+} from "@/lib/app-routes";
 import { appToast } from "@/lib/app-toast";
 import type { LiveMatchMeta } from "@/lib/store/match-slice";
 
@@ -47,10 +56,12 @@ function ShareUrlField({
   id,
   label,
   url,
+  hint,
 }: {
   id: string;
   label: string;
   url: string;
+  hint?: string;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -71,6 +82,7 @@ function ShareUrlField({
       <label htmlFor={id} className="live-share-dialog__label">
         {label}
       </label>
+      {hint ? <p className="live-share-dialog__field-hint">{hint}</p> : null}
       <div className="live-share-dialog__row">
         <input
           id={id}
@@ -108,10 +120,15 @@ export default function LiveMatchShareDialog({
   const [watchUrl, setWatchUrl] = useState("");
   const [embedUrl, setEmbedUrl] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
+  const [battingUrl, setBattingUrl] = useState("");
+  const [bowlingUrl, setBowlingUrl] = useState("");
+  const [pointsUrl, setPointsUrl] = useState("");
+  const [nextMatchUrl, setNextMatchUrl] = useState("");
+  const isTournament = meta?.kind === "tournament";
 
   useEffect(() => {
     if (open) {
-      const context =
+      const context: SpectatorUrlContext | undefined =
         meta?.kind === "tournament"
           ? {
               tournamentId: meta.tournamentId,
@@ -121,12 +138,16 @@ export default function LiveMatchShareDialog({
       setWatchUrl(getSpectatorLiveUrl(undefined, context));
       setEmbedUrl(getSpectatorEmbedUrl(undefined, context));
       setPreviewUrl(getSpectatorEmbedPreviewUrl(undefined, context));
+      setBattingUrl(getSpectatorEmbedBattingUrl(undefined, context));
+      setBowlingUrl(getSpectatorEmbedBowlingUrl(undefined, context));
+      setPointsUrl(getSpectatorEmbedPointsUrl(undefined, context));
+      setNextMatchUrl(getSpectatorEmbedNextMatchUrl(undefined, context));
     }
   }, [open, meta]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="live-share-dialog border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.025_255)] text-[var(--cricket-cream)] sm:max-w-md">
+      <DialogContent className="live-share-dialog border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.025_255)] text-[var(--cricket-cream)] sm:max-w-lg max-h-[min(90vh,42rem)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="cricket-display text-lg font-semibold text-[var(--cricket-cream)]">
             Share live match
@@ -138,11 +159,50 @@ export default function LiveMatchShareDialog({
 
         <ShareUrlField id="live-share-url" label="Watch link" url={watchUrl} />
 
-        <ShareUrlField
-          id="live-embed-url"
-          label="Stream overlay (OBS)"
-          url={embedUrl}
-        />
+        <div className="live-share-dialog__section">
+          <p className="live-share-dialog__section-title">OBS overlays</p>
+          <p className="live-share-dialog__section-text">
+            Add each link as a separate Browser Source in OBS. Use a transparent
+            background and the suggested size for each overlay.
+          </p>
+
+          <ShareUrlField
+            id="live-embed-url"
+            label="Score bar"
+            url={embedUrl}
+            hint="Suggested size: 1920 × 150"
+          />
+
+          <ShareUrlField
+            id="live-embed-batting-url"
+            label="Batting scorecard (current innings)"
+            url={battingUrl}
+            hint="Suggested size: 1920 × 1080 (full frame, centered)"
+          />
+
+          <ShareUrlField
+            id="live-embed-bowling-url"
+            label="Bowling scorecard (current innings)"
+            url={bowlingUrl}
+            hint="Suggested size: 1920 × 1080 (full frame, centered)"
+          />
+
+          <ShareUrlField
+            id="live-embed-next-match-url"
+            label="Live match faceoff"
+            url={nextMatchUrl}
+            hint="Suggested size: 1920 × 1080 (full frame, centered)"
+          />
+
+          {isTournament ? (
+              <ShareUrlField
+                id="live-embed-points-url"
+                label="Points table"
+                url={pointsUrl}
+                hint="Suggested size: 1920 × 1080 (full frame, centered)"
+              />
+          ) : null}
+        </div>
 
         <div className="live-share-dialog__preview">
           <a
@@ -152,13 +212,13 @@ export default function LiveMatchShareDialog({
             className="live-share-dialog__preview-btn"
           >
             <ExternalLink size={16} strokeWidth={2.25} aria-hidden />
-            Preview overlay on black background
+            Preview score bar on black background
           </a>
         </div>
 
         <p className="live-share-dialog__hint">
-          In OBS, Streamlabs, or vMix: add a Browser Source, paste the overlay
-          URL, and set size to about 1920×150 with a transparent background.
+          Score bar overlays pin to the bottom. Batting, bowling, points, and live
+          match faceoff fill the frame, centered, with a dark transparent backdrop.
         </p>
       </DialogContent>
     </Dialog>

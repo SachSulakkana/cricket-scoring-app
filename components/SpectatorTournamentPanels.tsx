@@ -10,7 +10,7 @@ import type { SpectatorTournamentData } from "@/hooks/use-spectator-tournament";
 import type { Team } from "@/lib/cricket-types";
 import type { SavedTournament, TournamentFixture } from "@/lib/roster-types";
 import { computeStandings } from "@/lib/tournament-stage-engine";
-import { formatTournamentNrr } from "@/lib/tournament-nrr";
+import { formatStandingNrr } from "@/lib/tournament-nrr";
 import { buildTournamentPlayerStats } from "@/lib/tournament-stats";
 import { cn } from "@/lib/utils";
 
@@ -321,47 +321,43 @@ export function SpectatorTournamentStats({
     <div className="space-y-5">
       <section>
         <CricketEyebrow className="mb-3">Points table</CricketEyebrow>
-        {standings.every((row) => row.played === 0) ? (
-          <p className="spectator-tournament-empty">No completed matches yet.</p>
-        ) : (
-          <div className="spectator-stats-table-wrap">
-            <table className="spectator-stats-table">
-              <thead>
-                <tr>
-                  <th>Team</th>
-                  <th>P</th>
-                  <th>W</th>
-                  <th>L</th>
-                  <th>Pts</th>
-                  <th>NRR</th>
-                </tr>
-              </thead>
-              <tbody>
-                {standings.map((row, index) => {
-                  const team = teamMap.get(row.teamId);
-                  if (!team || row.played === 0) return null;
-                  return (
-                    <tr key={row.teamId}>
-                      <td>
-                        <span className="spectator-stats-table__rank">
-                          {index + 1}
-                        </span>
-                        {team.name}
-                      </td>
-                      <td>{row.played}</td>
-                      <td>{row.won}</td>
-                      <td>{row.lost + row.tied}</td>
-                      <td className="spectator-stats-table__pts">{row.points}</td>
-                      <td className="spectator-stats-table__nrr">
-                        {formatTournamentNrr(row.nrr)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <div className="spectator-stats-table-wrap">
+          <table className="spectator-stats-table">
+            <thead>
+              <tr>
+                <th>Team</th>
+                <th>P</th>
+                <th>W</th>
+                <th>L</th>
+                <th>Pts</th>
+                <th>NRR</th>
+              </tr>
+            </thead>
+            <tbody>
+              {standings.map((row, index) => {
+                const team = teamMap.get(row.teamId);
+                if (!team) return null;
+                return (
+                  <tr key={row.teamId}>
+                    <td>
+                      <span className="spectator-stats-table__rank">
+                        {index + 1}
+                      </span>
+                      {team.name}
+                    </td>
+                    <td>{row.played}</td>
+                    <td>{row.won}</td>
+                    <td>{row.lost + row.tied}</td>
+                    <td className="spectator-stats-table__pts">{row.points}</td>
+                    <td className="spectator-stats-table__nrr">
+                      {formatStandingNrr(row.nrr, row.played)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section>
