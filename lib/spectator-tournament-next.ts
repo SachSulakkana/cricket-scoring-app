@@ -29,13 +29,15 @@ function fixtureStageLabel(
 }
 
 export function getNextTournamentFixture(
-  data: SpectatorTournamentData
+  data: SpectatorTournamentData,
+  options?: { excludeFixtureId?: string }
 ): NextTournamentFixture | null {
   const teamMap = new Map(data.teams.map((team) => [team.id, team]));
   let matchIndex = 0;
 
   for (const fixture of data.tournament.fixtures) {
     matchIndex += 1;
+    if (fixture.id === options?.excludeFixtureId) continue;
     if (fixture.played) continue;
     if (fixture.teamBId === "__pending_qualifier_winner__") continue;
 

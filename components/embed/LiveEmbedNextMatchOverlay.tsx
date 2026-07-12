@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import { Users } from "lucide-react";
 import LiveEmbedPanelShell from "@/components/embed/LiveEmbedPanelShell";
+import { EmbedMatchFaceoffLayout } from "@/components/embed/LiveEmbedMatchFaceoff";
 import { useLiveMatchSnapshot } from "@/hooks/use-live-match-snapshot";
-import type { MatchState, Team } from "@/lib/cricket-types";
+import type { MatchState } from "@/lib/cricket-types";
 import { deriveLiveScoreView } from "@/lib/live-score-view";
 import { getMatchResult } from "@/lib/match-result";
 import {
@@ -13,15 +13,6 @@ import {
   getInningsWickets,
   getLegalBalls,
 } from "@/lib/spectator-live-stats";
-
-function teamInitials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase() ?? "")
-    .join("");
-}
 
 function getTeamScoreLine(
   matchState: MatchState,
@@ -59,58 +50,6 @@ function getChaseLine(
   return null;
 }
 
-function TeamLogoContent({ team }: { team: Team }) {
-  const initials = teamInitials(team.name);
-
-  if (team.logoUrl) {
-    return (
-      <img
-        src={team.logoUrl}
-        alt=""
-        className="live-embed-next-match__disc-img"
-      />
-    );
-  }
-
-  return (
-    <span className="live-embed-next-match__disc-fallback">
-      {initials || (
-        <Users className="live-embed-next-match__disc-icon" aria-hidden />
-      )}
-    </span>
-  );
-}
-
-function EmbedTeamLogoFlip({
-  team,
-  scoreLine,
-}: {
-  team: Team;
-  scoreLine?: string | null;
-}) {
-  return (
-    <div className="live-embed-next-match__team">
-      <div className="live-embed-next-match__flip">
-        <div className="live-embed-next-match__flip-inner">
-          <div className="live-embed-next-match__disc live-embed-next-match__disc--front">
-            <TeamLogoContent team={team} />
-          </div>
-          <div
-            className="live-embed-next-match__disc live-embed-next-match__disc--back"
-            aria-hidden
-          >
-            <TeamLogoContent team={team} />
-          </div>
-        </div>
-      </div>
-      <p className="live-embed-next-match__team-name">{team.name}</p>
-      {scoreLine ? (
-        <p className="live-embed-next-match__team-score">{scoreLine}</p>
-      ) : null}
-    </div>
-  );
-}
-
 function EmbedLiveMatchFaceoff({ matchState }: { matchState: MatchState }) {
   const view = useMemo(
     () => deriveLiveScoreView(matchState),
@@ -128,23 +67,15 @@ function EmbedLiveMatchFaceoff({ matchState }: { matchState: MatchState }) {
     view.kind === "complete" ? getMatchResult(matchState).text : null;
 
   return (
-    <div className="live-embed-next-match__section">
-      <p className="live-embed-next-match__eyebrow live-embed-next-match__eyebrow--live">
-        Live now
-      </p>
-      <div className="live-embed-next-match__faceoff">
-        <EmbedTeamLogoFlip team={matchState.team1} scoreLine={team1Score} />
-        <p className="live-embed-next-match__vs" aria-hidden>
-          Vs
-        </p>
-        <EmbedTeamLogoFlip team={matchState.team2} scoreLine={team2Score} />
-      </div>
-      {chaseLine ? (
-        <p className="live-embed-next-match__chase">{chaseLine}</p>
-      ) : resultLine ? (
-        <p className="live-embed-next-match__chase">{resultLine}</p>
-      ) : null}
-    </div>
+    <EmbedMatchFaceoffLayout
+      eyebrow="Live now"
+      eyebrowClassName="live-embed-next-match__eyebrow--live"
+      teamA={matchState.team1}
+      teamB={matchState.team2}
+      teamAScoreLine={team1Score}
+      teamBScoreLine={team2Score}
+      footer={chaseLine ?? resultLine}
+    />
   );
 }
 

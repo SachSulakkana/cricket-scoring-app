@@ -8,6 +8,9 @@ export const routes = {
   liveEmbedBowling: "/live/embed/bowling",
   liveEmbedPoints: "/live/embed/points",
   liveEmbedNextMatch: "/live/embed/next-match",
+  liveEmbedUpcoming: "/live/embed/upcoming",
+  liveEmbedBattingStats: "/live/embed/batting-stats",
+  liveEmbedBowlingStats: "/live/embed/bowling-stats",
   settings: "/settings",
   quickMatch: "/quick-match",
   quickMatchHistory: "/quick-match/history",
@@ -143,4 +146,28 @@ export function getSpectatorEmbedNextMatchUrl(
   context?: SpectatorUrlContext
 ): string {
   return getSpectatorUrl(routes.liveEmbedNextMatch, origin, context);
+}
+
+/** Full URL for the OBS upcoming match preview overlay. */
+export function getSpectatorEmbedUpcomingUrl(
+  origin?: string,
+  context?: SpectatorUrlContext
+): string {
+  return getSpectatorUrl(routes.liveEmbedUpcoming, origin, context);
+}
+
+/** Full URL for the OBS tournament top batting stats overlay. */
+export function getSpectatorEmbedBattingStatsUrl(
+  origin?: string,
+  context?: SpectatorUrlContext
+): string {
+  return getSpectatorUrl(routes.liveEmbedBattingStats, origin, context);
+}
+
+/** Full URL for the OBS tournament top bowling stats overlay. */
+export function getSpectatorEmbedBowlingStatsUrl(
+  origin?: string,
+  context?: SpectatorUrlContext
+): string {
+  return getSpectatorUrl(routes.liveEmbedBowlingStats, origin, context);
 }

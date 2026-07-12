@@ -3808,17 +3808,32 @@
   }
 
   .live-share-dialog__field {
-    margin-top: 0.25rem;
+    margin-top: 0;
+    min-width: 0;
+  }
+
+  .live-share-dialog__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.9rem 1rem;
+    margin-top: 0.15rem;
+  }
+
+  @media (min-width: 40rem) {
+    .live-share-dialog__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   .live-share-dialog__label {
     display: block;
-    margin-bottom: 0.45rem;
-    font-size: 0.62rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.68rem;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: oklch(0.58 0.06 255);
+    line-height: 1.35;
   }
 
   .live-share-dialog__row {
@@ -3831,11 +3846,11 @@
   .live-share-dialog__url {
     flex: 1;
     min-width: 0;
-    padding: 0.65rem 0.75rem;
+    padding: 0.7rem 0.8rem;
     border-radius: var(--radius-md);
     border: 1px solid oklch(0.32 0.04 288);
     background: oklch(0.1 0.02 288);
-    font-size: 0.72rem;
+    font-size: 0.76rem;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     color: oklch(0.82 0.04 255);
     outline: none;
@@ -3850,20 +3865,31 @@
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    width: 2.85rem;
+    width: 2.5rem;
+    min-height: 2.85rem;
+    padding: 0;
+    border: none;
     border-radius: var(--radius-md);
-    border: 1px solid oklch(0.5 0.12 295 / 0.55);
-    background: linear-gradient(
-      135deg,
-      oklch(0.48 0.12 295),
-      oklch(0.38 0.1 288)
-    );
-    color: var(--cricket-cream);
+    background: transparent;
+    color: oklch(0.68 0.05 255);
     touch-action: manipulation;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .live-share-dialog__copy-btn svg {
+    display: block;
+    color: currentColor;
+    stroke: currentColor;
+  }
+
+  .live-share-dialog__copy-btn:hover {
+    color: var(--cricket-cream);
+    background: oklch(0.2 0.03 295 / 0.55);
   }
 
   .live-share-dialog__copy-btn:active {
-    transform: scale(0.98);
+    transform: scale(0.96);
   }
 
   .live-share-dialog__hint {
@@ -3876,7 +3902,7 @@
   .live-share-dialog__section {
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 0.75rem;
     margin-top: 0.35rem;
     padding-top: 0.85rem;
     border-top: 1px solid oklch(0.28 0.04 255 / 0.65);
@@ -3884,7 +3910,7 @@
 
   .live-share-dialog__section-title {
     margin: 0;
-    font-size: 0.68rem;
+    font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -3892,15 +3918,15 @@
   }
 
   .live-share-dialog__section-text {
-    margin: -0.35rem 0 0;
-    font-size: 0.72rem;
+    margin: -0.2rem 0 0;
+    font-size: 0.76rem;
     line-height: 1.45;
     color: oklch(0.58 0.04 255);
   }
 
   .live-share-dialog__field-hint {
-    margin: -0.15rem 0 0.1rem;
-    font-size: 0.66rem;
+    margin: -0.1rem 0 0.2rem;
+    font-size: 0.68rem;
     line-height: 1.35;
     color: oklch(0.5 0.04 255);
   }
@@ -4091,6 +4117,16 @@
   }
 
   .live-embed-panel-root--centered:has(.live-embed-scorecard) {
+    background: oklch(0.02 0.01 280 / 0.35);
+  }
+
+  .live-embed-panel-root--centered:has(.live-embed-leaderboard--fit) {
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+    padding: clamp(1rem, 2.5vh, 2rem) clamp(1.5rem, 4vw, 3rem);
     background: oklch(0.02 0.01 280 / 0.35);
   }
 
@@ -4592,7 +4628,7 @@
   }
 
   .live-embed-points__title {
-    margin: 0 0 clamp(1.25rem, 2.5vw, 2rem);
+    margin: 0 0 clamp(0.35rem, 0.75vw, 0.65rem);
     font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
     font-size: clamp(2.25rem, 3.8vw, 3.5rem);
     font-weight: 800;
@@ -4600,6 +4636,20 @@
     text-transform: uppercase;
     text-align: center;
     color: var(--lsb-purple);
+  }
+
+  .live-embed-points__subtitle {
+    margin: 0 0 clamp(1rem, 2vw, 1.5rem);
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.15rem, 2vw, 1.65rem);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-align: center;
+    color: var(--lsb-pink);
+  }
+
+  .live-embed-points:not(:has(.live-embed-points__subtitle)) .live-embed-points__title {
+    margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
   }
 
   .live-embed-points__empty {
@@ -4689,6 +4739,144 @@
     color: var(--lsb-muted);
   }
 
+  .live-embed-leaderboard .spectator-stats-table tbody td:last-child {
+    width: 28%;
+  }
+
+  .live-embed-leaderboard--fit {
+    display: flex;
+    flex-direction: column;
+    width: 75%;
+    max-width: 75%;
+    height: min(92vh, 100%);
+    max-height: 92vh;
+    min-height: 0;
+    flex: 0 1 auto;
+    align-self: center;
+    margin-inline: auto;
+    padding: clamp(0.85rem, 1.5vw, 1.35rem) clamp(1.25rem, 2.5vw, 2rem);
+  }
+
+  .live-embed-leaderboard--fit .live-embed-points__title,
+  .live-embed-points.live-embed-leaderboard--fit:not(:has(.live-embed-points__subtitle))
+    .live-embed-points__title {
+    flex-shrink: 0;
+    margin: 0 0 clamp(0.5rem, 1vw, 0.85rem);
+    font-size: clamp(2rem, 3.5vw, 3.25rem);
+  }
+
+  .live-embed-leaderboard--fit .live-embed-leaderboard__table {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .live-embed-leaderboard--fit .spectator-stats-table {
+    flex: 1 1 0;
+    min-height: 0;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: clamp(0.95rem, 1.45vw, 1.2rem);
+  }
+
+  .live-embed-leaderboard--fit .spectator-stats-table thead {
+    flex: 0 0 auto;
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .live-embed-leaderboard--fit .spectator-stats-table tbody {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .live-embed-leaderboard--fit .spectator-stats-table thead tr,
+  .live-embed-leaderboard--fit .spectator-stats-table tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .live-embed-leaderboard--fit .spectator-stats-table tbody tr {
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto;
+    max-height: none;
+  }
+
+  .live-embed-leaderboard--fit .spectator-stats-table thead th {
+    padding: clamp(0.35rem, 0.75vh, 0.65rem) clamp(0.65rem, 1.1vw, 0.95rem);
+    font-size: clamp(0.72rem, 1.1vw, 0.95rem);
+    letter-spacing: 0.06em;
+  }
+
+  .live-embed-leaderboard--fit .spectator-stats-table thead th:first-child,
+  .live-embed-leaderboard--fit .spectator-stats-table tbody td:first-child {
+    padding-left: clamp(0.75rem, 1.35vw, 1.15rem);
+  }
+
+  .live-embed-leaderboard--fit .spectator-stats-table tbody td {
+    padding: clamp(0.08rem, 0.35vh, 0.22rem) clamp(0.55rem, 1vw, 0.85rem);
+    vertical-align: middle;
+    line-height: 1.1;
+    border-bottom-width: 0;
+    font-size: inherit;
+  }
+
+  .live-embed-leaderboard--fit .spectator-stats-table tbody td:first-child {
+    font-size: clamp(0.95rem, 1.45vw, 1.2rem);
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--lsb-purple);
+  }
+
+  .live-embed-leaderboard--fit .spectator-stats-table__rank {
+    min-width: 1.5rem;
+    margin-right: 0.35rem;
+    font-size: clamp(0.85rem, 1.25vw, 1.05rem);
+  }
+
+  .live-embed-leaderboard--fit .spectator-stats-table__pts {
+    font-size: clamp(1rem, 1.55vw, 1.3rem);
+  }
+
+  .live-embed-points.live-embed-leaderboard--fit .spectator-stats-table {
+    font-size: clamp(0.95rem, 1.45vw, 1.2rem);
+  }
+
+  .live-embed-points.live-embed-leaderboard--fit .spectator-stats-table thead th {
+    padding: clamp(0.35rem, 0.75vh, 0.65rem) clamp(0.65rem, 1.1vw, 0.95rem);
+    font-size: clamp(0.72rem, 1.1vw, 0.95rem);
+  }
+
+  .live-embed-points.live-embed-leaderboard--fit .spectator-stats-table tbody td {
+    padding: clamp(0.08rem, 0.35vh, 0.22rem) clamp(0.55rem, 1vw, 0.85rem);
+  }
+
+  .live-embed-points.live-embed-leaderboard--fit .spectator-stats-table tbody td:first-child {
+    font-size: clamp(0.95rem, 1.45vw, 1.2rem);
+  }
+
+  .live-embed-points.live-embed-leaderboard--fit .spectator-stats-table__rank {
+    font-size: clamp(0.85rem, 1.25vw, 1.05rem);
+  }
+
+  .live-embed-points.live-embed-leaderboard--fit .spectator-stats-table__pts {
+    font-size: clamp(1rem, 1.55vw, 1.3rem);
+  }
+
   @keyframes live-embed-next-match-logo-flip {
     from {
       transform: rotateY(0deg);
@@ -4749,6 +4937,10 @@
 
   .live-embed-next-match__eyebrow--live {
     color: var(--lsb-pink);
+  }
+
+  .live-embed-next-match__eyebrow--upcoming {
+    color: var(--lsb-purple);
   }
 
   .live-embed-next-match__team-score {

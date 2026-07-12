@@ -11,10 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import {
   getSpectatorEmbedBattingUrl,
+  getSpectatorEmbedBattingStatsUrl,
   getSpectatorEmbedBowlingUrl,
+  getSpectatorEmbedBowlingStatsUrl,
   getSpectatorEmbedNextMatchUrl,
   getSpectatorEmbedPointsUrl,
   getSpectatorEmbedPreviewUrl,
+  getSpectatorEmbedUpcomingUrl,
   getSpectatorEmbedUrl,
   getSpectatorLiveUrl,
   type SpectatorUrlContext,
@@ -94,7 +97,7 @@ function ShareUrlField({
         />
         <button
           type="button"
-          className="live-share-dialog__copy-btn"
+          className="live-share-dialog__copy-btn btn-12-exempt"
           onClick={() => void handleCopy()}
           aria-label={copied ? "Link copied" : "Copy link"}
           title={copied ? "Copied" : "Copy link"}
@@ -124,6 +127,9 @@ export default function LiveMatchShareDialog({
   const [bowlingUrl, setBowlingUrl] = useState("");
   const [pointsUrl, setPointsUrl] = useState("");
   const [nextMatchUrl, setNextMatchUrl] = useState("");
+  const [upcomingUrl, setUpcomingUrl] = useState("");
+  const [battingStatsUrl, setBattingStatsUrl] = useState("");
+  const [bowlingStatsUrl, setBowlingStatsUrl] = useState("");
   const isTournament = meta?.kind === "tournament";
 
   useEffect(() => {
@@ -142,12 +148,15 @@ export default function LiveMatchShareDialog({
       setBowlingUrl(getSpectatorEmbedBowlingUrl(undefined, context));
       setPointsUrl(getSpectatorEmbedPointsUrl(undefined, context));
       setNextMatchUrl(getSpectatorEmbedNextMatchUrl(undefined, context));
+      setUpcomingUrl(getSpectatorEmbedUpcomingUrl(undefined, context));
+      setBattingStatsUrl(getSpectatorEmbedBattingStatsUrl(undefined, context));
+      setBowlingStatsUrl(getSpectatorEmbedBowlingStatsUrl(undefined, context));
     }
   }, [open, meta]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="live-share-dialog border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.025_255)] text-[var(--cricket-cream)] sm:max-w-lg max-h-[min(90vh,42rem)] overflow-y-auto">
+      <DialogContent className="live-share-dialog border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.025_255)] text-[var(--cricket-cream)] w-[min(96vw,56rem)] sm:max-w-5xl max-h-[min(92vh,52rem)] overflow-y-auto p-6 sm:p-7">
         <DialogHeader>
           <DialogTitle className="cricket-display text-lg font-semibold text-[var(--cricket-cream)]">
             Share live match
@@ -166,42 +175,71 @@ export default function LiveMatchShareDialog({
             background and the suggested size for each overlay.
           </p>
 
-          <ShareUrlField
-            id="live-embed-url"
-            label="Score bar"
-            url={embedUrl}
-            hint="Suggested size: 1920 × 150"
-          />
+          <div className="live-share-dialog__grid">
+            <ShareUrlField
+              id="live-embed-url"
+              label="Score bar"
+              url={embedUrl}
+              hint="Suggested size: 1920 × 150"
+            />
 
-          <ShareUrlField
-            id="live-embed-batting-url"
-            label="Batting scorecard (current innings)"
-            url={battingUrl}
-            hint="Suggested size: 1920 × 1080 (full frame, centered)"
-          />
+            <ShareUrlField
+              id="live-embed-batting-url"
+              label="Batting scorecard (current innings)"
+              url={battingUrl}
+              hint="Suggested size: 1920 × 1080 (full frame, centered)"
+            />
 
-          <ShareUrlField
-            id="live-embed-bowling-url"
-            label="Bowling scorecard (current innings)"
-            url={bowlingUrl}
-            hint="Suggested size: 1920 × 1080 (full frame, centered)"
-          />
+            <ShareUrlField
+              id="live-embed-bowling-url"
+              label="Bowling scorecard (current innings)"
+              url={bowlingUrl}
+              hint="Suggested size: 1920 × 1080 (full frame, centered)"
+            />
 
-          <ShareUrlField
-            id="live-embed-next-match-url"
-            label="Live match faceoff"
-            url={nextMatchUrl}
-            hint="Suggested size: 1920 × 1080 (full frame, centered)"
-          />
+            <ShareUrlField
+              id="live-embed-next-match-url"
+              label="Live match faceoff"
+              url={nextMatchUrl}
+              hint="Suggested size: 1920 × 1080 (full frame, centered)"
+            />
 
-          {isTournament ? (
+            {isTournament ? (
+              <ShareUrlField
+                id="live-embed-upcoming-url"
+                label="Coming up next"
+                url={upcomingUrl}
+                hint="Suggested size: 1920 × 1080 (full frame, centered)"
+              />
+            ) : null}
+
+            {isTournament ? (
               <ShareUrlField
                 id="live-embed-points-url"
                 label="Points table"
                 url={pointsUrl}
                 hint="Suggested size: 1920 × 1080 (full frame, centered)"
               />
-          ) : null}
+            ) : null}
+
+            {isTournament ? (
+              <ShareUrlField
+                id="live-embed-batting-stats-url"
+                label="Most runs (top 10)"
+                url={battingStatsUrl}
+                hint="Suggested size: 1920 × 1080 (full frame, centered)"
+              />
+            ) : null}
+
+            {isTournament ? (
+              <ShareUrlField
+                id="live-embed-bowling-stats-url"
+                label="Most wickets (top 10)"
+                url={bowlingStatsUrl}
+                hint="Suggested size: 1920 × 1080 (full frame, centered)"
+              />
+            ) : null}
+          </div>
         </div>
 
         <div className="live-share-dialog__preview">
@@ -217,8 +255,9 @@ export default function LiveMatchShareDialog({
         </div>
 
         <p className="live-share-dialog__hint">
-          Score bar overlays pin to the bottom. Batting, bowling, points, and live
-          match faceoff fill the frame, centered, with a dark transparent backdrop.
+          Score bar overlays pin to the bottom. Batting, bowling, points, stats
+          leaderboards, live match faceoff, and coming up next fill the frame,
+          centered, with a dark transparent backdrop.
         </p>
       </DialogContent>
     </Dialog>
