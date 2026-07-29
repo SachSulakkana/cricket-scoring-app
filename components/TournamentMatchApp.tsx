@@ -7,6 +7,7 @@ import FullScorecard from "@/components/FullScorecard";
 import ScoringBoard from "@/components/ScoringBoard";
 import {
   CricketAddButton,
+  CricketBackButton,
   CricketBroadcastCard,
   CricketDetailRow,
   CricketEyebrow,
@@ -21,7 +22,6 @@ import {
 } from "@/lib/roster-storage";
 import { useCricket } from "@/lib/cricket-context";
 import { useOfferLiveMatchRestore } from "@/hooks/use-offer-live-match-restore";
-import TournamentFlowSteps from "@/components/TournamentFlowSteps";
 import ExportPdfButton from "@/components/ExportPdfButton";
 import { appToast } from "@/lib/app-toast";
 import { exportTournamentMatchPdf } from "@/lib/pdf-export";
@@ -641,7 +641,15 @@ export default function TournamentMatchApp({
     return (
       <>
         <ScoringBoard
-          banner={<TournamentFlowSteps current="Score" className="mb-1" />}
+          banner={
+            <div className="mb-1">
+              <CricketBackButton
+                onClick={onBack}
+                ariaLabel="Back to fixtures"
+                className="!h-9 !w-9 !min-h-9 !min-w-9 text-base"
+              />
+            </div>
+          }
           onMatchEnd={handleMatchEnd}
           onMatchTied={handleMatchTied}
           onViewScorecard={() => setPage("scorecard")}

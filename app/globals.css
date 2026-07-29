@@ -5379,10 +5379,17 @@
   }
 
   .live-score-bar__ball--four,
-  .live-score-bar__ball--six,
-  .live-score-bar__ball--wicket {
+  .live-score-bar__ball--six {
     border-color: #ff007f !important;
     background: #ff007f !important;
+    color: #ffffff !important;
+  }
+
+  .live-score-bar__ball--wicket,
+  .live-score-bar__ball[data-variant="wicket"] {
+    border-color: #dc2626 !important;
+    background: #dc2626 !important;
+    background-color: #dc2626 !important;
     color: #ffffff !important;
   }
 

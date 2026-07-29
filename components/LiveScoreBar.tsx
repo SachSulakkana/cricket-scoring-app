@@ -95,22 +95,52 @@ function BattersPanel({
   );
 }
 
+const CONTEXT_RR_MS = 8000;
+const CONTEXT_MATCHUP_MS = 6000;
+
+type ContextSlide = {
+  text: string;
+  durationMs: number;
+};
+
 function buildContextItems(
   chaseInfo: LiveChaseInfo | null,
-  currentRunRate: string
-): string[] {
+  currentRunRate: string,
+  team1Name: string,
+  team2Name: string
+): ContextSlide[] {
+  const matchup: ContextSlide = {
+    text: `${team1Name} vs ${team2Name}`,
+    durationMs: CONTEXT_MATCHUP_MS,
+  };
+
   if (chaseInfo) {
     return [
-      `RUN RATE ${chaseInfo.currentRunRate}`,
-      `NEED ${chaseInfo.runsNeeded} FROM ${chaseInfo.oversRemaining} OV`,
+      {
+        text: `RUN RATE ${chaseInfo.currentRunRate}`,
+        durationMs: CONTEXT_RR_MS,
+      },
+      {
+        text: `NEED ${chaseInfo.runsNeeded} FROM ${chaseInfo.oversRemaining} OV`,
+        durationMs: CONTEXT_RR_MS,
+      },
+      matchup,
     ];
   }
-  return [`RUN RATE ${currentRunRate}`];
+
+  return [
+    {
+      text: `RUN RATE ${currentRunRate}`,
+      durationMs: CONTEXT_RR_MS,
+    },
+    matchup,
+  ];
 }
 
-function RotatingContext({ items }: { items: string[] }) {
-  const index = useRotatingIndex(items.length);
-  const text = items[index] ?? items[0] ?? "";
+function RotatingContext({ items }: { items: ContextSlide[] }) {
+  const durations = items.map((item) => item.durationMs);
+  const index = useRotatingIndex(items.length, durations);
+  const text = items[index]?.text ?? items[0]?.text ?? "";
 
   return (
     <span key={index} className="live-score-bar__center-footer-text">
@@ -198,6 +228,7 @@ function BowlerPanel({
             ball.variant === "pending" ? null : (
               <span
                 key={ball.id}
+                data-variant={ball.variant}
                 className={cn(
                   "live-score-bar__ball",
                   ball.variant === "wicket" && "live-score-bar__ball--wicket",
@@ -378,7 +409,12 @@ export default function LiveScoreBar({
         overs={view.currentOvers}
         footer={
           <RotatingContext
-            items={buildContextItems(view.chaseInfo, view.currentRunRate)}
+            items={buildContextItems(
+              view.chaseInfo,
+              view.currentRunRate,
+              view.matchState.team1.name,
+              view.matchState.team2.name
+            )}
           />
         }
       />

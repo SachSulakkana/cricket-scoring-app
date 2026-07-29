@@ -8,7 +8,7 @@ import {
   DismissalType,
   ExtraType,
 } from "@/lib/cricket-types";
-import { getDismissalReplacementEnd } from "@/lib/spectator-live-stats";
+import { getDismissalReplacementEnd, getBatsmanBalls, getBatsmanRuns } from "@/lib/spectator-live-stats";
 import DismissalModal from "./DismissalModal";
 import CricketLoader from "@/components/CricketLoader";
 import ReplacementBatsmanModal from "./ReplacementBatsmanModal";
@@ -70,20 +70,6 @@ export default function BallEntry({
     (p) => p.id === currentInnings.currentBowlerPlayerId
   );
 
-  const getBatsmanRuns = (batsmanName?: string) => {
-    if (!batsmanName) return 0;
-    return currentInnings.balls.reduce((total, ball) => {
-      if (ball.batsmanName !== batsmanName) return total;
-
-      // For no-ball, only additional runs count to batsman (exclude penalty +1).
-      const noBallRuns =
-        ball.extra === "no-ball" ? Math.max(ball.extraRuns - 1, 0) : 0;
-      const overthrowRuns =
-        ball.extra === "overthrow" ? ball.extraRuns : 0;
-      return total + ball.runs + noBallRuns + overthrowRuns;
-    }, 0);
-  };
-
   const getBowlerStats = (bowlerName?: string) => {
     if (!bowlerName) return { runsConceded: 0, wickets: 0 };
 
@@ -108,8 +94,10 @@ export default function BallEntry({
     );
   };
 
-  const strikerRuns = getBatsmanRuns(strikerInfo?.name);
-  const nonStrikerRuns = getBatsmanRuns(nonStrikerInfo?.name);
+  const strikerRuns = getBatsmanRuns(currentInnings, strikerInfo?.name);
+  const nonStrikerRuns = getBatsmanRuns(currentInnings, nonStrikerInfo?.name);
+  const strikerBalls = getBatsmanBalls(currentInnings, strikerInfo?.name);
+  const nonStrikerBalls = getBatsmanBalls(currentInnings, nonStrikerInfo?.name);
   const bowlerStats = getBowlerStats(bowlerInfo?.name);
 
   // Get available batsmen for replacement (excluding current batsmen)
@@ -411,7 +399,9 @@ export default function BallEntry({
               </p>
               <p className="cricket-score text-xl text-[var(--cricket-cream)] mt-1">
                 {strikerInfo.name}{" "}
-                <span className="text-[var(--cricket-gold)]">({strikerRuns})</span>
+                <span className="text-[var(--cricket-gold)]">
+                  {strikerRuns} ({strikerBalls})
+                </span>
               </p>
             </div>
             <div className="cricket-non-striker-panel">
@@ -419,9 +409,16 @@ export default function BallEntry({
                 Non-striker
               </p>
               <p className="cricket-score text-xl text-[var(--cricket-cream)] mt-1">
-                {nonStrikerInfo
-                  ? `${nonStrikerInfo.name} (${nonStrikerRuns})`
-                  : "—"}
+                {nonStrikerInfo ? (
+                  <>
+                    {nonStrikerInfo.name}{" "}
+                    <span className="text-[oklch(0.72_0.06_300)]">
+                      {nonStrikerRuns} ({nonStrikerBalls})
+                    </span>
+                  </>
+                ) : (
+                  "—"
+                )}
               </p>
             </div>
           </div>
