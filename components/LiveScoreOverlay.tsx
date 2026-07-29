@@ -54,6 +54,7 @@ export default function LiveScoreOverlay({ preview = false }: LiveScoreOverlayPr
       <LiveScoreBoundaryCelebration
         event={eventHighlight.event}
         phase={eventHighlight.phase}
+        playKey={eventHighlight.playKey}
       />
       <LiveScoreBar view={view} eventHighlight={eventHighlight} />
     </div>

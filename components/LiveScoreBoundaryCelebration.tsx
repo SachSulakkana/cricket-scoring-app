@@ -7,11 +7,19 @@ import { cn } from "@/lib/utils";
 interface LiveScoreBoundaryCelebrationProps {
   event: LiveScoreEvent | null;
   phase: LiveScoreEventPhase;
+  playKey?: number;
 }
+
+const CELEBRATION_SRC: Record<"four" | "six" | "wicket", string> = {
+  four: "/celebrations/four.gif",
+  six: "/celebrations/six.gif",
+  wicket: "/celebrations/wicket.gif",
+};
 
 export default function LiveScoreBoundaryCelebration({
   event,
   phase,
+  playKey = 0,
 }: LiveScoreBoundaryCelebrationProps) {
   const isBigEvent =
     event?.kind === "four" ||
@@ -31,19 +39,13 @@ export default function LiveScoreBoundaryCelebration({
       )}
       aria-hidden
     >
-      <span className="boundary-celebration__flash" aria-hidden />
-
-      <div className="boundary-celebration__center">
-        <span className="boundary-celebration__rays" aria-hidden />
-        <span className="boundary-celebration__ring" aria-hidden />
-        <span className="boundary-celebration__ring boundary-celebration__ring--delayed" aria-hidden />
-        <span className="boundary-celebration__word">{event.label}</span>
-        {event.sublabel ? (
-          <span className="boundary-celebration__subword">
-            {event.sublabel}
-          </span>
-        ) : null}
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element -- animated GIF must remount via key */}
+      <img
+        key={playKey}
+        src={CELEBRATION_SRC[event.kind]}
+        alt=""
+        className="boundary-celebration__media"
+      />
     </div>
   );
 }

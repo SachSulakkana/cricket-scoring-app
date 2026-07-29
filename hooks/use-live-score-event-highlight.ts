@@ -10,8 +10,13 @@ import type { LiveScoreView } from "@/lib/live-score-view";
 export type LiveScoreEventPhase = "idle" | "enter" | "show" | "exit";
 
 const DEFAULT_DURATION_MS = 1500;
+const GIF_CELEBRATION_DURATION_MS = 3500;
 const ENTER_MS = 250;
 const EXIT_MS = 300;
+
+function isGifCelebration(kind: LiveScoreEvent["kind"]): boolean {
+  return kind === "four" || kind === "six" || kind === "wicket";
+}
 
 export function useLiveScoreEventHighlight(
   view: LiveScoreView,
@@ -19,6 +24,7 @@ export function useLiveScoreEventHighlight(
 ) {
   const [event, setEvent] = useState<LiveScoreEvent | null>(null);
   const [phase, setPhase] = useState<LiveScoreEventPhase>("idle");
+  const [playKey, setPlayKey] = useState(0);
   const lastBallIdRef = useRef<string | null>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -62,23 +68,29 @@ export function useLiveScoreEventHighlight(
       return;
     }
 
+    const totalMs = isGifCelebration(nextEvent.kind)
+      ? GIF_CELEBRATION_DURATION_MS
+      : durationMs;
+
     clearTimers();
     setEvent(nextEvent);
+    setPlayKey((key) => key + 1);
     setPhase("enter");
 
     schedule(() => setPhase("show"), ENTER_MS);
 
-    const holdMs = Math.max(durationMs - ENTER_MS - EXIT_MS, 300);
+    const holdMs = Math.max(totalMs - ENTER_MS - EXIT_MS, 300);
     schedule(() => setPhase("exit"), ENTER_MS + holdMs);
     schedule(() => {
       setPhase("idle");
       setEvent(null);
-    }, durationMs);
+    }, totalMs);
   }, [view, durationMs]);
 
   return {
     event,
     phase,
+    playKey,
     isActive: phase !== "idle" && event !== null,
   };
 }
