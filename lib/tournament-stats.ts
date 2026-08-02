@@ -10,12 +10,14 @@ export interface TournamentBattingStat {
   player: string;
   team: string;
   runs: number;
+  matches: number;
 }
 
 export interface TournamentBowlingStat {
   player: string;
   team: string;
   wickets: number;
+  matches: number;
 }
 
 function playerKey(team: string, player: string): string {
@@ -28,14 +30,15 @@ function addBatting(
   player: string,
   runs: number
 ) {
-  if (runs <= 0) return;
   const key = playerKey(team, player);
   const existing = totals.get(key);
   if (existing) {
     existing.runs += runs;
+    existing.matches += 1;
     return;
   }
-  totals.set(key, { player, team, runs });
+  if (runs <= 0) return;
+  totals.set(key, { player, team, runs, matches: 1 });
 }
 
 function addBowling(
@@ -44,14 +47,15 @@ function addBowling(
   player: string,
   wickets: number
 ) {
-  if (wickets <= 0) return;
   const key = playerKey(team, player);
   const existing = totals.get(key);
   if (existing) {
     existing.wickets += wickets;
+    existing.matches += 1;
     return;
   }
-  totals.set(key, { player, team, wickets });
+  if (wickets <= 0) return;
+  totals.set(key, { player, team, wickets, matches: 1 });
 }
 
 export function buildTournamentPlayerStats(

@@ -4753,7 +4753,12 @@
     padding: 0;
     overflow: hidden;
     color: var(--lsb-ink);
-    background: var(--lsb-white);
+    background-color: var(--lsb-white);
+    background-image: radial-gradient(
+      oklch(0.55 0.16 350 / 0.11) 1.15px,
+      transparent 1.15px
+    );
+    background-size: 16px 16px;
     border: 1px solid oklch(0.88 0.02 295);
     border-top: none;
     border-bottom: none;
@@ -4764,10 +4769,11 @@
   }
 
   .live-embed-points__rail {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 1rem;
     padding: clamp(1rem, 2vw, 1.5rem) 0.35rem;
     background: var(--lsb-pink);
@@ -4830,10 +4836,13 @@
   }
 
   .live-embed-points__rail-label {
-    margin: auto 0;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin: 0;
     font-family: var(--font-display), var(--font-body), ui-sans-serif, system-ui,
       sans-serif;
-    font-size: clamp(2.85rem, 5.2vw, 4.5rem);
+    font-size: clamp(3rem, 5.5vw, 4.75rem);
     font-weight: 800;
     letter-spacing: 0.14em;
     line-height: 1.05;
@@ -4841,7 +4850,7 @@
     white-space: nowrap;
     color: #ffffff;
     text-shadow: none;
-    transform: rotate(-180deg);
+    transform: translate(-50%, -50%) rotate(-180deg);
     writing-mode: vertical-rl;
     text-orientation: mixed;
   }
@@ -4850,10 +4859,14 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-content: center;
     gap: clamp(0.85rem, 1.6vw, 1.25rem);
     min-width: 0;
+    min-height: 0;
     height: 100%;
+    max-height: 100%;
     align-self: stretch;
+    box-sizing: border-box;
     margin-top: 0;
     padding: clamp(0.85rem, 1.8vw, 1.35rem) clamp(0.85rem, 1.8vw, 1.5rem)
       clamp(0.85rem, 1.8vw, 1.35rem) clamp(0.55rem, 1.2vw, 0.9rem);
@@ -5034,6 +5047,122 @@
     color: var(--lsb-muted);
   }
 
+  /* ── Broadcast leaderboard (most runs / wickets) ── */
+  .live-embed-points--leaderboard {
+    --points-logo: clamp(2.4rem, 4vw, 3rem);
+    --points-pill-h: clamp(3.35rem, 5.2vw, 4.15rem);
+    height: min(94vh, 62rem);
+    min-height: min(94vh, 62rem);
+  }
+
+  .live-embed-points--leaderboard .live-embed-points__main {
+    gap: clamp(0.55rem, 1.2vw, 0.9rem);
+  }
+
+  .live-embed-points--leaderboard .live-embed-points__rows {
+    gap: clamp(0.55rem, 1.2vw, 0.9rem);
+  }
+
+  .live-embed-points--leaderboard .live-embed-points__row-body {
+    padding-left: 0;
+    min-height: var(--points-pill-h);
+  }
+
+  .live-embed-points--leaderboard
+    .live-embed-points__row--header
+    .live-embed-points__row-body {
+    min-height: 0;
+  }
+
+  .live-embed-points--leaderboard .live-embed-points__row--header {
+    min-height: 0;
+  }
+
+  .live-embed-points--leaderboard .live-embed-points__pill {
+    grid-template-columns: minmax(0, 1.4fr) minmax(10rem, 0.9fr);
+    gap: clamp(1rem, 2.5vw, 2rem);
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+    padding-left: clamp(1.1rem, 2vw, 1.6rem);
+    padding-right: clamp(1.1rem, 2vw, 1.6rem);
+    background: #ffffff;
+    box-shadow: 0 0.25rem 0.85rem oklch(0.55 0.2 350 / 0.18);
+  }
+
+  .live-embed-points--leaderboard .live-embed-points__pill--header {
+    grid-template-columns: minmax(0, 1.4fr) minmax(10rem, 0.9fr);
+    gap: clamp(1rem, 2.5vw, 2rem);
+    min-height: 0;
+    padding: 0.15rem clamp(1.1rem, 2vw, 1.6rem);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .live-embed-points--leaderboard .live-embed-points__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.75rem, 2vw, 1.5rem);
+  }
+
+  .live-embed-points--leaderboard .live-embed-points__player-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.1rem;
+    min-width: 0;
+    padding-right: 0.5rem;
+  }
+
+  .live-embed-points--leaderboard .live-embed-points__player {
+    text-transform: none;
+    letter-spacing: 0.02em;
+    padding-right: 0;
+    color: var(--lsb-purple);
+    text-align: left;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .live-embed-points--leaderboard .live-embed-points__player-team {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: clamp(0.7rem, 1.15vw, 0.9rem);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1.15;
+    color: var(--lsb-muted);
+    text-align: left;
+  }
+
+  .live-embed-points--leaderboard
+    .live-embed-points__pill--header
+    .live-embed-points__team {
+    visibility: visible;
+    color: var(--lsb-pink);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 1.8rem;
+    font-weight: 900;
+    text-align: left;
+  }
+
+  .live-embed-points--leaderboard
+    .live-embed-points__pill--header
+    .live-embed-points__stats
+    .live-embed-points__stat-label {
+    text-align: center;
+  }
+
+  .live-embed-points--leaderboard .live-embed-points__rail-label {
+    font-size: clamp(2.75rem, 5vw, 4.35rem);
+    letter-spacing: 0.1em;
+  }
+
   .live-embed-leaderboard .spectator-stats-table tbody td:last-child {
     width: 28%;
   }
@@ -5183,13 +5312,46 @@
   }
 
   .live-embed-next-match {
-    width: min(84rem, 96vw);
+    width: min(72rem, 96vw);
     padding: 0;
     text-align: center;
-    background: transparent;
     border: none;
     box-shadow: none;
     font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .live-embed-next-match:not(.live-embed-points--broadcast) {
+    background: transparent;
+  }
+
+  /* Faceoff inside broadcast shell (live match / coming up next) */
+  .live-embed-points--faceoff {
+    height: min(72vh, 44rem);
+    min-height: min(72vh, 44rem);
+    align-items: stretch;
+  }
+
+  .live-embed-points--faceoff .live-embed-points__rail,
+  .live-embed-points--faceoff .live-embed-points__main {
+    min-height: 100%;
+    height: 100%;
+    align-self: stretch;
+  }
+
+  .live-embed-points--faceoff .live-embed-points__main,
+  .live-embed-next-match__main {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: clamp(1rem, 2vw, 1.5rem);
+    box-sizing: border-box;
+  }
+
+  .live-embed-points--faceoff .live-embed-points__rail-label {
+    font-size: clamp(2.5rem, 4.5vw, 4rem);
+    letter-spacing: 0.1em;
   }
 
   .live-embed-next-match__section {
@@ -5224,7 +5386,7 @@
   }
 
   .live-embed-next-match__stage {
-    margin: 0.75rem 0 0;
+    margin: 0;
     font-size: clamp(1.35rem, 2.2vw, 2rem);
     font-weight: 600;
     color: var(--lsb-muted);
@@ -5251,8 +5413,9 @@
   }
 
   .live-embed-next-match__chase {
-    margin: clamp(1.35rem, 2.5vw, 2rem) 0 0;
+    margin: clamp(0.5rem, 1.2vw, 1rem) 0 0;
     padding: clamp(0.75rem, 1.4vw, 1.1rem) clamp(1rem, 2vw, 1.5rem);
+    width: min(100%, 42rem);
     font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
     font-size: clamp(1.85rem, 3.2vw, 3rem);
     font-weight: 800;
@@ -5276,11 +5439,11 @@
     align-items: flex-start;
     justify-content: center;
     gap: clamp(2.5rem, 6vw, 5.5rem);
-    margin-top: clamp(1.75rem, 3.2vw, 2.75rem);
-    padding: clamp(1.25rem, 2.5vw, 2rem) clamp(0.75rem, 1.5vw, 1.25rem);
-    border-radius: 0.5rem;
-    background: var(--lsb-panel);
-    border: 2px solid var(--lsb-pink);
+    margin-top: 0;
+    padding: clamp(0.5rem, 1.5vw, 1rem) 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
   }
 
   .live-embed-next-match__team {

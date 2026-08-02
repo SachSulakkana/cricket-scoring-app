@@ -46,15 +46,12 @@ export default function LiveEmbedUpcomingMatchOverlay() {
 
   return (
     <LiveEmbedPanelShell centered>
-      <div className="live-embed-next-match">
-        <EmbedMatchFaceoffLayout
-          eyebrow="Coming up next"
-          eyebrowClassName="live-embed-next-match__eyebrow--upcoming"
-          stageLabel={upcoming.stageLabel}
-          teamA={upcoming.teamA}
-          teamB={upcoming.teamB}
-        />
-      </div>
+      <EmbedMatchFaceoffLayout
+        eyebrow="Coming up next"
+        stageLabel={upcoming.stageLabel}
+        teamA={upcoming.teamA}
+        teamB={upcoming.teamB}
+      />
     </LiveEmbedPanelShell>
   );
 }

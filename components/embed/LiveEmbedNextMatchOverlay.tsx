@@ -69,7 +69,6 @@ function EmbedLiveMatchFaceoff({ matchState }: { matchState: MatchState }) {
   return (
     <EmbedMatchFaceoffLayout
       eyebrow="Live now"
-      eyebrowClassName="live-embed-next-match__eyebrow--live"
       teamA={matchState.team1}
       teamB={matchState.team2}
       teamAScoreLine={team1Score}
@@ -101,9 +100,7 @@ export default function LiveEmbedNextMatchOverlay() {
 
   return (
     <LiveEmbedPanelShell centered>
-      <div className="live-embed-next-match">
-        <EmbedLiveMatchFaceoff matchState={liveMatchState} />
-      </div>
+      <EmbedLiveMatchFaceoff matchState={liveMatchState} />
     </LiveEmbedPanelShell>
   );
 }
