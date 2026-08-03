@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireMutationAuth } from "@/lib/api-auth";
+import { isAuthError, requireUser } from "@/lib/api-auth";
 import { parseJsonBody } from "@/lib/api-route-utils";
 import { liveDraftPutSchema } from "@/lib/api-schemas";
 import {
@@ -10,9 +10,12 @@ import {
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const user = await requireUser(request);
+  if (isAuthError(user)) return user;
+
   try {
-    const draft = await getLiveMatchDraft();
+    const draft = await getLiveMatchDraft(user.uid);
     if (!draft) {
       return NextResponse.json({ draft: null });
     }
@@ -33,14 +36,15 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const authError = requireMutationAuth(request);
-  if (authError) return authError;
+  const user = await requireUser(request);
+  if (isAuthError(user)) return user;
 
   try {
     const parsed = await parseJsonBody(request, liveDraftPutSchema);
     if ("error" in parsed) return parsed.error;
 
     await saveLiveMatchDraft(
+      user.uid,
       parsed.data.matchState,
       parsed.data.meta ?? null,
       parsed.data.updatedAt
@@ -56,11 +60,11 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const authError = requireMutationAuth(request);
-  if (authError) return authError;
+  const user = await requireUser(request);
+  if (isAuthError(user)) return user;
 
   try {
-    await clearLiveMatchDraft();
+    await clearLiveMatchDraft(user.uid);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("DELETE /api/matches/draft failed", error);

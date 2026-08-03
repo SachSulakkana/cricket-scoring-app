@@ -35,7 +35,7 @@ function TeamLogoDisc({
     <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
       <div
         className={cn(
-          "tournament-match-faceoff__disc",
+          "tournament-match-faceoff__disc rounded-full",
           isLarge
             ? "h-[4.5rem] w-[4.5rem] sm:h-[5.5rem] sm:w-[5.5rem]"
             : "h-[3.25rem] w-[3.25rem] sm:h-[3.75rem] sm:w-[3.75rem]"
@@ -45,20 +45,13 @@ function TeamLogoDisc({
           <img
             src={team.logoUrl}
             alt=""
-            className={cn(
-              "object-contain",
-              isLarge
-                ? "h-[3.25rem] w-[3.25rem] sm:h-[4rem] sm:w-[4rem]"
-                : "h-[2.35rem] w-[2.35rem] sm:h-[2.75rem] sm:w-[2.75rem]"
-            )}
+            className="tournament-match-faceoff__disc-img rounded-full"
           />
         ) : (
           <span
             className={cn(
-              "flex items-center justify-center rounded-full bg-[oklch(0.88_0.02_295)] font-bold text-[oklch(0.35_0.08_295)]",
-              isLarge
-                ? "h-[3.25rem] w-[3.25rem] text-lg sm:h-[4rem] sm:w-[4rem] sm:text-xl"
-                : "h-[2.35rem] w-[2.35rem] text-sm sm:h-[2.75rem] sm:w-[2.75rem] sm:text-base"
+              "flex h-full w-full items-center justify-center rounded-full bg-[oklch(0.88_0.02_295)] font-bold text-[oklch(0.35_0.08_295)]",
+              isLarge ? "text-lg sm:text-xl" : "text-sm sm:text-base"
             )}
           >
             {teamInitials(team.name) || (

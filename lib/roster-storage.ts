@@ -60,6 +60,26 @@ type RosterCache = {
 
 let initPromise: Promise<void> | null = null;
 
+const ROSTER_INIT_TIMEOUT_MS = 45_000;
+
+async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  message: string
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(message)), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export function buildTeamSelectionSlots(
   teamCount: number,
   existing?: string[]
@@ -341,27 +361,33 @@ export async function initRosterStorage(): Promise<void> {
 
   initPromise = (async () => {
     try {
-      const legacy =
-        typeof window !== "undefined" &&
-        !localStorage.getItem(CLIENT_MIGRATION_FLAG)
-          ? readLegacyBundle()
-          : null;
+      await withTimeout(
+        (async () => {
+          const legacy =
+            typeof window !== "undefined" &&
+            !localStorage.getItem(CLIENT_MIGRATION_FLAG)
+              ? readLegacyBundle()
+              : null;
 
-      if (legacy && hasLegacyData(legacy)) {
-        await apiFetch("/api/roster/migrate", {
-          method: "POST",
-          body: JSON.stringify(legacy),
-        });
-        markClientMigrated();
-      }
+          if (legacy && hasLegacyData(legacy)) {
+            await apiFetch("/api/roster/migrate", {
+              method: "POST",
+              body: JSON.stringify(legacy),
+            });
+            markClientMigrated();
+          }
 
-      const res = await apiFetch("/api/roster");
-      const raw = (await res.json()) as RosterCache;
-      const { bundle, migratedIds } = normalizeRosterBundle(raw);
-      dispatch(rosterActions.hydrateRoster(bundle));
-      if (migratedIds.length > 0) {
-        void persistMigratedTemplates(bundle.tournaments, migratedIds);
-      }
+          const res = await apiFetch("/api/roster");
+          const raw = (await res.json()) as RosterCache;
+          const { bundle, migratedIds } = normalizeRosterBundle(raw);
+          dispatch(rosterActions.hydrateRoster(bundle));
+          if (migratedIds.length > 0) {
+            void persistMigratedTemplates(bundle.tournaments, migratedIds);
+          }
+        })(),
+        ROSTER_INIT_TIMEOUT_MS,
+        "Timed out loading roster data. Check your connection and try again."
+      );
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to load roster data";
@@ -373,6 +399,11 @@ export async function initRosterStorage(): Promise<void> {
   })();
 
   return initPromise;
+}
+
+export function resetRosterStorageState(): void {
+  initPromise = null;
+  dispatch(rosterActions.resetRoster());
 }
 
 export function isRosterStorageReady(): boolean {

@@ -44,6 +44,10 @@ function getDb(): Firestore {
   return getAdminFirestore();
 }
 
+function userCol(uid: string, name: string) {
+  return getDb().collection("users").doc(uid).collection(name);
+}
+
 function rowToPlayer(row: Record<string, unknown>): Player {
   return {
     id: row.id as string,
@@ -94,15 +98,14 @@ function teamToRow(team: Team) {
 const FIXTURES_SUBCOLLECTION = "fixtures";
 const BATCH_WRITE_LIMIT = 400;
 
-function tournamentFixturesRef(tournamentId: string) {
-  return getDb()
-    .collection(COLLECTIONS.tournaments)
+function tournamentFixturesRef(uid: string, tournamentId: string) {
+  return userCol(uid, COLLECTIONS.tournaments)
     .doc(tournamentId)
     .collection(FIXTURES_SUBCOLLECTION);
 }
 
-async function loadTournamentFixtures(tournamentId: string): Promise<unknown[]> {
-  const snapshot = await tournamentFixturesRef(tournamentId).get();
+async function loadTournamentFixtures(uid: string, tournamentId: string): Promise<unknown[]> {
+  const snapshot = await tournamentFixturesRef(uid, tournamentId).get();
   if (snapshot.empty) return [];
   return snapshot.docs
     .map((doc) => doc.data() as { order?: number; fixture?: unknown })
@@ -112,12 +115,13 @@ async function loadTournamentFixtures(tournamentId: string): Promise<unknown[]> 
 }
 
 async function saveTournamentFixtures(
+  uid: string,
   tournamentId: string,
   fixtures: unknown[]
 ): Promise<void> {
   if (fixtures.length === 0) return;
 
-  const ref = tournamentFixturesRef(tournamentId);
+  const ref = tournamentFixturesRef(uid, tournamentId);
   const existing = await ref.get();
   const nextIds = new Set(
     fixtures
@@ -161,8 +165,8 @@ async function saveTournamentFixtures(
   }
 }
 
-async function deleteTournamentFixtures(tournamentId: string): Promise<void> {
-  const snapshot = await tournamentFixturesRef(tournamentId).get();
+async function deleteTournamentFixtures(uid: string, tournamentId: string): Promise<void> {
+  const snapshot = await tournamentFixturesRef(uid, tournamentId).get();
   if (snapshot.empty) return;
 
   for (let i = 0; i < snapshot.docs.length; i += BATCH_WRITE_LIMIT) {
@@ -174,12 +178,12 @@ async function deleteTournamentFixtures(tournamentId: string): Promise<void> {
   }
 }
 
-async function hydrateTournamentDoc(row: Record<string, unknown>): Promise<DbTournament> {
+async function hydrateTournamentDoc(uid: string, row: Record<string, unknown>): Promise<DbTournament> {
   const id = row.id as string;
   const usesFixtureSubcollection = row.fixtures_external === true;
   const inlineFixtures = Array.isArray(row.fixtures_json) ? row.fixtures_json : [];
   const fixtures = usesFixtureSubcollection
-    ? await loadTournamentFixtures(id)
+    ? await loadTournamentFixtures(uid, id)
     : inlineFixtures;
 
   const formatPresetId =
@@ -259,32 +263,32 @@ function tournamentToRow(tournament: DbTournament) {
   };
 }
 
-async function listCollection<T>(name: string): Promise<T[]> {
-  const snapshot = await getDb().collection(name).get();
+async function listCollection<T>(uid: string, name: string): Promise<T[]> {
+  const snapshot = await userCol(uid, name).get();
   return snapshot.docs.map((doc) => doc.data() as T);
 }
 
-export async function listPlayers(): Promise<Player[]> {
-  const rows = await listCollection<Record<string, unknown>>(COLLECTIONS.players);
+export async function listPlayers(uid: string): Promise<Player[]> {
+  const rows = await listCollection<Record<string, unknown>>(uid, COLLECTIONS.players);
   return rows.map((row) => rowToPlayer(row)).sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function getPlayer(id: string): Promise<Player | undefined> {
-  const doc = await getDb().collection(COLLECTIONS.players).doc(id).get();
+export async function getPlayer(uid: string, id: string): Promise<Player | undefined> {
+  const doc = await userCol(uid, COLLECTIONS.players).doc(id).get();
   return doc.exists ? rowToPlayer(doc.data() as Record<string, unknown>) : undefined;
 }
 
-export async function savePlayer(player: Player): Promise<void> {
-  await getDb().collection(COLLECTIONS.players).doc(player.id).set(playerToRow(player));
+export async function savePlayer(uid: string, player: Player): Promise<void> {
+  await userCol(uid, COLLECTIONS.players).doc(player.id).set(playerToRow(player));
 }
 
-export async function bulkImportPlayers(players: Player[]): Promise<number> {
+export async function bulkImportPlayers(uid: string, players: Player[]): Promise<number> {
   if (players.length === 0) return 0;
   for (let i = 0; i < players.length; i += BATCH_WRITE_LIMIT) {
     const batch = getDb().batch();
     for (const player of players.slice(i, i + BATCH_WRITE_LIMIT)) {
       batch.set(
-        getDb().collection(COLLECTIONS.players).doc(player.id),
+        userCol(uid, COLLECTIONS.players).doc(player.id),
         playerToRow(player)
       );
     }
@@ -293,9 +297,9 @@ export async function bulkImportPlayers(players: Player[]): Promise<number> {
   return players.length;
 }
 
-export async function deletePlayer(playerId: string): Promise<void> {
+export async function deletePlayer(uid: string, playerId: string): Promise<void> {
   const db = getDb();
-  const teams = await listTeams();
+  const teams = await listTeams(uid);
   const affected = teams.filter((team) =>
     team.players.some((p) => p.id === playerId)
   );
@@ -307,11 +311,11 @@ export async function deletePlayer(playerId: string): Promise<void> {
   const ops: PlayerDeleteOp[] = [
     {
       type: "delete",
-      ref: db.collection(COLLECTIONS.players).doc(playerId),
+      ref: userCol(uid, COLLECTIONS.players).doc(playerId),
     },
     ...affected.map((team) => ({
       type: "set" as const,
-      ref: db.collection(COLLECTIONS.teams).doc(team.id),
+      ref: userCol(uid, COLLECTIONS.teams).doc(team.id),
       data: teamToRow({
         ...team,
         players: team.players.filter((p) => p.id !== playerId),
@@ -329,12 +333,12 @@ export async function deletePlayer(playerId: string): Promise<void> {
   }
 }
 
-export async function syncPlayerInTeams(player: Player): Promise<void> {
-  const teams = await listTeams();
+export async function syncPlayerInTeams(uid: string, player: Player): Promise<void> {
+  const teams = await listTeams(uid);
   const updates = teams
     .filter((team) => team.players.some((p) => p.id === player.id))
     .map((team) =>
-      saveTeam({
+      saveTeam(uid, {
         ...team,
         players: team.players.map((p) => (p.id === player.id ? player : p)),
       })
@@ -342,27 +346,27 @@ export async function syncPlayerInTeams(player: Player): Promise<void> {
   await Promise.all(updates);
 }
 
-export async function listTeams(): Promise<Team[]> {
-  const rows = await listCollection<Record<string, unknown>>(COLLECTIONS.teams);
+export async function listTeams(uid: string): Promise<Team[]> {
+  const rows = await listCollection<Record<string, unknown>>(uid, COLLECTIONS.teams);
   return rows.map((row) => rowToTeam(row)).sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function getTeam(id: string): Promise<Team | undefined> {
-  const doc = await getDb().collection(COLLECTIONS.teams).doc(id).get();
+export async function getTeam(uid: string, id: string): Promise<Team | undefined> {
+  const doc = await userCol(uid, COLLECTIONS.teams).doc(id).get();
   return doc.exists ? rowToTeam(doc.data() as Record<string, unknown>) : undefined;
 }
 
-export async function saveTeam(team: Team): Promise<void> {
-  await getDb().collection(COLLECTIONS.teams).doc(team.id).set(teamToRow(team));
+export async function saveTeam(uid: string, team: Team): Promise<void> {
+  await userCol(uid, COLLECTIONS.teams).doc(team.id).set(teamToRow(team));
 }
 
-export async function bulkImportTeams(teams: Team[]): Promise<number> {
+export async function bulkImportTeams(uid: string, teams: Team[]): Promise<number> {
   if (teams.length === 0) return 0;
   for (let i = 0; i < teams.length; i += BATCH_WRITE_LIMIT) {
     const batch = getDb().batch();
     for (const team of teams.slice(i, i + BATCH_WRITE_LIMIT)) {
       batch.set(
-        getDb().collection(COLLECTIONS.teams).doc(team.id),
+        userCol(uid, COLLECTIONS.teams).doc(team.id),
         teamToRow(team)
       );
     }
@@ -371,66 +375,68 @@ export async function bulkImportTeams(teams: Team[]): Promise<number> {
   return teams.length;
 }
 
-export async function deleteTeam(teamId: string): Promise<void> {
-  await getDb().collection(COLLECTIONS.teams).doc(teamId).delete();
+export async function deleteTeam(uid: string, teamId: string): Promise<void> {
+  await userCol(uid, COLLECTIONS.teams).doc(teamId).delete();
 }
 
-export async function listTournaments(): Promise<DbTournament[]> {
-  const rows = await listCollection<Record<string, unknown>>(COLLECTIONS.tournaments);
-  const tournaments = await Promise.all(rows.map((row) => hydrateTournamentDoc(row)));
+export async function listTournaments(uid: string): Promise<DbTournament[]> {
+  const rows = await listCollection<Record<string, unknown>>(uid, COLLECTIONS.tournaments);
+  const tournaments = await Promise.all(rows.map((row) => hydrateTournamentDoc(uid, row)));
   return tournaments.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export async function getTournament(id: string): Promise<DbTournament | undefined> {
-  const doc = await getDb().collection(COLLECTIONS.tournaments).doc(id).get();
+export async function getTournament(uid: string, id: string): Promise<DbTournament | undefined> {
+  const doc = await userCol(uid, COLLECTIONS.tournaments).doc(id).get();
   if (!doc.exists) return undefined;
-  return hydrateTournamentDoc(doc.data() as Record<string, unknown>);
+  return hydrateTournamentDoc(uid, doc.data() as Record<string, unknown>);
 }
 
-export async function saveTournament(tournament: DbTournament): Promise<void> {
+export async function saveTournament(uid: string, tournament: DbTournament): Promise<void> {
   const fixtures = tournament.fixtures ?? [];
-  await saveTournamentFixtures(tournament.id, fixtures);
-  await getDb()
-    .collection(COLLECTIONS.tournaments)
+  await saveTournamentFixtures(uid, tournament.id, fixtures);
+  await userCol(uid, COLLECTIONS.tournaments)
     .doc(tournament.id)
     .set(tournamentToRow(tournament));
 }
 
-export async function deleteTournament(tournamentId: string): Promise<void> {
-  await deleteTournamentFixtures(tournamentId);
-  await getDb().collection(COLLECTIONS.tournaments).doc(tournamentId).delete();
+export async function deleteTournament(uid: string, tournamentId: string): Promise<void> {
+  await deleteTournamentFixtures(uid, tournamentId);
+  await userCol(uid, COLLECTIONS.tournaments).doc(tournamentId).delete();
 }
 
-export async function loadAll(): Promise<{
+export async function loadAll(uid: string): Promise<{
   players: Player[];
   teams: Team[];
   tournaments: DbTournament[];
 }> {
   const [players, teams, tournaments] = await Promise.all([
-    listPlayers(),
-    listTeams(),
-    listTournaments(),
+    listPlayers(uid),
+    listTeams(uid),
+    listTournaments(uid),
   ]);
   return { players, teams, tournaments };
 }
 
-export async function migrateFromLegacy(data: {
-  players: Player[];
-  teams: Team[];
-  tournaments: DbTournament[];
-}): Promise<void> {
+export async function migrateFromLegacy(
+  uid: string,
+  data: {
+    players: Player[];
+    teams: Team[];
+    tournaments: DbTournament[];
+  }
+): Promise<void> {
   await Promise.all([
-    bulkImportPlayers(data.players ?? []),
-    bulkImportTeams(data.teams ?? []),
-    Promise.all((data.tournaments ?? []).map((t) => saveTournament(t))),
+    bulkImportPlayers(uid, data.players ?? []),
+    bulkImportTeams(uid, data.teams ?? []),
+    Promise.all((data.tournaments ?? []).map((t) => saveTournament(uid, t))),
   ]);
-  await getDb().collection(COLLECTIONS.meta).doc("legacy_migrated").set({
+  await userCol(uid, COLLECTIONS.meta).doc("legacy_migrated").set({
     value: "1",
   });
 }
 
-export async function isLegacyMigrated(): Promise<boolean> {
-  const doc = await getDb().collection(COLLECTIONS.meta).doc("legacy_migrated").get();
+export async function isLegacyMigrated(uid: string): Promise<boolean> {
+  const doc = await userCol(uid, COLLECTIONS.meta).doc("legacy_migrated").get();
   return doc.data()?.value === "1";
 }
 
@@ -440,8 +446,8 @@ export interface LiveMatchDraft {
   updatedAt: string;
 }
 
-export async function getLiveMatchDraft(): Promise<LiveMatchDraft | null> {
-  const doc = await getDb().collection(COLLECTIONS.liveMatchDraft).doc("current").get();
+export async function getLiveMatchDraft(uid: string): Promise<LiveMatchDraft | null> {
+  const doc = await userCol(uid, COLLECTIONS.liveMatchDraft).doc("current").get();
   if (!doc.exists) return null;
   const data = doc.data() as
     | { matchState?: unknown; meta?: unknown; updatedAt?: string }
@@ -455,28 +461,30 @@ export async function getLiveMatchDraft(): Promise<LiveMatchDraft | null> {
 }
 
 export async function saveLiveMatchDraft(
+  uid: string,
   matchState: unknown,
   meta: unknown,
   updatedAt: string
 ) {
-  await getDb().collection(COLLECTIONS.liveMatchDraft).doc("current").set({
+  await userCol(uid, COLLECTIONS.liveMatchDraft).doc("current").set({
     matchState,
     meta: meta ?? null,
     updatedAt,
   });
 }
 
-export async function clearLiveMatchDraft(): Promise<void> {
-  await getDb().collection(COLLECTIONS.liveMatchDraft).doc("current").delete();
+export async function clearLiveMatchDraft(uid: string): Promise<void> {
+  await userCol(uid, COLLECTIONS.liveMatchDraft).doc("current").delete();
 }
 
 export async function saveQuickMatch(
+  uid: string,
   id: string,
   label: string,
   stateJson: string,
   createdAt: string
 ) {
-  await getDb().collection(COLLECTIONS.savedMatches).doc(id).set({
+  await userCol(uid, COLLECTIONS.savedMatches).doc(id).set({
     id,
     kind: "quick",
     label,
@@ -499,9 +507,10 @@ export interface DbQuickMatchDetail {
 }
 
 export async function getQuickMatchById(
+  uid: string,
   id: string
 ): Promise<DbQuickMatchDetail | null> {
-  const snap = await getDb().collection(COLLECTIONS.savedMatches).doc(id).get();
+  const snap = await userCol(uid, COLLECTIONS.savedMatches).doc(id).get();
   if (!snap.exists) return null;
   const data = snap.data();
   if (!data || data.kind !== "quick") return null;
@@ -513,21 +522,21 @@ export async function getQuickMatchById(
   };
 }
 
-export async function deleteQuickMatch(id: string): Promise<boolean> {
-  const ref = getDb().collection(COLLECTIONS.savedMatches).doc(id);
+export async function deleteQuickMatch(uid: string, id: string): Promise<boolean> {
+  const ref = userCol(uid, COLLECTIONS.savedMatches).doc(id);
   const snap = await ref.get();
   if (!snap.exists || snap.data()?.kind !== "quick") return false;
   await ref.delete();
   return true;
 }
 
-export async function listQuickMatches(limit = 50): Promise<DbQuickMatchListItem[]> {
+export async function listQuickMatches(uid: string, limit = 50): Promise<DbQuickMatchListItem[]> {
   const rows = await listCollection<{
     id: string;
     kind?: string;
     label?: string;
     created_at: string;
-  }>(COLLECTIONS.savedMatches);
+  }>(uid, COLLECTIONS.savedMatches);
 
   return rows
     .filter((row) => row.kind === "quick")
@@ -541,39 +550,40 @@ export async function listQuickMatches(limit = 50): Promise<DbQuickMatchListItem
 }
 
 /** Saved quick matches only (match history page). */
-export async function clearMatchHistory(): Promise<number> {
+export async function clearMatchHistory(uid: string): Promise<number> {
   const rows = await listCollection<{ id: string; kind?: string }>(
+    uid,
     COLLECTIONS.savedMatches
   );
   const quick = rows.filter((row) => row.kind === "quick");
   const deletions = quick.map((row) =>
-    getDb().collection(COLLECTIONS.savedMatches).doc(row.id).delete()
+    userCol(uid, COLLECTIONS.savedMatches).doc(row.id).delete()
   );
   await Promise.all(deletions);
   return quick.length;
 }
 
 /** Drafts, saved matches, and all tournaments — players and teams kept. */
-export async function clearAllMatchData(): Promise<void> {
+export async function clearAllMatchData(uid: string): Promise<void> {
   await Promise.all([
-    clearCollection(COLLECTIONS.savedMatches),
-    clearCollection(COLLECTIONS.liveMatchDraft),
-    clearCollection(COLLECTIONS.tournaments),
+    clearCollection(uid, COLLECTIONS.savedMatches),
+    clearCollection(uid, COLLECTIONS.liveMatchDraft),
+    clearCollection(uid, COLLECTIONS.tournaments),
   ]);
 }
 
 /** All teams (players remain in the players collection). */
-export async function clearAllTeams(): Promise<number> {
-  return clearCollection(COLLECTIONS.teams);
+export async function clearAllTeams(uid: string): Promise<number> {
+  return clearCollection(uid, COLLECTIONS.teams);
 }
 
 /** All players and player assignments on teams. */
-export async function clearAllPlayers(): Promise<number> {
-  const removed = await clearCollection(COLLECTIONS.players);
-  const teams = await listTeams();
+export async function clearAllPlayers(uid: string): Promise<number> {
+  const removed = await clearCollection(uid, COLLECTIONS.players);
+  const teams = await listTeams(uid);
   await Promise.all(
     teams.map((team) =>
-      saveTeam({
+      saveTeam(uid, {
         ...team,
         players: [],
       })
@@ -583,19 +593,19 @@ export async function clearAllPlayers(): Promise<number> {
 }
 
 /** Full wipe: players, teams, tournaments, matches, drafts. */
-export async function clearAllData(): Promise<void> {
+export async function clearAllData(uid: string): Promise<void> {
   await Promise.all([
-    clearCollection(COLLECTIONS.savedMatches),
-    clearCollection(COLLECTIONS.liveMatchDraft),
-    clearCollection(COLLECTIONS.players),
-    clearCollection(COLLECTIONS.teams),
-    clearCollection(COLLECTIONS.tournaments),
+    clearCollection(uid, COLLECTIONS.savedMatches),
+    clearCollection(uid, COLLECTIONS.liveMatchDraft),
+    clearCollection(uid, COLLECTIONS.players),
+    clearCollection(uid, COLLECTIONS.teams),
+    clearCollection(uid, COLLECTIONS.tournaments),
   ]);
 }
 
-async function clearTournamentsCollection(): Promise<number> {
-  const snapshot = await getDb().collection(COLLECTIONS.tournaments).get();
-  await Promise.all(snapshot.docs.map((doc) => deleteTournamentFixtures(doc.id)));
+async function clearTournamentsCollection(uid: string): Promise<number> {
+  const snapshot = await userCol(uid, COLLECTIONS.tournaments).get();
+  await Promise.all(snapshot.docs.map((doc) => deleteTournamentFixtures(uid, doc.id)));
 
   for (let i = 0; i < snapshot.docs.length; i += BATCH_WRITE_LIMIT) {
     const batch = getDb().batch();
@@ -607,12 +617,12 @@ async function clearTournamentsCollection(): Promise<number> {
   return snapshot.size;
 }
 
-async function clearCollection(name: string): Promise<number> {
+async function clearCollection(uid: string, name: string): Promise<number> {
   if (name === COLLECTIONS.tournaments) {
-    return clearTournamentsCollection();
+    return clearTournamentsCollection(uid);
   }
 
-  const snapshot = await getDb().collection(name).get();
+  const snapshot = await userCol(uid, name).get();
   for (let i = 0; i < snapshot.docs.length; i += BATCH_WRITE_LIMIT) {
     const batch = getDb().batch();
     for (const doc of snapshot.docs.slice(i, i + BATCH_WRITE_LIMIT)) {
@@ -623,22 +633,22 @@ async function clearCollection(name: string): Promise<number> {
   return snapshot.size;
 }
 
-export async function runDataClear(action: DataClearAction): Promise<void> {
+export async function runDataClear(uid: string, action: DataClearAction): Promise<void> {
   switch (action) {
     case "match-history":
-      await clearMatchHistory();
+      await clearMatchHistory(uid);
       break;
     case "match-data":
-      await clearAllMatchData();
+      await clearAllMatchData(uid);
       break;
     case "teams":
-      await clearAllTeams();
+      await clearAllTeams(uid);
       break;
     case "players":
-      await clearAllPlayers();
+      await clearAllPlayers(uid);
       break;
     case "all":
-      await clearAllData();
+      await clearAllData(uid);
       break;
     default:
       throw new Error(`Unknown clear action: ${String(action)}`);

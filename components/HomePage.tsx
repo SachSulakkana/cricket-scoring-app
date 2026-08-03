@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
 import LandingPage from "@/components/LandingPage";
 import SplashScreen from "@/components/SplashScreen";
 import { appToast } from "@/lib/app-toast";
+import { routes } from "@/lib/app-routes";
 import { initRosterStorage } from "@/lib/roster-storage";
 import {
   useRosterError,
@@ -17,6 +20,8 @@ const MIN_SPLASH_MS = 900;
 let initialSplashCompleted = false;
 
 export default function HomePage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const hydrated = useRosterHydrated();
   const loading = useRosterLoading();
   const error = useRosterError();
@@ -35,6 +40,15 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      router.replace(routes.login);
+    }
+  }, [authLoading, user, router]);
+
+  useEffect(() => {
+    if (authLoading || !user) return;
+
     if (initialSplashCompleted) {
       if (hydrated && !error) setShowHome(true);
       return;
@@ -52,7 +66,11 @@ export default function HomePage() {
       setShowHome(true);
     }, delay);
     return () => window.clearTimeout(timer);
-  }, [hydrated, error]);
+  }, [authLoading, user, hydrated, error]);
+
+  if (authLoading || !user) {
+    return <SplashScreen loading error={null} />;
+  }
 
   if (initialSplashCompleted) {
     if (error) {

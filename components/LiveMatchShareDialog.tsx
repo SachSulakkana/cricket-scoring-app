@@ -17,6 +17,7 @@ import {
   getSpectatorEmbedNextMatchUrl,
   getSpectatorEmbedPointsUrl,
   getSpectatorEmbedPreviewUrl,
+  getSpectatorEmbedScoreUrl,
   getSpectatorEmbedUpcomingUrl,
   getSpectatorEmbedUrl,
   getSpectatorLiveUrl,
@@ -130,17 +131,24 @@ export default function LiveMatchShareDialog({
   const [upcomingUrl, setUpcomingUrl] = useState("");
   const [battingStatsUrl, setBattingStatsUrl] = useState("");
   const [bowlingStatsUrl, setBowlingStatsUrl] = useState("");
+  const [scoreUrl, setScoreUrl] = useState("");
+  const [shareKeyError, setShareKeyError] = useState<string | null>(null);
   const isTournament = meta?.kind === "tournament";
 
   useEffect(() => {
-    if (open) {
-      const context: SpectatorUrlContext | undefined =
+    if (!open) return;
+
+    let cancelled = false;
+
+    const buildUrls = (shareKey: string) => {
+      const context: SpectatorUrlContext =
         meta?.kind === "tournament"
           ? {
               tournamentId: meta.tournamentId,
               fixtureId: meta.fixtureId,
+              shareKey,
             }
-          : undefined;
+          : { shareKey };
       setWatchUrl(getSpectatorLiveUrl(undefined, context));
       setEmbedUrl(getSpectatorEmbedUrl(undefined, context));
       setPreviewUrl(getSpectatorEmbedPreviewUrl(undefined, context));
@@ -151,7 +159,43 @@ export default function LiveMatchShareDialog({
       setUpcomingUrl(getSpectatorEmbedUpcomingUrl(undefined, context));
       setBattingStatsUrl(getSpectatorEmbedBattingStatsUrl(undefined, context));
       setBowlingStatsUrl(getSpectatorEmbedBowlingStatsUrl(undefined, context));
-    }
+      setScoreUrl(getSpectatorEmbedScoreUrl(undefined, context));
+    };
+
+    void (async () => {
+      try {
+        const { authenticatedFetch } = await import("@/lib/api-client");
+        const res = await authenticatedFetch("/api/live/share");
+        if (!res.ok) {
+          throw new Error("Could not create share link");
+        }
+        const body = (await res.json()) as { key?: string };
+        if (!body.key) {
+          throw new Error("Could not create share link");
+        }
+        if (cancelled) return;
+        setShareKeyError(null);
+        buildUrls(body.key);
+      } catch {
+        if (cancelled) return;
+        setShareKeyError("Could not create share links. Try again.");
+        setWatchUrl("");
+        setEmbedUrl("");
+        setPreviewUrl("");
+        setBattingUrl("");
+        setBowlingUrl("");
+        setPointsUrl("");
+        setNextMatchUrl("");
+        setUpcomingUrl("");
+        setBattingStatsUrl("");
+        setBowlingStatsUrl("");
+        setScoreUrl("");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [open, meta]);
 
   return (
@@ -165,6 +209,10 @@ export default function LiveMatchShareDialog({
             {team1Name} vs {team2Name}
           </DialogDescription>
         </DialogHeader>
+
+        {shareKeyError ? (
+          <p className="text-sm text-[oklch(0.72_0.1_75)]">{shareKeyError}</p>
+        ) : null}
 
         <ShareUrlField id="live-share-url" label="Watch link" url={watchUrl} />
 
@@ -180,7 +228,14 @@ export default function LiveMatchShareDialog({
               id="live-embed-url"
               label="Score bar"
               url={embedUrl}
-              hint="Suggested size: 1920 × 150"
+              hint="Suggested size: 1920 × 1080, transparent. Score bar stays at the bottom; 4 / 6 / wicket GIFs play full-screen on this same source."
+            />
+
+            <ShareUrlField
+              id="live-embed-score-url"
+              label="Big score (runs / wickets + overs)"
+              url={scoreUrl}
+              hint="Suggested size: 1920 × 1080 (full frame, centered)"
             />
 
             <ShareUrlField
@@ -255,9 +310,10 @@ export default function LiveMatchShareDialog({
         </div>
 
         <p className="live-share-dialog__hint">
-          Score bar overlays pin to the bottom. Batting, bowling, points, stats
-          leaderboards, live match faceoff, and coming up next fill the frame,
-          centered, with a dark transparent backdrop.
+          Links include a private share key so OBS and spectators work without
+          logging in. Score bar overlays pin to the bottom. Full-frame overlays
+          (big score, batting, bowling, points, stats, faceoff, coming up next)
+          are centered with a dark transparent backdrop.
         </p>
       </DialogContent>
     </Dialog>

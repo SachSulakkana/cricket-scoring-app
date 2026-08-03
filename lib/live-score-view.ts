@@ -31,6 +31,14 @@ export function teamAbbrev(name: string): string {
   return cleaned.slice(0, 3).toUpperCase();
 }
 
+/** Last word of a team name (e.g. "Qrio Falcons" → "Falcons"). */
+export function teamLastName(name: string): string {
+  const cleaned = name.trim();
+  if (!cleaned) return "—";
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  return words.at(-1) ?? cleaned;
+}
+
 function getBattingTeam(matchState: MatchState): Team {
   return matchState.currentInnings === 1 ? matchState.team1 : matchState.team2;
 }

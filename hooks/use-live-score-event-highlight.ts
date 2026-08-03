@@ -5,12 +5,12 @@ import {
   getLiveScoreEventFromBall,
   type LiveScoreEvent,
 } from "@/lib/live-score-event";
+import { LIVE_SCORE_CELEBRATION_DURATION_MS } from "@/lib/live-score-celebration";
 import type { LiveScoreView } from "@/lib/live-score-view";
 
 export type LiveScoreEventPhase = "idle" | "enter" | "show" | "exit";
 
 const DEFAULT_DURATION_MS = 1500;
-const GIF_CELEBRATION_DURATION_MS = 3500;
 const ENTER_MS = 250;
 const EXIT_MS = 300;
 
@@ -69,7 +69,7 @@ export function useLiveScoreEventHighlight(
     }
 
     const totalMs = isGifCelebration(nextEvent.kind)
-      ? GIF_CELEBRATION_DURATION_MS
+      ? LIVE_SCORE_CELEBRATION_DURATION_MS
       : durationMs;
 
     clearTimers();

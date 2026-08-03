@@ -4,7 +4,7 @@ import Image from "next/image";
 import type { SpectatorTournamentData } from "@/hooks/use-spectator-tournament";
 import { computeStandings } from "@/lib/tournament-stage-engine";
 import { formatStandingNrr } from "@/lib/tournament-nrr";
-import { teamAbbrev } from "@/lib/live-score-view";
+import { teamAbbrev, teamLastName } from "@/lib/live-score-view";
 
 interface SpectatorPointsTableProps {
   data: SpectatorTournamentData;
@@ -92,6 +92,7 @@ export default function SpectatorPointsTable({
               const team = teamMap.get(row.teamId);
               if (!team) return null;
               const abbrev = teamAbbrev(team.name);
+              const lastName = teamLastName(team.name);
               return (
                 <li key={row.teamId} className="live-embed-points__row">
                   <span className="live-embed-points__rank">{index + 1}.</span>
@@ -101,8 +102,8 @@ export default function SpectatorPointsTable({
                         <Image
                           src={team.logoUrl}
                           alt=""
-                          width={120}
-                          height={120}
+                          fill
+                          sizes="84px"
                           className="live-embed-points__logo-img"
                           unoptimized
                         />
@@ -113,7 +114,7 @@ export default function SpectatorPointsTable({
                       )}
                     </div>
                     <div className="live-embed-points__pill">
-                      <span className="live-embed-points__team">{abbrev}</span>
+                      <span className="live-embed-points__team">{lastName}</span>
                       <div className="live-embed-points__stats">
                         <span className="live-embed-points__stat">{row.played}</span>
                         <span className="live-embed-points__stat">{row.won}</span>

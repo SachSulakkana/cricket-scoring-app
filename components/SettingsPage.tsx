@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Database, History, KeyRound, Settings } from "lucide-react";
+import { AlertTriangle, LogOut, Settings, UserRound } from "lucide-react";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import RefreshRosterButton from "@/components/RefreshRosterButton";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/AuthProvider";
 import {
   clearAppData,
   DATA_CLEAR_OPTIONS,
@@ -15,12 +14,7 @@ import {
 } from "@/lib/clear-app-data";
 import { appToast } from "@/lib/app-toast";
 import {
-  getStoredApiSecret,
-  setStoredApiSecret,
-} from "@/lib/api-client";
-import {
   CricketBroadcastCard,
-  CricketDetailRow,
   CricketEyebrow,
   CricketPage,
   CricketPageHeader,
@@ -31,46 +25,14 @@ interface SettingsPageProps {
   onBack: () => void;
 }
 
-function SettingsLinkRow({
-  href,
-  label,
-  description,
-}: {
-  href: string;
-  label: string;
-  description: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="settings-link-row block rounded-md border border-[oklch(0.32_0.04_255)] px-4 py-3 transition-colors hover:border-[oklch(0.5_0.08_295/0.45)] hover:bg-[oklch(0.16_0.03_255/0.6)]"
-    >
-      <p className="text-sm font-semibold text-[var(--cricket-cream)]">{label}</p>
-      <p className="text-xs text-[oklch(0.55_0.03_255)] mt-0.5">{description}</p>
-    </Link>
-  );
-}
-
 export default function SettingsPage({ onBack }: SettingsPageProps) {
   const router = useRouter();
+  const { user, logout } = useAuth();
   const [pendingAction, setPendingAction] = useState<DataClearAction | null>(
     null
   );
   const [clearing, setClearing] = useState(false);
-  const [apiSecret, setApiSecret] = useState("");
-
-  useEffect(() => {
-    setApiSecret(getStoredApiSecret());
-  }, []);
-
-  const saveApiSecret = () => {
-    setStoredApiSecret(apiSecret);
-    appToast.success(
-      apiSecret.trim()
-        ? "API secret saved for this browser"
-        : "API secret cleared"
-    );
-  };
+  const [signingOut, setSigningOut] = useState(false);
 
   const pendingOption = DATA_CLEAR_OPTIONS.find(
     (o) => o.action === pendingAction
@@ -92,6 +54,20 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
         appToast.error(err instanceof Error ? err.message : "Could not clear data")
       )
       .finally(() => setClearing(false));
+  };
+
+  const onSignOut = () => {
+    setSigningOut(true);
+    void logout()
+      .then(() => {
+        appToast.success("Signed out");
+        router.replace(routes.login);
+        router.refresh();
+      })
+      .catch((err) =>
+        appToast.error(err instanceof Error ? err.message : "Could not sign out")
+      )
+      .finally(() => setSigningOut(false));
   };
 
   return (
@@ -117,47 +93,17 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
 
       <CricketBroadcastCard className="p-5 space-y-3 mb-4">
         <div className="flex items-start gap-2.5">
-          <KeyRound className="h-5 w-5 shrink-0 text-[var(--cricket-gold)] mt-0.5" />
-          <div>
-            <CricketEyebrow className="mb-1">API access</CricketEyebrow>
-            <p className="text-xs text-[oklch(0.55_0.03_255)] leading-relaxed">
-              If the server sets <code className="text-[0.65rem]">CRICKET_API_SECRET</code>,
-              enter the same value here so this browser can save roster and match data.
+          <UserRound className="h-5 w-5 shrink-0 text-[var(--cricket-gold)] mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <CricketEyebrow className="mb-1">Account</CricketEyebrow>
+            <p className="text-sm text-[var(--cricket-cream)] truncate">
+              {user?.email ?? "Signed in"}
+            </p>
+            <p className="text-xs text-[oklch(0.55_0.03_255)] mt-0.5">
+              Your players, teams, and tournaments are private to this account.
             </p>
           </div>
         </div>
-        <Input
-          type="password"
-          value={apiSecret}
-          onChange={(e) => setApiSecret(e.target.value)}
-          placeholder="Optional API secret"
-          className="cricket-form-input"
-          autoComplete="off"
-        />
-        <Button type="button" variant="secondary" onClick={saveApiSecret}>
-          Save API secret
-        </Button>
-      </CricketBroadcastCard>
-
-      <CricketBroadcastCard className="p-5 space-y-3 mb-4">
-        <CricketEyebrow>Data</CricketEyebrow>
-        <SettingsLinkRow
-          href={routes.quickMatchHistory}
-          label="Match history"
-          description="View quick matches saved to the database"
-        />
-        <button
-          type="button"
-          className="settings-link-row w-full text-left rounded-md border border-[oklch(0.32_0.04_255)] px-4 py-3 transition-colors hover:border-[oklch(0.5_0.08_295/0.45)] hover:bg-[oklch(0.16_0.03_255/0.6)]"
-          onClick={() => router.push(routes.players)}
-        >
-          <p className="text-sm font-semibold text-[var(--cricket-cream)]">
-            Players & teams
-          </p>
-          <p className="text-xs text-[oklch(0.55_0.03_255)] mt-0.5">
-            Edit squad registry and rosters
-          </p>
-        </button>
       </CricketBroadcastCard>
 
       <CricketBroadcastCard className="p-5 space-y-3 border-[oklch(0.45_0.12_25/0.35)]">
@@ -168,7 +114,7 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
               Clear data
             </CricketEyebrow>
             <p className="text-xs text-[oklch(0.55_0.03_255)] leading-relaxed">
-              These actions permanently delete data from Firestore.
+              These actions permanently delete data from your account in Firestore.
               You will be asked to confirm each one.
             </p>
           </div>
@@ -198,17 +144,17 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
         </div>
       </CricketBroadcastCard>
 
-      <CricketBroadcastCard className="p-5 mt-4 space-y-2">
-        <CricketEyebrow>Storage</CricketEyebrow>
-        <CricketDetailRow label="Database" value="Cloud Firestore" />
-        <div className="flex items-center gap-2 text-xs text-[oklch(0.55_0.03_255)] pt-1">
-          <Database className="h-3.5 w-3.5 shrink-0" />
-          <span>Firebase project (synced via API)</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-[oklch(0.55_0.03_255)]">
-          <History className="h-3.5 w-3.5 shrink-0" />
-          <span>Use Refresh data after editing outside the app</span>
-        </div>
+      <CricketBroadcastCard className="p-5 mt-4 mb-2">
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={signingOut}
+          onClick={onSignOut}
+          className="w-full gap-2"
+        >
+          <LogOut className="h-4 w-4" />
+          {signingOut ? "Logging out…" : "Logout"}
+        </Button>
       </CricketBroadcastCard>
 
       <ConfirmDeleteDialog

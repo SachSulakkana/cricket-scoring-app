@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireMutationAuth } from "@/lib/api-auth";
+import { isAuthError, requireUser } from "@/lib/api-auth";
 import { parseJsonBody } from "@/lib/api-route-utils";
 import { teamSchema } from "@/lib/api-schemas";
 import { deleteTeam, saveTeam } from "@/lib/firestore-db";
@@ -11,8 +11,8 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authError = requireMutationAuth(request);
-  if (authError) return authError;
+  const user = await requireUser(request);
+  if (isAuthError(user)) return user;
 
   try {
     const { id } = await params;
@@ -22,7 +22,7 @@ export async function PUT(
     if (parsed.data.id !== id) {
       return NextResponse.json({ error: "ID mismatch" }, { status: 400 });
     }
-    await saveTeam(parsed.data as Team);
+    await saveTeam(user.uid, parsed.data as Team);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("PUT /api/teams/[id] failed", error);
@@ -37,12 +37,12 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authError = requireMutationAuth(request);
-  if (authError) return authError;
+  const user = await requireUser(request);
+  if (isAuthError(user)) return user;
 
   try {
     const { id } = await params;
-    await deleteTeam(id);
+    await deleteTeam(user.uid, id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("DELETE /api/teams/[id] failed", error);

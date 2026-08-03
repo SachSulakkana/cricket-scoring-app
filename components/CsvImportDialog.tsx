@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { CricketAddButton } from "@/components/cricket-shell";
 import type { Player, Team } from "@/lib/cricket-types";
 import {
@@ -149,14 +150,15 @@ export default function CsvImportDialog({
         </DialogHeader>
 
         <div className="px-6 pb-4 space-y-3 flex-1 min-h-0 overflow-y-auto">
-          <button
+          <Button
             type="button"
-            className="csv-import-template-btn"
+            variant="link"
+            className="w-full justify-end px-0"
             onClick={() => downloadTemplate(templateFile, template)}
           >
             <Download className="h-4 w-4 shrink-0" />
             Download template CSV
-          </button>
+          </Button>
 
           <input
             ref={fileRef}
@@ -168,16 +170,16 @@ export default function CsvImportDialog({
               if (file) void handleFile(file);
             }}
           />
-          <button
+          <Button
             type="button"
-            className="csv-import-file-btn"
+            className="w-full"
             onClick={() => fileRef.current?.click()}
           >
-            <FileUp className="h-5 w-5 shrink-0 text-[var(--cricket-gold)]" />
+            <FileUp className="h-4 w-4 shrink-0" />
             <span className="min-w-0 truncate">
               {fileName ?? "Choose CSV file"}
             </span>
-          </button>
+          </Button>
 
           {fileName && (
             <div className="csv-import-summary" role="status">
@@ -205,15 +207,15 @@ export default function CsvImportDialog({
           )}
         </div>
 
-        <DialogFooter className="p-4 border-t border-[oklch(0.28_0.04_255)] gap-2 sm:justify-end">
-          <button
+        <DialogFooter className="p-4 border-t border-[oklch(0.28_0.04_255)] gap-3 sm:justify-end">
+          <CricketAddButton
             type="button"
-            className="btn-12 btn-12--icon btn-12-exempt rounded-md px-3 py-2 text-sm"
-            onClick={() => handleOpenChange(false)}
+            size="inline"
             disabled={importing}
+            onClick={() => handleOpenChange(false)}
           >
             Cancel
-          </button>
+          </CricketAddButton>
           <CricketAddButton
             type="button"
             variant={kind === "players" ? "player" : "team"}

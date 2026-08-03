@@ -189,7 +189,7 @@ export default function SplashScreen({
 
         <footer className="splash-screen__footer splash-screen__reveal splash-screen__reveal--3">
           <span className="splash-screen__footer-line" aria-hidden />
-          <p>Secure local storage · No account required</p>
+          <p>Signed-in scoring · Private to your account</p>
         </footer>
       </div>
     </div>

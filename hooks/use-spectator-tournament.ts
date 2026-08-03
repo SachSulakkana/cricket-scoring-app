@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Team } from "@/lib/cricket-types";
 import type { SavedTournament } from "@/lib/roster-types";
+import { LIVE_SHARE_QUERY_PARAM } from "@/lib/live-share-constants";
+import { useLiveShareKeyFromUrl } from "@/hooks/use-live-share-key";
 
 export interface SpectatorTournamentData {
   tournament: SavedTournament;
@@ -13,6 +15,7 @@ export function useSpectatorTournament(
   tournamentId: string | undefined,
   pollMs = 12_000
 ) {
+  const shareKey = useLiveShareKeyFromUrl();
   const [data, setData] = useState<SpectatorTournamentData | null>(null);
   const [loading, setLoading] = useState(Boolean(tournamentId));
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +28,12 @@ export function useSpectatorTournament(
     }
 
     try {
-      const res = await fetch(`/api/tournaments/${encodeURIComponent(tournamentId)}`);
+      const params = new URLSearchParams();
+      if (shareKey) params.set(LIVE_SHARE_QUERY_PARAM, shareKey);
+      const qs = params.toString();
+      const res = await fetch(
+        `/api/tournaments/${encodeURIComponent(tournamentId)}${qs ? `?${qs}` : ""}`
+      );
       if (!res.ok) {
         throw new Error("Could not load tournament");
       }
@@ -37,7 +45,7 @@ export function useSpectatorTournament(
     } finally {
       setLoading(false);
     }
-  }, [tournamentId]);
+  }, [tournamentId, shareKey]);
 
   useEffect(() => {
     if (!tournamentId) {

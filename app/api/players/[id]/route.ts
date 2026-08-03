@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireMutationAuth } from "@/lib/api-auth";
+import { isAuthError, requireUser } from "@/lib/api-auth";
 import { parseJsonBody } from "@/lib/api-route-utils";
 import { playerSchema } from "@/lib/api-schemas";
 import {
@@ -15,8 +15,8 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authError = requireMutationAuth(request);
-  if (authError) return authError;
+  const user = await requireUser(request);
+  if (isAuthError(user)) return user;
 
   try {
     const { id } = await params;
@@ -26,8 +26,8 @@ export async function PUT(
     if (parsed.data.id !== id) {
       return NextResponse.json({ error: "ID mismatch" }, { status: 400 });
     }
-    await savePlayer(parsed.data as Player);
-    await syncPlayerInTeams(parsed.data as Player);
+    await savePlayer(user.uid, parsed.data as Player);
+    await syncPlayerInTeams(user.uid, parsed.data as Player);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("PUT /api/players/[id] failed", error);
@@ -42,12 +42,12 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authError = requireMutationAuth(request);
-  if (authError) return authError;
+  const user = await requireUser(request);
+  if (isAuthError(user)) return user;
 
   try {
     const { id } = await params;
-    await deletePlayer(id);
+    await deletePlayer(user.uid, id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("DELETE /api/players/[id] failed", error);

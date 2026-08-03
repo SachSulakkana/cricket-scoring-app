@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/firebase";
+import { db } from "@/lib/firebase-client";
 import type { LiveMatchDraft } from "@/lib/live-match-draft";
 import { useLiveMatchPoll } from "@/hooks/use-live-match-poll";
+import { usePublicLiveMatchPoll } from "@/hooks/use-public-live-match-poll";
+import { useLiveShareKeyFromUrl } from "@/hooks/use-live-share-key";
+import { useAuth } from "@/components/AuthProvider";
 
 function isFirebaseConfigured(): boolean {
   return Boolean(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
@@ -21,18 +24,20 @@ function parseDraft(data: unknown): LiveMatchDraft | null {
   };
 }
 
-function useFirestoreLiveDraft() {
+function useFirestoreLiveDraft(uid: string | null, enabled: boolean) {
   const [draft, setDraft] = useState<LiveMatchDraft | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isFirebaseConfigured()) {
+    if (!enabled || !isFirebaseConfigured() || !uid) {
+      setDraft(null);
       setLoading(false);
       return;
     }
 
-    const ref = doc(db, "live_match_draft", "current");
+    setLoading(true);
+    const ref = doc(db, "users", uid, "live_match_draft", "current");
     const unsubscribe = onSnapshot(
       ref,
       (snapshot) => {
@@ -51,20 +56,39 @@ function useFirestoreLiveDraft() {
     );
 
     return unsubscribe;
-  }, []);
+  }, [uid, enabled]);
 
   return { draft, loading, error, realtime: true as const };
 }
 
 export function useLiveMatchSnapshot() {
+  const { user, loading: authLoading } = useAuth();
+  const shareKey = useLiveShareKeyFromUrl();
   const firebaseEnabled = isFirebaseConfigured();
-  const firestore = useFirestoreLiveDraft();
-  const polled = useLiveMatchPoll(3000, !firebaseEnabled);
+  const usePublic = Boolean(shareKey);
+  const useOwnerRealtime = firebaseEnabled && Boolean(user) && !usePublic;
+
+  const firestore = useFirestoreLiveDraft(user?.uid ?? null, useOwnerRealtime);
+  const publicPoll = usePublicLiveMatchPoll(usePublic ? shareKey : null);
+  const polled = useLiveMatchPoll(
+    3000,
+    !usePublic && (!firebaseEnabled || !user)
+  );
+
+  if (usePublic) {
+    return {
+      draft: publicPoll.draft,
+      loading: publicPoll.loading,
+      error: publicPoll.error,
+      refresh: publicPoll.refresh,
+      source: "share" as const,
+    };
+  }
 
   if (firebaseEnabled) {
     return {
       draft: firestore.draft,
-      loading: firestore.loading,
+      loading: authLoading || firestore.loading,
       error: firestore.error,
       refresh: polled.refresh,
       source: "firestore" as const,
@@ -73,7 +97,7 @@ export function useLiveMatchSnapshot() {
 
   return {
     draft: polled.draft,
-    loading: polled.loading,
+    loading: authLoading || polled.loading,
     error: polled.error,
     refresh: polled.refresh,
     source: "poll" as const,

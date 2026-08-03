@@ -81,8 +81,8 @@ export default function SpectatorPlayerLeaderboard({
               row == null
                 ? "—"
                 : mode === "batting"
-                  ? row.runs
-                  : row.wickets;
+                  ? (row as { runs: number }).runs
+                  : (row as { wickets: number }).wickets;
             return (
               <li
                 key={row ? `${row.team}-${row.player}-${index}` : `empty-${index}`}

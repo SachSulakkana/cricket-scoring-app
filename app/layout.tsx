@@ -3,6 +3,8 @@ import { Nunito, Oswald, Source_Sans_3 } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { CricketProvider } from '@/lib/cricket-context'
 import AppToaster from '@/components/AppToaster'
+import ApiAuthBridge from '@/components/ApiAuthBridge'
+import { AuthProvider } from '@/components/AuthProvider'
 import CricketDbProvider from '@/components/CricketDbProvider'
 import { ResumePromptProvider } from '@/components/ResumePromptProvider'
 import StoreProvider from '@/components/StoreProvider'
@@ -65,12 +67,15 @@ export default function RootLayout({
     >
       <body className="font-sans antialiased" suppressHydrationWarning>
         <StoreProvider>
-          <CricketProvider>
-            <ResumePromptProvider>
-              <CricketDbProvider>{children}</CricketDbProvider>
-              <AppToaster />
-            </ResumePromptProvider>
-          </CricketProvider>
+          <AuthProvider>
+            <ApiAuthBridge />
+            <CricketProvider>
+              <ResumePromptProvider>
+                <CricketDbProvider>{children}</CricketDbProvider>
+                <AppToaster />
+              </ResumePromptProvider>
+            </CricketProvider>
+          </AuthProvider>
         </StoreProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

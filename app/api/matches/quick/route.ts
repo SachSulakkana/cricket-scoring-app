@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireMutationAuth } from "@/lib/api-auth";
+import { isAuthError, requireUser } from "@/lib/api-auth";
 import { parseJsonBody } from "@/lib/api-route-utils";
 import { quickMatchPostSchema } from "@/lib/api-schemas";
 import { listQuickMatches, saveQuickMatch } from "@/lib/firestore-db";
@@ -7,9 +7,12 @@ import type { MatchState } from "@/lib/cricket-types";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const user = await requireUser(request);
+  if (isAuthError(user)) return user;
+
   try {
-    const matches = await listQuickMatches();
+    const matches = await listQuickMatches(user.uid);
     return NextResponse.json({ matches });
   } catch (error) {
     console.error("GET /api/matches/quick failed", error);
@@ -21,8 +24,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const authError = requireMutationAuth(request);
-  if (authError) return authError;
+  const user = await requireUser(request);
+  if (isAuthError(user)) return user;
 
   try {
     const parsed = await parseJsonBody(request, quickMatchPostSchema);
@@ -41,7 +44,13 @@ export async function POST(request: Request) {
       parsed.data.label?.trim() ||
       `${matchState.team1.name} vs ${matchState.team2.name}`;
     const createdAt = new Date().toISOString();
-    await saveQuickMatch(id, label, JSON.stringify(matchState), createdAt);
+    await saveQuickMatch(
+      user.uid,
+      id,
+      label,
+      JSON.stringify(matchState),
+      createdAt
+    );
     return NextResponse.json({ ok: true, id, label });
   } catch (error) {
     console.error("POST /api/matches/quick failed", error);

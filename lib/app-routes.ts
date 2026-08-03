@@ -1,5 +1,7 @@
 export const routes = {
   home: "/",
+  login: "/login",
+  register: "/register",
   live: "/live",
   liveWatch: "/live/watch",
   liveEmbed: "/live/embed",
@@ -11,6 +13,8 @@ export const routes = {
   liveEmbedUpcoming: "/live/embed/upcoming",
   liveEmbedBattingStats: "/live/embed/batting-stats",
   liveEmbedBowlingStats: "/live/embed/bowling-stats",
+  liveEmbedScore: "/live/embed/score",
+  liveEmbedCelebration: "/live/embed/celebration",
   settings: "/settings",
   quickMatch: "/quick-match",
   quickMatchHistory: "/quick-match/history",
@@ -66,6 +70,8 @@ export function resolveBackRoute(
 export type SpectatorUrlContext = {
   tournamentId?: string;
   fixtureId?: string;
+  /** Public live share key for OBS / unauthenticated viewers. */
+  shareKey?: string;
 };
 
 function getSpectatorOrigin(origin?: string): string {
@@ -79,6 +85,9 @@ function buildSpectatorQuery(context?: SpectatorUrlContext): string {
   }
   if (context?.fixtureId) {
     params.set("fixture", context.fixtureId);
+  }
+  if (context?.shareKey) {
+    params.set("k", context.shareKey);
   }
   const qs = params.toString();
   return qs ? `?${qs}` : "";
@@ -170,4 +179,20 @@ export function getSpectatorEmbedBowlingStatsUrl(
   context?: SpectatorUrlContext
 ): string {
   return getSpectatorUrl(routes.liveEmbedBowlingStats, origin, context);
+}
+
+/** Full URL for the OBS full-screen runs/wickets + overs overlay. */
+export function getSpectatorEmbedScoreUrl(
+  origin?: string,
+  context?: SpectatorUrlContext
+): string {
+  return getSpectatorUrl(routes.liveEmbedScore, origin, context);
+}
+
+/** Full URL for the OBS full-frame 4 / 6 / wicket celebration GIFs. */
+export function getSpectatorEmbedCelebrationUrl(
+  origin?: string,
+  context?: SpectatorUrlContext
+): string {
+  return getSpectatorUrl(routes.liveEmbedCelebration, origin, context);
 }

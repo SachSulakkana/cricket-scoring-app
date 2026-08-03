@@ -6,6 +6,7 @@ import LiveScoreBoundaryCelebration from "@/components/LiveScoreBoundaryCelebrat
 import CricketLoader from "@/components/CricketLoader";
 import { useLiveMatchSnapshot } from "@/hooks/use-live-match-snapshot";
 import { useLiveScoreEventHighlight } from "@/hooks/use-live-score-event-highlight";
+import { usePreloadLiveScoreCelebrations } from "@/hooks/use-preload-live-score-celebrations";
 import { deriveLiveScoreView } from "@/lib/live-score-view";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ interface LiveScoreOverlayProps {
 }
 
 export default function LiveScoreOverlay({ preview = false }: LiveScoreOverlayProps) {
+  usePreloadLiveScoreCelebrations();
   const { draft, loading, error } = useLiveMatchSnapshot();
 
   const view = useMemo(() => {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireMutationAuth } from "@/lib/api-auth";
+import { isAuthError, requireUser } from "@/lib/api-auth";
 import { parseJsonBody } from "@/lib/api-route-utils";
 import { rosterMigrateSchema } from "@/lib/api-schemas";
 import { isLegacyMigrated, migrateFromLegacy } from "@/lib/firestore-db";
@@ -9,11 +9,11 @@ import type { Player, Team } from "@/lib/cricket-types";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const authError = requireMutationAuth(request);
-  if (authError) return authError;
+  const user = await requireUser(request);
+  if (isAuthError(user)) return user;
 
   try {
-    if (await isLegacyMigrated()) {
+    if (await isLegacyMigrated(user.uid)) {
       return NextResponse.json({ ok: true, skipped: true });
     }
 
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await migrateFromLegacy({
+    await migrateFromLegacy(user.uid, {
       players: players as Player[],
       teams: teams as Team[],
       tournaments: tournaments as DbTournament[],

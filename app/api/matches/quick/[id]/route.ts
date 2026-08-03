@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
-import { requireMutationAuth } from "@/lib/api-auth";
+import { isAuthError, requireUser } from "@/lib/api-auth";
 import { deleteQuickMatch, getQuickMatchById } from "@/lib/firestore-db";
 
 export const runtime = "nodejs";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+  const user = await requireUser(request);
+  if (isAuthError(user)) return user;
+
   try {
     const { id } = await context.params;
-    const match = await getQuickMatchById(id);
+    const match = await getQuickMatchById(user.uid, id);
     if (!match) {
       return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }
@@ -28,12 +31,12 @@ export async function DELETE(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const authError = requireMutationAuth(request);
-  if (authError) return authError;
+  const user = await requireUser(request);
+  if (isAuthError(user)) return user;
 
   try {
     const { id } = await context.params;
-    const deleted = await deleteQuickMatch(id);
+    const deleted = await deleteQuickMatch(user.uid, id);
     if (!deleted) {
       return NextResponse.json({ error: "Match not found" }, { status: 404 });
     }

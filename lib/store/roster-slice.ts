@@ -53,6 +53,14 @@ const rosterSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
+    resetRoster(state) {
+      state.players = [];
+      state.teams = [];
+      state.tournaments = [];
+      state.hydrated = false;
+      state.loading = false;
+      state.error = null;
+    },
     upsertPlayer(state, action: PayloadAction<Player>) {
       state.players = upsertById(state.players, action.payload);
     },
