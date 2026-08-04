@@ -14,10 +14,10 @@ import {
   getSpectatorEmbedBattingStatsUrl,
   getSpectatorEmbedBowlingUrl,
   getSpectatorEmbedBowlingStatsUrl,
+  getLocalEmbedScoreUrl,
   getSpectatorEmbedNextMatchUrl,
   getSpectatorEmbedPointsUrl,
   getSpectatorEmbedPreviewUrl,
-  getSpectatorEmbedScoreUrl,
   getSpectatorEmbedUpcomingUrl,
   getSpectatorEmbedUrl,
   getSpectatorLiveUrl,
@@ -137,6 +137,11 @@ export default function LiveMatchShareDialog({
 
   useEffect(() => {
     if (!open) return;
+    setScoreUrl(getLocalEmbedScoreUrl());
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
 
     let cancelled = false;
 
@@ -159,7 +164,6 @@ export default function LiveMatchShareDialog({
       setUpcomingUrl(getSpectatorEmbedUpcomingUrl(undefined, context));
       setBattingStatsUrl(getSpectatorEmbedBattingStatsUrl(undefined, context));
       setBowlingStatsUrl(getSpectatorEmbedBowlingStatsUrl(undefined, context));
-      setScoreUrl(getSpectatorEmbedScoreUrl(undefined, context));
     };
 
     void (async () => {
@@ -189,7 +193,6 @@ export default function LiveMatchShareDialog({
         setUpcomingUrl("");
         setBattingStatsUrl("");
         setBowlingStatsUrl("");
-        setScoreUrl("");
       }
     })();
 
@@ -197,6 +200,15 @@ export default function LiveMatchShareDialog({
       cancelled = true;
     };
   }, [open, meta]);
+
+  const openBigScoreWindow = () => {
+    if (!scoreUrl) return;
+    window.open(
+      scoreUrl,
+      "cricket-big-score",
+      "noopener,noreferrer,width=1280,height=720"
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -229,13 +241,6 @@ export default function LiveMatchShareDialog({
               label="Score bar"
               url={embedUrl}
               hint="Suggested size: 1920 × 1080, transparent. Score bar stays at the bottom; 4 / 6 / wicket GIFs play full-screen on this same source."
-            />
-
-            <ShareUrlField
-              id="live-embed-score-url"
-              label="Big score (runs / wickets + overs)"
-              url={scoreUrl}
-              hint="Suggested size: 1920 × 1080 (full frame, centered)"
             />
 
             <ShareUrlField
@@ -307,13 +312,22 @@ export default function LiveMatchShareDialog({
             <ExternalLink size={16} strokeWidth={2.25} aria-hidden />
             Preview score bar on black background
           </a>
+          <button
+            type="button"
+            className="live-share-dialog__preview-btn btn-12-exempt"
+            onClick={openBigScoreWindow}
+            disabled={!scoreUrl}
+          >
+            <ExternalLink size={16} strokeWidth={2.25} aria-hidden />
+            Open big score window
+          </button>
         </div>
 
         <p className="live-share-dialog__hint">
           Links include a private share key so OBS and spectators work without
           logging in. Score bar overlays pin to the bottom. Full-frame overlays
-          (big score, batting, bowling, points, stats, faceoff, coming up next)
-          are centered with a dark transparent backdrop.
+          (batting, bowling, points, stats, faceoff, coming up next) are centered
+          with a dark transparent backdrop.
         </p>
       </DialogContent>
     </Dialog>

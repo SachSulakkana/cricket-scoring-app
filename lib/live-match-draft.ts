@@ -3,6 +3,7 @@ import type { LiveMatchMeta } from "./store/match-slice";
 import { authenticatedFetch } from "./api-client";
 
 const LOCAL_DRAFT_KEY = "cricket-live-match-draft-v1";
+const LOCAL_DRAFT_CHANNEL = "cricket-live-match-draft";
 
 export interface LiveMatchDraft {
   matchState: MatchState;
@@ -17,6 +18,27 @@ export class LiveDraftSyncError extends Error {
   }
 }
 
+function getDraftChannel(): BroadcastChannel | null {
+  if (typeof window === "undefined" || typeof BroadcastChannel === "undefined") {
+    return null;
+  }
+  try {
+    return new BroadcastChannel(LOCAL_DRAFT_CHANNEL);
+  } catch {
+    return null;
+  }
+}
+
+function publishLiveMatchDraftLocal(draft: LiveMatchDraft | null) {
+  const channel = getDraftChannel();
+  if (!channel) return;
+  try {
+    channel.postMessage(draft);
+  } finally {
+    channel.close();
+  }
+}
+
 export function saveLiveMatchDraftLocal(
   matchState: MatchState,
   meta: LiveMatchMeta | null
@@ -24,6 +46,7 @@ export function saveLiveMatchDraftLocal(
   if (typeof window === "undefined") return;
   if (!matchState.matchStarted) {
     localStorage.removeItem(LOCAL_DRAFT_KEY);
+    publishLiveMatchDraftLocal(null);
     return;
   }
   const draft: LiveMatchDraft = {
@@ -32,6 +55,7 @@ export function saveLiveMatchDraftLocal(
     updatedAt: new Date().toISOString(),
   };
   localStorage.setItem(LOCAL_DRAFT_KEY, JSON.stringify(draft));
+  publishLiveMatchDraftLocal(draft);
 }
 
 export function loadLiveMatchDraftLocal(): LiveMatchDraft | null {
@@ -45,9 +69,37 @@ export function loadLiveMatchDraftLocal(): LiveMatchDraft | null {
   }
 }
 
+/** Same-device windows (e.g. Big Score) follow local draft without a DB round-trip. */
+export function subscribeLiveMatchDraftLocal(
+  onChange: (draft: LiveMatchDraft | null) => void
+): () => void {
+  if (typeof window === "undefined") return () => {};
+
+  onChange(loadLiveMatchDraftLocal());
+
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== LOCAL_DRAFT_KEY) return;
+    onChange(loadLiveMatchDraftLocal());
+  };
+  window.addEventListener("storage", onStorage);
+
+  const channel = getDraftChannel();
+  const onMessage = (event: MessageEvent<LiveMatchDraft | null>) => {
+    onChange(event.data ?? null);
+  };
+  channel?.addEventListener("message", onMessage);
+
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    channel?.removeEventListener("message", onMessage);
+    channel?.close();
+  };
+}
+
 export function clearLiveMatchDraftLocal() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(LOCAL_DRAFT_KEY);
+  publishLiveMatchDraftLocal(null);
 }
 
 /** Stop live sync while keeping in-memory Redux state for summary screens. */

@@ -7,6 +7,7 @@ import type { useLiveScoreEventHighlight } from "@/hooks/use-live-score-event-hi
 import { useRotatingIndex } from "@/hooks/use-rotating-index";
 import {
   teamAbbrev,
+  teamLastName,
   type LiveChaseInfo,
   type LiveScoreView,
 } from "@/lib/live-score-view";
@@ -14,6 +15,11 @@ import { cn } from "@/lib/utils";
 
 type EventHighlight = ReturnType<typeof useLiveScoreEventHighlight>;
 type TeamInfo = { name: string; logoUrl?: string };
+
+/** Bowling initials vs batting last name (e.g. "CS vs Falcons"). */
+function formatCenterMatchup(battingName: string, bowlingName: string): string {
+  return `${teamAbbrev(bowlingName)} vs ${teamLastName(battingName)}`;
+}
 
 function formatPlayerShort(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -155,25 +161,18 @@ function formatOversValue(overs: string): string {
 }
 
 function CenterPanel({
-  battingAbbrev,
-  bowlingAbbrev,
+  matchup,
   score,
   overs,
   footer,
   solo = false,
 }: {
-  battingAbbrev?: string;
-  bowlingAbbrev?: string;
+  matchup?: string | null;
   score: string;
   overs: string;
   footer: ReactNode;
   solo?: boolean;
 }) {
-  const matchup =
-    battingAbbrev && bowlingAbbrev
-      ? `${battingAbbrev} v ${bowlingAbbrev}`
-      : null;
-
   return (
     <div
       className={cn(
@@ -318,8 +317,10 @@ export default function LiveScoreBar({
     );
   }
 
-  const battingAbbrev = teamAbbrev(view.battingTeam.name);
-  const bowlingAbbrev = teamAbbrev(view.bowlingTeam.name);
+  const matchup = formatCenterMatchup(
+    view.battingTeam.name,
+    view.bowlingTeam.name
+  );
 
   if (view.kind === "waiting") {
     return (
@@ -331,8 +332,7 @@ export default function LiveScoreBar({
           <span className="live-score-bar__placeholder">—</span>
         </div>
         <CenterPanel
-          battingAbbrev={battingAbbrev}
-          bowlingAbbrev={bowlingAbbrev}
+          matchup={matchup}
           score="—"
           overs="—"
           footer={view.ticker}
@@ -354,8 +354,7 @@ export default function LiveScoreBar({
           <span className="live-score-bar__placeholder">INNINGS BREAK</span>
         </div>
         <CenterPanel
-          battingAbbrev={battingAbbrev}
-          bowlingAbbrev={bowlingAbbrev}
+          matchup={matchup}
           score={`${view.innings1Runs}-${view.innings1Wickets}`}
           overs={view.innings1Overs}
           footer={view.ticker}
@@ -379,8 +378,10 @@ export default function LiveScoreBar({
           </span>
         </div>
         <CenterPanel
-          battingAbbrev={teamAbbrev(view.matchState.team1.name)}
-          bowlingAbbrev={teamAbbrev(view.matchState.team2.name)}
+          matchup={formatCenterMatchup(
+            view.matchState.team2.name,
+            view.matchState.team1.name
+          )}
           score={`${view.innings2Runs}-${view.innings2Wickets}`}
           overs="FT"
           footer={view.ticker}
@@ -403,8 +404,7 @@ export default function LiveScoreBar({
     >
       <BattersPanel batters={view.batters} />
       <CenterPanel
-        battingAbbrev={battingAbbrev}
-        bowlingAbbrev={bowlingAbbrev}
+        matchup={matchup}
         score={`${view.currentRuns}-${view.currentWickets}`}
         overs={view.currentOvers}
         footer={

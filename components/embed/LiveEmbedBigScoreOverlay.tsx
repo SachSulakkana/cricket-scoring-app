@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import LiveEmbedPanelShell from "@/components/embed/LiveEmbedPanelShell";
-import { useLiveMatchSnapshot } from "@/hooks/use-live-match-snapshot";
+import { useLocalLiveMatchDraft } from "@/hooks/use-local-live-match-draft";
 import { deriveLiveScoreView } from "@/lib/live-score-view";
 import {
   formatOversFromLegalBalls,
@@ -55,8 +55,9 @@ function getBigScore(
   return null;
 }
 
+/** Scoring-device companion window — reads local draft only (no DB / share poll). */
 export default function LiveEmbedBigScoreOverlay() {
-  const { draft: liveDraft, loading, error } = useLiveMatchSnapshot();
+  const { draft: liveDraft, loading } = useLocalLiveMatchDraft();
 
   const liveMatchState = liveDraft?.matchState?.matchStarted
     ? liveDraft.matchState
@@ -75,7 +76,7 @@ export default function LiveEmbedBigScoreOverlay() {
     return (
       <LiveEmbedPanelShell
         centered
-        emptyMessage={error ?? "No live match"}
+        emptyMessage="No live match on this device"
       />
     );
   }

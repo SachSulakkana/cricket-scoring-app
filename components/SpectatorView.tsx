@@ -39,6 +39,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useSpectatorTournament } from "@/hooks/use-spectator-tournament";
 
+type SpectatorSyncSource = "share" | "firestore" | "poll";
+
 function formatUpdatedAt(iso: string): string {
   try {
     return new Intl.DateTimeFormat(undefined, {
@@ -74,7 +76,7 @@ function SpectatorFooter({
 }: {
   error: string | null;
   updatedAt: string;
-  source: "firestore" | "poll";
+  source: SpectatorSyncSource;
 }) {
   return (
     <footer className="spectator-footer">
@@ -178,7 +180,7 @@ function WaitingState({
   onRefresh: () => void;
   error: string | null;
   updatedAt: string;
-  source: "firestore" | "poll";
+  source: SpectatorSyncSource;
 }) {
   const isTournament = meta?.kind === "tournament";
   const tournamentId =
@@ -331,7 +333,7 @@ function InningsBreakView({
   onRefresh: () => void;
   error: string | null;
   updatedAt: string;
-  source: "firestore" | "poll";
+  source: SpectatorSyncSource;
 }) {
   const ballsPerOver = matchState.config?.ballsPerOver ?? 6;
   const innings1Runs = getInningsRuns(matchState.innings1);
@@ -439,7 +441,7 @@ function MatchCompleteView({
   onRefresh: () => void;
   error: string | null;
   updatedAt: string;
-  source: "firestore" | "poll";
+  source: SpectatorSyncSource;
 }) {
   const result = getMatchResult(matchState);
   const innings1Runs = getInningsRuns(matchState.innings1);

@@ -181,12 +181,9 @@ export function getSpectatorEmbedBowlingStatsUrl(
   return getSpectatorUrl(routes.liveEmbedBowlingStats, origin, context);
 }
 
-/** Full URL for the OBS full-screen runs/wickets + overs overlay. */
-export function getSpectatorEmbedScoreUrl(
-  origin?: string,
-  context?: SpectatorUrlContext
-): string {
-  return getSpectatorUrl(routes.liveEmbedScore, origin, context);
+/** Local scoring-device Big Score window (no share key — reads local draft only). */
+export function getLocalEmbedScoreUrl(origin?: string): string {
+  return getSpectatorUrl(routes.liveEmbedScore, origin);
 }
 
 /** Full URL for the OBS full-frame 4 / 6 / wicket celebration GIFs. */
