@@ -32,6 +32,7 @@ import {
   type TournamentStageStyle,
 } from "@/lib/tournament-stage-options";
 import { appToast } from "@/lib/app-toast";
+import { resolveFixtureDisplayScores } from "@/lib/fixture-team-scores";
 import { exportTournamentFullResultsPdf } from "@/lib/pdf-export";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Team } from "@/lib/cricket-types";
@@ -557,16 +558,17 @@ export default function CustomTournamentGamePage({
     const teamA = teamMap.get(fixture.teamAId);
     const teamB = teamMap.get(fixture.teamBId);
     if (!teamA || !teamB) continue;
+    const scores = resolveFixtureDisplayScores(teamA, teamB, fixture.result);
     mappedFixtures.push({
       id: fixture.id,
       teamA,
       teamB,
       played: fixture.played,
       fixture,
-      runsA: fixture.result?.runsA,
-      wicketsA: fixture.result?.wicketsA,
-      runsB: fixture.result?.runsB,
-      wicketsB: fixture.result?.wicketsB,
+      runsA: scores.runsA,
+      wicketsA: scores.wicketsA,
+      runsB: scores.runsB,
+      wicketsB: scores.wicketsB,
       winnerId: fixture.result?.winnerTeamId,
     });
   }

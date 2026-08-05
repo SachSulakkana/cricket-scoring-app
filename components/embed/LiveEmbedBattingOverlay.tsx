@@ -4,15 +4,26 @@ import { useMemo } from "react";
 import LiveEmbedPanelShell from "@/components/embed/LiveEmbedPanelShell";
 import { LiveEmbedScorecardFrame } from "@/components/embed/LiveEmbedScorecardFrame";
 import { useLiveMatchSnapshot } from "@/hooks/use-live-match-snapshot";
-import { resolveCurrentInningsContext } from "@/lib/spectator-scorecard-innings";
+import {
+  resolveCurrentInningsContext,
+  resolveFirstInningsContext,
+} from "@/lib/spectator-scorecard-innings";
 
-export default function LiveEmbedBattingOverlay() {
+type InningsMode = "current" | "first";
+
+export default function LiveEmbedBattingOverlay({
+  innings = "current",
+}: {
+  innings?: InningsMode;
+}) {
   const { draft, loading, error } = useLiveMatchSnapshot();
 
   const ctx = useMemo(() => {
     if (!draft?.matchState) return null;
-    return resolveCurrentInningsContext(draft.matchState);
-  }, [draft]);
+    return innings === "first"
+      ? resolveFirstInningsContext(draft.matchState)
+      : resolveCurrentInningsContext(draft.matchState);
+  }, [draft, innings]);
 
   if (loading) {
     return <LiveEmbedPanelShell centered loading />;
@@ -30,7 +41,9 @@ export default function LiveEmbedBattingOverlay() {
   return (
     <LiveEmbedPanelShell centered>
       <LiveEmbedScorecardFrame
-        title="Batting scorecard"
+        title={
+          innings === "first" ? "1st innings batting" : "Batting scorecard"
+        }
         mode="batting"
         ctx={ctx}
         matchState={draft.matchState}

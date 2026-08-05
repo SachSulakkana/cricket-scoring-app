@@ -22,6 +22,7 @@ import { countsAsWicket } from "@/lib/cricket-types";
 import { hasPersistedSuperOver } from "@/lib/match-snapshot";
 import { exportTournamentMatchPdf } from "@/lib/pdf-export";
 import type { TournamentFixture } from "@/lib/roster-types";
+import { resolveFixtureDisplayScores } from "@/lib/fixture-team-scores";
 
 interface TournamentMatchSummaryDialogProps {
   open: boolean;
@@ -62,6 +63,7 @@ export default function TournamentMatchSummaryDialog({
   tournamentName,
 }: TournamentMatchSummaryDialogProps) {
   const result = fixture.result;
+  const scores = resolveFixtureDisplayScores(teamA, teamB, result);
   const hasScorecard = Boolean(result?.scorecard);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [activeTab, setActiveTab] = useState<MatchDetailTab>("summary");
@@ -143,12 +145,12 @@ export default function TournamentMatchSummaryDialog({
               <CricketBroadcastCard className="p-4 space-y-0">
                 <CricketEyebrow className="mb-3">Original match</CricketEyebrow>
                 <CricketDetailRow
-                  label={teamA.name}
-                  value={formatScore(result.runsA, result.wicketsA)}
+                  label={teamA.name.toUpperCase()}
+                  value={formatScore(scores.runsA, scores.wicketsA)}
                 />
                 <CricketDetailRow
-                  label={teamB.name}
-                  value={formatScore(result.runsB, result.wicketsB)}
+                  label={teamB.name.toUpperCase()}
+                  value={formatScore(scores.runsB, scores.wicketsB)}
                 />
                 {result.scorecard?.mainMatchTied ? (
                   <CricketDetailRow label="Main innings" value="Tied" />

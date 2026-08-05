@@ -8,6 +8,8 @@ export const routes = {
   liveEmbedPreview: "/live/embed/preview",
   liveEmbedBatting: "/live/embed/batting",
   liveEmbedBowling: "/live/embed/bowling",
+  liveEmbedBatting1st: "/live/embed/batting-1st",
+  liveEmbedBowling1st: "/live/embed/bowling-1st",
   liveEmbedPoints: "/live/embed/points",
   liveEmbedNextMatch: "/live/embed/next-match",
   liveEmbedUpcoming: "/live/embed/upcoming",
@@ -139,6 +141,22 @@ export function getSpectatorEmbedBowlingUrl(
   context?: SpectatorUrlContext
 ): string {
   return getSpectatorUrl(routes.liveEmbedBowling, origin, context);
+}
+
+/** Full URL for the OBS 1st-innings batting scorecard overlay. */
+export function getSpectatorEmbedBatting1stUrl(
+  origin?: string,
+  context?: SpectatorUrlContext
+): string {
+  return getSpectatorUrl(routes.liveEmbedBatting1st, origin, context);
+}
+
+/** Full URL for the OBS 1st-innings bowling scorecard overlay. */
+export function getSpectatorEmbedBowling1stUrl(
+  origin?: string,
+  context?: SpectatorUrlContext
+): string {
+  return getSpectatorUrl(routes.liveEmbedBowling1st, origin, context);
 }
 
 /** Full URL for the OBS tournament points table overlay. */

@@ -11,8 +11,10 @@ import {
 } from "@/components/ui/dialog";
 import {
   getSpectatorEmbedBattingUrl,
+  getSpectatorEmbedBatting1stUrl,
   getSpectatorEmbedBattingStatsUrl,
   getSpectatorEmbedBowlingUrl,
+  getSpectatorEmbedBowling1stUrl,
   getSpectatorEmbedBowlingStatsUrl,
   getLocalEmbedScoreUrl,
   getSpectatorEmbedNextMatchUrl,
@@ -126,6 +128,8 @@ export default function LiveMatchShareDialog({
   const [previewUrl, setPreviewUrl] = useState("");
   const [battingUrl, setBattingUrl] = useState("");
   const [bowlingUrl, setBowlingUrl] = useState("");
+  const [batting1stUrl, setBatting1stUrl] = useState("");
+  const [bowling1stUrl, setBowling1stUrl] = useState("");
   const [pointsUrl, setPointsUrl] = useState("");
   const [nextMatchUrl, setNextMatchUrl] = useState("");
   const [upcomingUrl, setUpcomingUrl] = useState("");
@@ -159,6 +163,8 @@ export default function LiveMatchShareDialog({
       setPreviewUrl(getSpectatorEmbedPreviewUrl(undefined, context));
       setBattingUrl(getSpectatorEmbedBattingUrl(undefined, context));
       setBowlingUrl(getSpectatorEmbedBowlingUrl(undefined, context));
+      setBatting1stUrl(getSpectatorEmbedBatting1stUrl(undefined, context));
+      setBowling1stUrl(getSpectatorEmbedBowling1stUrl(undefined, context));
       setPointsUrl(getSpectatorEmbedPointsUrl(undefined, context));
       setNextMatchUrl(getSpectatorEmbedNextMatchUrl(undefined, context));
       setUpcomingUrl(getSpectatorEmbedUpcomingUrl(undefined, context));
@@ -188,6 +194,8 @@ export default function LiveMatchShareDialog({
         setPreviewUrl("");
         setBattingUrl("");
         setBowlingUrl("");
+        setBatting1stUrl("");
+        setBowling1stUrl("");
         setPointsUrl("");
         setNextMatchUrl("");
         setUpcomingUrl("");
@@ -244,17 +252,31 @@ export default function LiveMatchShareDialog({
             />
 
             <ShareUrlField
+              id="live-embed-batting-1st-url"
+              label="1st innings batting scorecard"
+              url={batting1stUrl}
+              hint="Shows 1st innings batting live, then the completed card once the 2nd innings starts. Suggested size: 1920 × 1080."
+            />
+
+            <ShareUrlField
+              id="live-embed-bowling-1st-url"
+              label="1st innings bowling scorecard"
+              url={bowling1stUrl}
+              hint="Shows 1st innings bowling live, then the completed card once the 2nd innings starts. Suggested size: 1920 × 1080."
+            />
+
+            <ShareUrlField
               id="live-embed-batting-url"
               label="Batting scorecard (current innings)"
               url={battingUrl}
-              hint="Suggested size: 1920 × 1080 (full frame, centered)"
+              hint="Follows the innings being scored now. Suggested size: 1920 × 1080 (full frame, centered)."
             />
 
             <ShareUrlField
               id="live-embed-bowling-url"
               label="Bowling scorecard (current innings)"
               url={bowlingUrl}
-              hint="Suggested size: 1920 × 1080 (full frame, centered)"
+              hint="Follows the innings being scored now. Suggested size: 1920 × 1080 (full frame, centered)."
             />
 
             <ShareUrlField

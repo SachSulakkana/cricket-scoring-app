@@ -109,6 +109,25 @@ type ContextSlide = {
   durationMs: number;
 };
 
+function buildCompleteContextItems(
+  resultTicker: string,
+  upcomingLabel: string | null
+): ContextSlide[] {
+  const items: ContextSlide[] = [
+    {
+      text: resultTicker,
+      durationMs: CONTEXT_RR_MS,
+    },
+  ];
+  if (upcomingLabel) {
+    items.push({
+      text: `COMING UP NEXT · ${upcomingLabel}`,
+      durationMs: CONTEXT_RR_MS,
+    });
+  }
+  return items;
+}
+
 function buildContextItems(
   chaseInfo: LiveChaseInfo | null,
   currentRunRate: string,
@@ -300,9 +319,12 @@ function ScoreBarFrame({
 export default function LiveScoreBar({
   view,
   eventHighlight,
+  upcomingLabel = null,
 }: {
   view: LiveScoreView;
   eventHighlight?: EventHighlight;
+  /** Tournament next fixture label for post-match footer rotation. */
+  upcomingLabel?: string | null;
 }) {
   if (view.kind === "none" || view.kind === "empty") {
     return (
@@ -384,7 +406,11 @@ export default function LiveScoreBar({
           )}
           score={`${view.innings2Runs}-${view.innings2Wickets}`}
           overs="FT"
-          footer={view.ticker}
+          footer={
+            <RotatingContext
+              items={buildCompleteContextItems(view.ticker, upcomingLabel)}
+            />
+          }
         />
         <div className="live-score-bar__panel live-score-bar__panel--bowl">
           <span className="live-score-bar__placeholder">

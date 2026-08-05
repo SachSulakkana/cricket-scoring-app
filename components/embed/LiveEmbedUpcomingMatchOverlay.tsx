@@ -32,7 +32,10 @@ export default function LiveEmbedUpcomingMatchOverlay() {
   }
 
   const upcoming = data
-    ? getNextTournamentFixture(data, { excludeFixtureId: activeFixtureId })
+    ? getNextTournamentFixture(data, {
+        afterFixtureId: activeFixtureId,
+        excludeFixtureId: activeFixtureId,
+      })
     : null;
 
   if (!upcoming) {

@@ -187,6 +187,20 @@ export function resolveCurrentInningsContext(
   return null;
 }
 
+/** Always 1st innings (live during innings 1; completed card once innings 2 starts). */
+export function resolveFirstInningsContext(
+  matchState: MatchState
+): InningsViewContext | null {
+  if (!matchState.innings1) return null;
+  return {
+    inningsNumber: 1,
+    innings: matchState.innings1,
+    battingTeam: matchState.team1,
+    bowlingTeam: matchState.team2,
+    ballsPerOver: matchState.config?.ballsPerOver ?? 6,
+  };
+}
+
 export function getInningsHeader(
   ctx: InningsViewContext
 ): { label: string; score: string } {

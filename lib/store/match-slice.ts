@@ -8,6 +8,8 @@ export interface LiveMatchMeta {
   tournamentId?: string;
   fixtureId?: string;
   label?: string;
+  /** Set when a tournament match finishes — score bar uses this for COMING UP NEXT. */
+  comingUpNextLabel?: string | null;
 }
 
 /** Stable id for comparing sessions (avoids effect loops on inline meta objects). */

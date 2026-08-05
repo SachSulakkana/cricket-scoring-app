@@ -4,32 +4,32 @@ import { useMemo } from "react";
 import LiveEmbedPanelShell from "@/components/embed/LiveEmbedPanelShell";
 import { EmbedMatchFaceoffLayout } from "@/components/embed/LiveEmbedMatchFaceoff";
 import { useLiveMatchSnapshot } from "@/hooks/use-live-match-snapshot";
-import type { MatchState } from "@/lib/cricket-types";
+import type { MatchState, Team } from "@/lib/cricket-types";
+import { getTeamInningsTotalsFromMatch } from "@/lib/fixture-team-scores";
+import { getBattingInningsForTeam } from "@/lib/fixture-team-scores";
 import { deriveLiveScoreView } from "@/lib/live-score-view";
 import { getMatchResult } from "@/lib/match-result";
 import {
   formatOversFromLegalBalls,
   getInningsRuns,
-  getInningsWickets,
   getLegalBalls,
 } from "@/lib/spectator-live-stats";
 
-function getTeamScoreLine(
-  matchState: MatchState,
-  side: 1 | 2
-): string | null {
+function getTeamScoreLine(matchState: MatchState, team: Team): string | null {
   const ballsPerOver = matchState.config?.ballsPerOver ?? 6;
-  const innings = side === 1 ? matchState.innings1 : matchState.innings2;
+  const innings = getBattingInningsForTeam(
+    {
+      innings1: matchState.innings1,
+      innings2: matchState.innings2,
+      team1: matchState.team1,
+      team2: matchState.team2,
+    },
+    team
+  );
 
-  if (!innings?.balls.length) {
-    if (side === 2 && matchState.currentInnings === 2) {
-      return `0/0 (0.0 ov)`;
-    }
-    return null;
-  }
+  if (!innings?.balls.length) return null;
 
-  const runs = getInningsRuns(innings);
-  const wickets = getInningsWickets(innings);
+  const { runs, wickets } = getTeamInningsTotalsFromMatch(matchState, team);
   const overs = formatOversFromLegalBalls(getLegalBalls(innings), ballsPerOver);
   return `${runs}/${wickets} (${overs} ov)`;
 }
@@ -60,8 +60,8 @@ function EmbedLiveMatchFaceoff({ matchState }: { matchState: MatchState }) {
     return null;
   }
 
-  const team1Score = getTeamScoreLine(matchState, 1);
-  const team2Score = getTeamScoreLine(matchState, 2);
+  const team1Score = getTeamScoreLine(matchState, matchState.team1);
+  const team2Score = getTeamScoreLine(matchState, matchState.team2);
   const chaseLine = getChaseLine(matchState, view);
   const resultLine =
     view.kind === "complete" ? getMatchResult(matchState).text : null;

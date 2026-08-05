@@ -16,7 +16,6 @@ import {
 } from "./cricket-types";
 import {
   clearLiveMatchDraftLocal,
-  clearLiveMatchDraftPersistence,
   clearLiveMatchDraftRemote,
   saveLiveMatchDraftLocal,
   saveLiveMatchDraftRemote,
@@ -42,6 +41,8 @@ interface CricketContextType {
   clearLiveDraft: () => void;
   /** Stop persisting live draft; keep Redux for post-match summary. */
   finalizeLiveMatch: () => void;
+  /** Immediately write the current Redux match + meta to the live draft. */
+  flushPersistDraft: () => void;
   setTeam1: (team: Team) => void;
   setTeam2: (team: Team) => void;
   setMatchConfig: (config: MatchConfig) => void;
@@ -92,8 +93,8 @@ export function CricketProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(persistTimer.current);
       persistTimer.current = null;
     }
-    const { matchState: state, liveMeta: meta } = latestState.current;
-    persistDraft(state, meta);
+    const { match } = getStore().getState();
+    persistDraft(match.matchState, match.meta);
   }, [persistDraft]);
 
   useEffect(() => {
@@ -142,8 +143,13 @@ export function CricketProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(persistTimer.current);
       persistTimer.current = null;
     }
-    clearLiveMatchDraftPersistence();
-  }, []);
+    // Keep the completed match on the live draft so OBS overlays can show
+    // the result (and coming-up-next) until the next match starts.
+    const { match } = getStore().getState();
+    if (match.matchState.matchStarted) {
+      persistDraft(match.matchState, match.meta);
+    }
+  }, [persistDraft]);
 
   const setTeam1 = useCallback(
     (team: Team) => dispatch(matchActions.setTeam1(team)),
@@ -247,6 +253,7 @@ export function CricketProvider({ children }: { children: React.ReactNode }) {
     restoreLiveDraft,
     clearLiveDraft,
     finalizeLiveMatch,
+    flushPersistDraft,
     setTeam1,
     setTeam2,
     setMatchConfig,

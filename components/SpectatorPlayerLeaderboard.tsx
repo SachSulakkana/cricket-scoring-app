@@ -1,25 +1,34 @@
 "use client";
 
 import Image from "next/image";
+import { useMemo } from "react";
 import type { SpectatorTournamentData } from "@/hooks/use-spectator-tournament";
+import type { MatchState } from "@/lib/cricket-types";
 import { buildTournamentPlayerStats } from "@/lib/tournament-stats";
 
 interface SpectatorPlayerLeaderboardProps {
   data: SpectatorTournamentData;
   mode: "batting" | "bowling";
   title: string;
+  /** Live match draft — included so Most Runs / Wickets update ball-by-ball. */
+  liveMatchState?: MatchState | null;
+  liveFixtureId?: string | null;
 }
 
 export default function SpectatorPlayerLeaderboard({
   data,
   mode,
   title,
+  liveMatchState = null,
+  liveFixtureId = null,
 }: SpectatorPlayerLeaderboardProps) {
-  const playedFixtures = data.tournament.fixtures.filter((fixture) => fixture.played);
-  const { battingTop, bowlingTop } = buildTournamentPlayerStats(
-    playedFixtures,
-    data.teams,
-    10
+  const { battingTop, bowlingTop } = useMemo(
+    () =>
+      buildTournamentPlayerStats(data.tournament.fixtures, data.teams, 10, {
+        liveMatchState,
+        liveFixtureId,
+      }),
+    [data.tournament.fixtures, data.teams, liveMatchState, liveFixtureId]
   );
   const rows = mode === "batting" ? battingTop : bowlingTop;
   const displayRows = Array.from({ length: 10 }, (_, index) => rows[index] ?? null);

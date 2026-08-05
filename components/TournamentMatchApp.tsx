@@ -14,12 +14,21 @@ import {
   CricketPage,
   CricketPageHeader,
 } from "@/components/cricket-shell";
-import { MatchState, Team, countsAsBowlerWicket, countsAsWicket } from "@/lib/cricket-types";
+import { MatchState, Team, countsAsBowlerWicket } from "@/lib/cricket-types";
+import {
+  getBattingInningsForTeam as resolveBattingInningsForTeam,
+  getTeamInningsTotalsFromMatch,
+} from "@/lib/fixture-team-scores";
 import {
   TournamentFixture,
   TournamentFixtureResult,
   TournamentMatchSnapshot,
+  type SavedTournament,
 } from "@/lib/roster-storage";
+import {
+  formatComingUpNextLabel,
+  getNextTournamentFixture,
+} from "@/lib/spectator-tournament-next";
 import { useCricket } from "@/lib/cricket-context";
 import { useOfferLiveMatchRestore } from "@/hooks/use-offer-live-match-restore";
 import ExportPdfButton from "@/components/ExportPdfButton";
@@ -91,6 +100,8 @@ interface TournamentMatchAppProps {
   ballsPerOver: number;
   tournamentId: string;
   tournamentName?: string;
+  tournament: SavedTournament;
+  teams: Team[];
   onBack: () => void;
   onComplete: (result: TournamentFixtureResult) => void;
 }
@@ -161,19 +172,25 @@ function getBattingInningsForTeam(
   matchState: MatchState,
   team: Team
 ): MatchState["innings1"] {
-  if (matchState.innings1?.teamId === team.id) return matchState.innings1;
-  if (matchState.innings2?.teamId === team.id) return matchState.innings2;
-  return null;
+  return resolveBattingInningsForTeam(
+    {
+      innings1: matchState.innings1,
+      innings2: matchState.innings2,
+      team1: matchState.team1,
+      team2: matchState.team2,
+    },
+    team
+  );
 }
 
 function getBowlingInningsForTeam(
   matchState: MatchState,
   team: Team
 ): MatchState["innings1"] {
-  if (matchState.innings1?.teamId === team.id) {
+  if (getBattingInningsForTeam(matchState, team) === matchState.innings1) {
     return matchState.innings2;
   }
-  if (matchState.innings2?.teamId === team.id) {
+  if (getBattingInningsForTeam(matchState, team) === matchState.innings2) {
     return matchState.innings1;
   }
   return null;
@@ -183,12 +200,7 @@ function getTeamInningsTotals(
   matchState: MatchState,
   team: Team
 ): { runs: number; wickets: number } {
-  const batting = getBattingInningsForTeam(matchState, team);
-  if (!batting) return { runs: 0, wickets: 0 };
-  return {
-    runs: getInningsRuns(batting),
-    wickets: batting.balls.filter((ball) => countsAsWicket(ball.dismissal)).length,
-  };
+  return getTeamInningsTotalsFromMatch(matchState, team);
 }
 
 function extractFixtureResult(
@@ -286,6 +298,8 @@ export default function TournamentMatchApp({
   ballsPerOver,
   tournamentId,
   tournamentName,
+  tournament,
+  teams,
   onBack,
   onComplete,
 }: TournamentMatchAppProps) {
@@ -301,11 +315,22 @@ export default function TournamentMatchApp({
     resetMatch,
     finalizeLiveMatch,
     setLiveSession,
+    flushPersistDraft,
     acceptMatchDraw,
     initSuperOver,
     switchSuperOverInnings,
     completeSuperOver,
   } = useCricket();
+
+  const comingUpNextLabel = useMemo(() => {
+    const upcoming = getNextTournamentFixture(
+      { tournament, teams },
+      { excludeFixtureId: fixture.id, afterFixtureId: fixture.id }
+    );
+    return upcoming
+      ? formatComingUpNextLabel(upcoming.teamA, upcoming.teamB)
+      : null;
+  }, [tournament, teams, fixture.id]);
 
   const liveSessionMeta = useMemo(
     (): LiveMatchMeta => ({
@@ -313,8 +338,9 @@ export default function TournamentMatchApp({
       tournamentId,
       fixtureId: fixture.id,
       label: `${teamA.name} vs ${teamB.name}`,
+      comingUpNextLabel,
     }),
-    [tournamentId, fixture.id, teamA.name, teamB.name]
+    [tournamentId, fixture.id, teamA.name, teamB.name, comingUpNextLabel]
   );
 
   useOfferLiveMatchRestore(liveSessionMeta, (restored) => {
@@ -390,6 +416,8 @@ export default function TournamentMatchApp({
     if (!stored.matchStarted) {
       startMatch();
     }
+    // Persist coming-up-next as soon as this match starts (not at full-time).
+    flushPersistDraft();
     setPage("lineup");
     setLineupStep("batsmen");
   };

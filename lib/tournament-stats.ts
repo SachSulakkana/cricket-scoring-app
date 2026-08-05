@@ -1,5 +1,6 @@
-import type { Team } from "./cricket-types";
-import type { TournamentFixture } from "./roster-types";
+import type { MatchState, Team } from "./cricket-types";
+import type { TournamentFixture, TournamentMatchSnapshot } from "./roster-types";
+import { buildPersistedMatchSnapshot } from "./match-snapshot";
 import {
   calculateBatting,
   calculateBowling,
@@ -58,10 +59,40 @@ function addBowling(
   totals.set(key, { player, team, wickets, matches: 1 });
 }
 
+function accumulateFromScorecard(
+  battingTotals: Map<string, TournamentBattingStat>,
+  bowlingTotals: Map<string, TournamentBowlingStat>,
+  scorecard: TournamentMatchSnapshot
+) {
+  if (!scorecard.team1 || !scorecard.team2) return;
+  const ballsPerOver = scorecard.config?.ballsPerOver ?? 6;
+  for (const innings of [scorecard.innings1, scorecard.innings2]) {
+    if (!innings) continue;
+    const { battingTeam, bowlingTeam } = resolveBattingBowlingTeams(
+      innings,
+      scorecard.team1,
+      scorecard.team2
+    );
+
+    for (const row of calculateBatting(innings, battingTeam)) {
+      addBatting(battingTotals, battingTeam.name, row.name, row.runs);
+    }
+    for (const row of calculateBowling(innings, bowlingTeam, ballsPerOver)) {
+      addBowling(bowlingTotals, bowlingTeam.name, row.name, row.wickets);
+    }
+  }
+}
+
 export function buildTournamentPlayerStats(
   fixtures: TournamentFixture[],
   teams: Team[],
-  limit = 10
+  limit = 10,
+  options?: {
+    /** In-progress match — folded into totals so OBS leaderboards stay live. */
+    liveMatchState?: MatchState | null;
+    /** When set, skip this fixture's saved result to avoid double-counting a replay. */
+    liveFixtureId?: string | null;
+  }
 ): {
   battingTop: TournamentBattingStat[];
   bowlingTop: TournamentBowlingStat[];
@@ -71,28 +102,22 @@ export function buildTournamentPlayerStats(
   const bowlingTotals = new Map<string, TournamentBowlingStat>();
 
   const teamName = (teamId: string) => teamMap.get(teamId)?.name ?? "Team";
+  const liveFixtureId = options?.liveFixtureId ?? null;
 
   for (const fixture of fixtures) {
     if (!fixture.played || !fixture.result || fixture.result.abandoned) continue;
+    // Live replay / still-open fixture: prefer live balls over the old saved card.
+    if (
+      liveFixtureId &&
+      fixture.id === liveFixtureId &&
+      options?.liveMatchState?.matchStarted
+    ) {
+      continue;
+    }
 
     const scorecard = fixture.result.scorecard;
     if (scorecard?.team1 && scorecard?.team2) {
-      const ballsPerOver = scorecard.config?.ballsPerOver ?? 6;
-      for (const innings of [scorecard.innings1, scorecard.innings2]) {
-        if (!innings) continue;
-        const { battingTeam, bowlingTeam } = resolveBattingBowlingTeams(
-          innings,
-          scorecard.team1,
-          scorecard.team2
-        );
-
-        for (const row of calculateBatting(innings, battingTeam)) {
-          addBatting(battingTotals, battingTeam.name, row.name, row.runs);
-        }
-        for (const row of calculateBowling(innings, bowlingTeam, ballsPerOver)) {
-          addBowling(bowlingTotals, bowlingTeam.name, row.name, row.wickets);
-        }
-      }
+      accumulateFromScorecard(battingTotals, bowlingTotals, scorecard);
       continue;
     }
 
@@ -113,6 +138,14 @@ export function buildTournamentPlayerStats(
         fixture.result.bestBowling.wickets
       );
     }
+  }
+
+  if (options?.liveMatchState?.matchStarted) {
+    accumulateFromScorecard(
+      battingTotals,
+      bowlingTotals,
+      buildPersistedMatchSnapshot(options.liveMatchState)
+    );
   }
 
   const battingTop = Array.from(battingTotals.values())

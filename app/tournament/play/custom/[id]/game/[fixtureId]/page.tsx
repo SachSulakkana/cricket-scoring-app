@@ -11,7 +11,6 @@ import {
   withReturnTo,
 } from "@/lib/app-routes";
 import { appToast } from "@/lib/app-toast";
-import { clearLiveMatchDraftPersistence } from "@/lib/live-match-draft";
 import { updateTournament } from "@/lib/roster-storage";
 import { getStore } from "@/lib/store/store";
 import { matchActions } from "@/lib/store/match-slice";
@@ -81,6 +80,8 @@ export default function PlayTournamentFixturePage() {
       ballsPerOver={tournament.ballsPerOver}
       tournamentId={tournament.id}
       tournamentName={tournament.name}
+      tournament={tournament}
+      teams={allTeams}
       onBack={() => router.push(gameRoute)}
       onComplete={(result) => {
         void (async () => {
@@ -101,7 +102,6 @@ export default function PlayTournamentFixturePage() {
           updated = advance.tournament;
           try {
             await updateTournament(updated);
-            clearLiveMatchDraftPersistence();
             getStore().dispatch(matchActions.resetLiveMatch());
             if (advance.championTeamId) {
               appToast.success("Tournament complete — champion crowned!");
