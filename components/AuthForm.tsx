@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { appToast } from "@/lib/app-toast";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,6 @@ function authErrorMessage(error: unknown): string {
 }
 
 export default function AuthForm({ mode }: { mode: "login" | "register" }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = getSafeReturnTo(searchParams.get("returnTo")) ?? routes.home;
   const {
@@ -59,16 +58,16 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   const submitLabel = mode === "login" ? "Sign in" : "Create account";
 
   const finish = () => {
-    router.replace(returnTo);
-    router.refresh();
+    // Hard navigation so middleware + HomePage see the new `__session` cookie
+    // and auth state in one clean load (client soft nav raced ahead of setUser).
+    window.location.assign(returnTo);
   };
 
-  // After Google redirect (or if already signed in with a session), leave auth pages.
+  // After Google redirect (or refresh while already signed in), leave auth pages.
   useEffect(() => {
     if (loading || !user) return;
-    router.replace(returnTo);
-    router.refresh();
-  }, [loading, user, returnTo, router]);
+    window.location.replace(returnTo);
+  }, [loading, user, returnTo]);
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();

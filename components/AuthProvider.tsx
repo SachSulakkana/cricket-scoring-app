@@ -48,7 +48,6 @@ async function clearSessionCookie() {
   await fetch("/api/auth/session", { method: "DELETE" });
 }
 
-/** Ensure server `__session` cookie exists before treating the user as signed in. */
 async function syncSessionForUser(user: User): Promise<void> {
   const token = await user.getIdToken();
   await createSessionCookie(token);
@@ -67,13 +66,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const auth = getClientAuth();
     let cancelled = false;
+    let epoch = 0;
 
-    // Complete Google redirect sign-in (if any) before listening, so the
-    // session cookie exists before AuthForm navigates away from /login.
     void getRedirectResult(auth)
       .then(async (result) => {
-        if (result?.user) {
-          await syncSessionForUser(result.user);
+        if (!result?.user || cancelled) return;
+        await syncSessionForUser(result.user);
+        if (!cancelled) {
+          setUser(result.user);
+          setLoading(false);
         }
       })
       .catch((err: unknown) => {
@@ -81,37 +82,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
     const unsubscribe = onAuthStateChanged(auth, (next) => {
+      const myEpoch = ++epoch;
+
+      // Keep HomePage from treating "cookie set, React user not yet" as logged out.
+      if (next) {
+        setLoading(true);
+      }
+
       void (async () => {
         try {
           if (next) {
             await syncSessionForUser(next);
-            if (!cancelled) {
-              setUser(next);
-              setLoading(false);
-            }
+            if (cancelled || myEpoch !== epoch) return;
+            setUser(next);
+            setLoading(false);
           } else {
             await clearSessionCookie().catch((err: unknown) => {
               console.error("Failed to clear auth session cookie", err);
             });
-            if (!cancelled) {
-              setUser(null);
-              setLoading(false);
-            }
+            if (cancelled || myEpoch !== epoch) return;
+            setUser(null);
+            setLoading(false);
           }
         } catch (err) {
           console.error("Failed to sync auth session cookie", err);
-          // Firebase client may be signed in, but without a session cookie
-          // middleware will bounce protected routes back to /login.
+          if (cancelled || myEpoch !== epoch) return;
           try {
             await firebaseSignOut();
             await clearSessionCookie();
           } catch {
             /* ignore */
           }
-          if (!cancelled) {
-            setUser(null);
-            setLoading(false);
-          }
+          if (cancelled || myEpoch !== epoch) return;
+          setUser(null);
+          setLoading(false);
         }
       })();
     });
@@ -129,27 +133,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithEmail = useCallback(async (email: string, password: string) => {
     const cred = await signInWithEmail(email, password);
     await syncSessionForUser(cred.user);
+    setUser(cred.user);
+    setLoading(false);
   }, []);
 
   const registerWithEmailPassword = useCallback(
     async (email: string, password: string) => {
       const cred = await registerWithEmail(email, password);
       await syncSessionForUser(cred.user);
+      setUser(cred.user);
+      setLoading(false);
     },
     []
   );
 
   const loginWithGoogle = useCallback(async () => {
     const cred = await signInWithGoogle();
-    // false = redirect flow started; session is synced on return
     if (!cred) return false;
     await syncSessionForUser(cred.user);
+    setUser(cred.user);
+    setLoading(false);
     return true;
   }, []);
 
   const logout = useCallback(async () => {
     await clearSessionCookie();
     await firebaseSignOut();
+    setUser(null);
+    setLoading(false);
   }, []);
 
   const value = useMemo(
