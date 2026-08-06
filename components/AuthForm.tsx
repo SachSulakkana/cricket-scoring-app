@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { appToast } from "@/lib/app-toast";
@@ -29,6 +29,8 @@ function authErrorMessage(error: unknown): string {
       return "Invalid email or password";
     case "auth/popup-closed-by-user":
       return "Google sign-in was cancelled";
+    case "auth/popup-blocked":
+      return "Pop-up blocked. Allow pop-ups for this site and try again";
     default:
       return error instanceof Error ? error.message : "Authentication failed";
   }
@@ -39,6 +41,8 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   const searchParams = useSearchParams();
   const returnTo = getSafeReturnTo(searchParams.get("returnTo")) ?? routes.home;
   const {
+    user,
+    loading,
     loginWithEmail,
     registerWithEmailPassword,
     loginWithGoogle,
@@ -56,6 +60,14 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
     router.replace(returnTo);
     router.refresh();
   };
+
+  // After Google redirect sign-in, land back on this page already authenticated.
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(returnTo);
+      router.refresh();
+    }
+  }, [loading, user, returnTo, router]);
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -86,7 +98,8 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   const onGoogle = () => {
     setSubmitting(true);
     void loginWithGoogle()
-      .then(() => {
+      .then((completed) => {
+        if (!completed) return; // full-page Google redirect in progress
         appToast.success("Signed in with Google");
         finish();
       })

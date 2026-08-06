@@ -26,7 +26,7 @@ type AuthContextValue = {
   getAccessToken: (forceRefresh?: boolean) => Promise<string | null>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   registerWithEmailPassword: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: () => Promise<boolean>;
   logout: () => Promise<void>;
 };
 
@@ -102,8 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithGoogle = useCallback(async () => {
     const cred = await signInWithGoogle();
+    // false = redirect flow started; session cookie is created on return via onAuthStateChanged
+    if (!cred) return false;
     const token = await cred.user.getIdToken();
     await createSessionCookie(token);
+    return true;
   }, []);
 
   const logout = useCallback(async () => {

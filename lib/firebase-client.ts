@@ -5,9 +5,11 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
   signOut as firebaseSignOut,
   type Auth,
   type User,
+  type UserCredential,
 } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 
@@ -72,8 +74,28 @@ export async function signInWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(getClientAuth(), email, password);
 }
 
-export async function signInWithGoogle() {
-  return signInWithPopup(getClientAuth(), googleProvider);
+function authErrorCode(error: unknown): string {
+  if (error && typeof error === "object" && "code" in error) {
+    return String((error as { code?: string }).code);
+  }
+  return "";
+}
+
+/**
+ * Prefer popup; if the browser blocks it, fall back to full-page redirect.
+ * Returns null when a redirect was started (page will navigate away).
+ */
+export async function signInWithGoogle(): Promise<UserCredential | null> {
+  const auth = getClientAuth();
+  try {
+    return await signInWithPopup(auth, googleProvider);
+  } catch (error) {
+    if (authErrorCode(error) === "auth/popup-blocked") {
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function signOut() {
