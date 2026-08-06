@@ -4,11 +4,10 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
   signOut as firebaseSignOut,
   type Auth,
   type User,
-  type UserCredential,
 } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 
@@ -73,9 +72,12 @@ export async function signInWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(getClientAuth(), email, password);
 }
 
-/** Google sign-in in a popup window (does not navigate the current page). */
-export async function signInWithGoogle(): Promise<UserCredential> {
-  return signInWithPopup(getClientAuth(), googleProvider);
+/**
+ * Full-page Google sign-in (no popup). The current page navigates away;
+ * completion is handled via getRedirectResult / onAuthStateChanged on return.
+ */
+export async function signInWithGoogle(): Promise<void> {
+  await signInWithRedirect(getClientAuth(), googleProvider);
 }
 
 export async function signOut() {

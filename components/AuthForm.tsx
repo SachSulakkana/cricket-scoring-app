@@ -29,8 +29,6 @@ function authErrorMessage(error: unknown): string {
       return "Invalid email or password";
     case "auth/popup-closed-by-user":
       return "Google sign-in was cancelled";
-    case "auth/popup-blocked":
-      return "Pop-up blocked. Allow pop-ups for this site and try again";
     case "auth/unauthorized-domain":
       return "This domain is not allowed for sign-in. Add it in Firebase → Authentication → Settings → Authorized domains";
     default:
@@ -66,7 +64,17 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   // After Google redirect (or refresh while already signed in), leave auth pages.
   useEffect(() => {
     if (loading || !user) return;
-    window.location.replace(returnTo);
+    let target = returnTo;
+    try {
+      const saved = sessionStorage.getItem("authReturnTo");
+      if (saved && saved.startsWith("/") && !saved.startsWith("//")) {
+        target = saved;
+      }
+      sessionStorage.removeItem("authReturnTo");
+    } catch {
+      /* ignore */
+    }
+    window.location.replace(target);
   }, [loading, user, returnTo]);
 
   const onSubmit = (event: FormEvent) => {
@@ -97,14 +105,16 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
 
   const onGoogle = () => {
     setSubmitting(true);
-    void loginWithGoogle()
-      .then((completed) => {
-        if (!completed) return; // full-page Google redirect in progress
-        appToast.success("Signed in with Google");
-        finish();
-      })
-      .catch((error) => appToast.error(authErrorMessage(error)))
-      .finally(() => setSubmitting(false));
+    // Persist return path across the full-page Google redirect.
+    try {
+      sessionStorage.setItem("authReturnTo", returnTo);
+    } catch {
+      /* ignore */
+    }
+    void loginWithGoogle().catch((error) => {
+      appToast.error(authErrorMessage(error));
+      setSubmitting(false);
+    });
   };
 
   return (
