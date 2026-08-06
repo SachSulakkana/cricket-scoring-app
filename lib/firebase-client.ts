@@ -20,35 +20,68 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-function getFirebaseApp(): FirebaseApp {
-  if (getApps().length > 0) return getApps()[0]!;
-  return initializeApp(firebaseConfig);
+export function isFirebaseConfigured(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.trim() &&
+      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim()
+  );
 }
 
-export const app = getFirebaseApp();
-export const auth: Auth = getAuth(app);
-export const db: Firestore = getFirestore(app);
+let appInstance: FirebaseApp | null = null;
+let authInstance: Auth | null = null;
+let dbInstance: Firestore | null = null;
+
+function requireConfigured(): void {
+  if (!isFirebaseConfigured()) {
+    throw new Error(
+      "Firebase client is not configured. Set NEXT_PUBLIC_FIREBASE_API_KEY and NEXT_PUBLIC_FIREBASE_PROJECT_ID."
+    );
+  }
+}
+
+export function getFirebaseApp(): FirebaseApp {
+  requireConfigured();
+  if (appInstance) return appInstance;
+  if (getApps().length > 0) {
+    appInstance = getApps()[0]!;
+    return appInstance;
+  }
+  appInstance = initializeApp(firebaseConfig);
+  return appInstance;
+}
+
+export function getClientAuth(): Auth {
+  requireConfigured();
+  if (!authInstance) authInstance = getAuth(getFirebaseApp());
+  return authInstance;
+}
+
+export function getClientDb(): Firestore {
+  requireConfigured();
+  if (!dbInstance) dbInstance = getFirestore(getFirebaseApp());
+  return dbInstance;
+}
 
 export const googleProvider = new GoogleAuthProvider();
 
 export async function registerWithEmail(email: string, password: string) {
-  return createUserWithEmailAndPassword(auth, email, password);
+  return createUserWithEmailAndPassword(getClientAuth(), email, password);
 }
 
 export async function signInWithEmail(email: string, password: string) {
-  return signInWithEmailAndPassword(auth, email, password);
+  return signInWithEmailAndPassword(getClientAuth(), email, password);
 }
 
 export async function signInWithGoogle() {
-  return signInWithPopup(auth, googleProvider);
+  return signInWithPopup(getClientAuth(), googleProvider);
 }
 
 export async function signOut() {
-  return firebaseSignOut(auth);
+  return firebaseSignOut(getClientAuth());
 }
 
 export async function getIdToken(forceRefresh = false): Promise<string | null> {
-  const user = auth.currentUser;
+  const user = getClientAuth().currentUser;
   if (!user) return null;
   return user.getIdToken(forceRefresh);
 }

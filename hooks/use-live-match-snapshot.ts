@@ -2,16 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase-client";
+import { getClientDb, isFirebaseConfigured } from "@/lib/firebase-client";
 import type { LiveMatchDraft } from "@/lib/live-match-draft";
 import { useLiveMatchPoll } from "@/hooks/use-live-match-poll";
 import { usePublicLiveMatchPoll } from "@/hooks/use-public-live-match-poll";
 import { useLiveShareKeyFromUrl } from "@/hooks/use-live-share-key";
 import { useAuth } from "@/components/AuthProvider";
-
-function isFirebaseConfigured(): boolean {
-  return Boolean(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
-}
 
 function parseDraft(data: unknown): LiveMatchDraft | null {
   if (!data || typeof data !== "object") return null;
@@ -37,7 +33,7 @@ function useFirestoreLiveDraft(uid: string | null, enabled: boolean) {
     }
 
     setLoading(true);
-    const ref = doc(db, "users", uid, "live_match_draft", "current");
+    const ref = doc(getClientDb(), "users", uid, "live_match_draft", "current");
     const unsubscribe = onSnapshot(
       ref,
       (snapshot) => {

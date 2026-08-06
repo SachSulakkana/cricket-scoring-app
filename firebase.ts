@@ -1,1 +1,1 @@
-export { app, db } from "@/lib/firebase-client";
+export { getFirebaseApp as app, getClientDb as db } from "@/lib/firebase-client";

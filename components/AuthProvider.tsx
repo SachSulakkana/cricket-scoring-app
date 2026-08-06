@@ -11,8 +11,9 @@ import {
 } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import {
-  auth,
+  getClientAuth,
   getIdToken,
+  isFirebaseConfigured,
   registerWithEmail,
   signInWithEmail,
   signInWithGoogle,
@@ -52,7 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (next) => {
+    if (!isFirebaseConfigured()) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(getClientAuth(), (next) => {
       setUser(next);
       setLoading(false);
 
