@@ -31,6 +31,8 @@ function authErrorMessage(error: unknown): string {
       return "Google sign-in was cancelled";
     case "auth/popup-blocked":
       return "Pop-up blocked. Allow pop-ups for this site and try again";
+    case "auth/unauthorized-domain":
+      return "This domain is not allowed for sign-in. Add it in Firebase → Authentication → Settings → Authorized domains";
     default:
       return error instanceof Error ? error.message : "Authentication failed";
   }
@@ -61,12 +63,11 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
     router.refresh();
   };
 
-  // After Google redirect sign-in, land back on this page already authenticated.
+  // After Google redirect (or if already signed in with a session), leave auth pages.
   useEffect(() => {
-    if (!loading && user) {
-      router.replace(returnTo);
-      router.refresh();
-    }
+    if (loading || !user) return;
+    router.replace(returnTo);
+    router.refresh();
   }, [loading, user, returnTo, router]);
 
   const onSubmit = (event: FormEvent) => {

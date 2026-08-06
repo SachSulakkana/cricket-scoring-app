@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { onAuthStateChanged, type User } from "firebase/auth";
+import { getRedirectResult, onAuthStateChanged, type User } from "firebase/auth";
 import {
   getClientAuth,
   getIdToken,
@@ -48,6 +48,12 @@ async function clearSessionCookie() {
   await fetch("/api/auth/session", { method: "DELETE" });
 }
 
+/** Ensure server `__session` cookie exists before treating the user as signed in. */
+async function syncSessionForUser(user: User): Promise<void> {
+  const token = await user.getIdToken();
+  await createSessionCookie(token);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,26 +65,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(getClientAuth(), (next) => {
-      setUser(next);
-      setLoading(false);
+    const auth = getClientAuth();
+    let cancelled = false;
 
-      // Keep the httpOnly session cookie aligned with Firebase Auth.
-      // Do not block UI on this — roster APIs can use the Bearer ID token.
-      if (next) {
-        void next
-          .getIdToken()
-          .then((token) => createSessionCookie(token))
-          .catch((err: unknown) => {
-            console.error("Failed to refresh auth session cookie", err);
-          });
-      } else {
-        void clearSessionCookie().catch((err: unknown) => {
-          console.error("Failed to clear auth session cookie", err);
-        });
-      }
+    // Complete Google redirect sign-in (if any) before listening, so the
+    // session cookie exists before AuthForm navigates away from /login.
+    void getRedirectResult(auth)
+      .then(async (result) => {
+        if (result?.user) {
+          await syncSessionForUser(result.user);
+        }
+      })
+      .catch((err: unknown) => {
+        console.error("Google redirect sign-in failed", err);
+      });
+
+    const unsubscribe = onAuthStateChanged(auth, (next) => {
+      void (async () => {
+        try {
+          if (next) {
+            await syncSessionForUser(next);
+            if (!cancelled) {
+              setUser(next);
+              setLoading(false);
+            }
+          } else {
+            await clearSessionCookie().catch((err: unknown) => {
+              console.error("Failed to clear auth session cookie", err);
+            });
+            if (!cancelled) {
+              setUser(null);
+              setLoading(false);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to sync auth session cookie", err);
+          // Firebase client may be signed in, but without a session cookie
+          // middleware will bounce protected routes back to /login.
+          try {
+            await firebaseSignOut();
+            await clearSessionCookie();
+          } catch {
+            /* ignore */
+          }
+          if (!cancelled) {
+            setUser(null);
+            setLoading(false);
+          }
+        }
+      })();
     });
-    return unsubscribe;
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   const getAccessToken = useCallback(async (forceRefresh = false) => {
@@ -87,25 +128,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithEmail = useCallback(async (email: string, password: string) => {
     const cred = await signInWithEmail(email, password);
-    const token = await cred.user.getIdToken();
-    await createSessionCookie(token);
+    await syncSessionForUser(cred.user);
   }, []);
 
   const registerWithEmailPassword = useCallback(
     async (email: string, password: string) => {
       const cred = await registerWithEmail(email, password);
-      const token = await cred.user.getIdToken();
-      await createSessionCookie(token);
+      await syncSessionForUser(cred.user);
     },
     []
   );
 
   const loginWithGoogle = useCallback(async () => {
     const cred = await signInWithGoogle();
-    // false = redirect flow started; session cookie is created on return via onAuthStateChanged
+    // false = redirect flow started; session is synced on return
     if (!cred) return false;
-    const token = await cred.user.getIdToken();
-    await createSessionCookie(token);
+    await syncSessionForUser(cred.user);
     return true;
   }, []);
 
