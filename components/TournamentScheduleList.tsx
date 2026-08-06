@@ -28,6 +28,8 @@ interface TournamentScheduleListProps {
   rows: ScheduleFixtureRow[];
   fixtures: TournamentFixture[];
   nextFixtureId?: string;
+  /** When false, drag-to-reorder is disabled (e.g. viewing a past/upcoming stage). */
+  canReorder?: boolean;
   onPlayNow: (fixtureId: string) => void;
   onSummary: (fixtureId: string) => void;
   onReplay: (fixtureId: string, teamA: string, teamB: string) => void;
@@ -55,6 +57,7 @@ export default function TournamentScheduleList({
   rows,
   fixtures,
   nextFixtureId,
+  canReorder = true,
   onPlayNow,
   onSummary,
   onReplay,
@@ -69,7 +72,7 @@ export default function TournamentScheduleList({
   }, [rows]);
 
   const finishReorder = (activeId: string, targetId: string) => {
-    if (activeId === targetId) return;
+    if (!canReorder || activeId === targetId) return;
     const nextFixtures = reorderTournamentFixtures(fixtures, activeId, targetId);
     const map = new Map(orderedRows.map((row) => [row.id, row]));
     const nextRows = nextFixtures
@@ -82,6 +85,7 @@ export default function TournamentScheduleList({
   };
 
   const handleDragStart = (fixtureId: string) => {
+    if (!canReorder) return;
     setDragId(fixtureId);
     setOverId(fixtureId);
   };
@@ -94,7 +98,7 @@ export default function TournamentScheduleList({
     setOverId(null);
   };
 
-  const dragHandle = (
+  const dragHandle = canReorder ? (
     <span
       className="flex h-9 w-9 shrink-0 cursor-grab touch-manipulation items-center justify-center rounded border border-[oklch(0.35_0.05_295/0.5)] bg-[oklch(0.16_0.03_295/0.4)] text-[oklch(0.55_0.04_288)] active:cursor-grabbing"
       aria-hidden
@@ -102,16 +106,22 @@ export default function TournamentScheduleList({
     >
       <GripVertical className="h-4 w-4" />
     </span>
-  );
+  ) : null;
 
   return (
     <div className="space-y-3">
       <div className="tournament-game-section-head">
         <CricketEyebrow className="mb-0">Schedule matches</CricketEyebrow>
-        <span className="tournament-game-pill">Drag to reorder</span>
+        {canReorder ? (
+          <span className="tournament-game-pill">Drag to reorder</span>
+        ) : (
+          <span className="tournament-game-pill">View only</span>
+        )}
       </div>
       <p className="text-xs text-[oklch(0.55_0.03_255)]">
-        Drag matches to set play order. The highlighted match in the list is up next.
+        {canReorder
+          ? "Drag matches to set play order. The highlighted match in the list is up next."
+          : "Browsing another stage. Switch back to the current stage to play or reorder matches."}
       </p>
       <div className="space-y-3">
         {orderedRows.map((fx, idx) => {
@@ -120,14 +130,16 @@ export default function TournamentScheduleList({
           const isNextMatch = !fx.played && fx.id === nextFixtureId;
 
           const rowProps = {
-            draggable: true as const,
+            draggable: canReorder,
             onDragStart: (e: React.DragEvent) => {
+              if (!canReorder) return;
               e.dataTransfer.effectAllowed = "move";
               e.dataTransfer.setData("text/plain", fx.id);
               handleDragStart(fx.id);
             },
             onDragEnd: handleDragEnd,
             onDragOver: (e: React.DragEvent) => {
+              if (!canReorder) return;
               e.preventDefault();
               e.dataTransfer.dropEffect = "move";
               setOverId(fx.id);
@@ -136,6 +148,7 @@ export default function TournamentScheduleList({
               if (overId === fx.id) setOverId(null);
             },
             onDrop: (e: React.DragEvent) => {
+              if (!canReorder) return;
               e.preventDefault();
               if (dragId) finishReorder(dragId, fx.id);
               setDragId(null);

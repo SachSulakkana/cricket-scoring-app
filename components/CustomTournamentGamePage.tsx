@@ -419,6 +419,75 @@ function PointsTableBlock({
   );
 }
 
+function TournamentStageNavBar({
+  viewingStageIndex,
+  totalStages,
+  stageStyleLabel,
+  activeStageIndex,
+  onViewingStageChange,
+}: {
+  viewingStageIndex: number;
+  totalStages: number;
+  stageStyleLabel: string;
+  activeStageIndex: number;
+  onViewingStageChange: (index: number) => void;
+}) {
+  const stageStatus =
+    viewingStageIndex < activeStageIndex
+      ? "Completed"
+      : viewingStageIndex === activeStageIndex
+        ? "Current"
+        : "Upcoming";
+
+  const statusClass =
+    stageStatus === "Current"
+      ? "border-[oklch(0.62_0.12_85/0.55)] bg-[oklch(0.34_0.09_85/0.35)] text-[oklch(0.82_0.12_85)]"
+      : stageStatus === "Completed"
+        ? "border-[oklch(0.45_0.08_295/0.5)] bg-[oklch(0.2_0.04_295/0.45)] text-[oklch(0.7_0.05_288)]"
+        : "border-[oklch(0.35_0.04_255)] bg-[oklch(0.14_0.02_255/0.5)] text-[oklch(0.55_0.03_255)]";
+
+  return (
+    <div className="tournament-stage-points-nav flex items-center gap-2 sm:gap-3">
+      <button
+        type="button"
+        disabled={viewingStageIndex <= 0}
+        onClick={() => onViewingStageChange(viewingStageIndex - 1)}
+        className="tournament-stage-points-nav__btn btn-12-exempt flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-[oklch(0.35_0.05_295/0.55)] bg-[oklch(0.16_0.03_295/0.5)] text-[var(--cricket-cream)] transition hover:border-[oklch(0.55_0.1_295/0.6)] disabled:cursor-not-allowed disabled:opacity-35 touch-manipulation"
+        aria-label="Previous stage"
+      >
+        <ChevronLeft className="h-5 w-5" aria-hidden />
+      </button>
+
+      <div className="min-w-0 flex-1 text-center px-1">
+        <p className="cricket-display text-sm sm:text-base font-semibold text-[var(--cricket-cream)]">
+          Stage {viewingStageIndex + 1} of {totalStages}
+        </p>
+        <p className="text-xs sm:text-sm text-[oklch(0.65_0.04_288)] mt-0.5">
+          {stageStyleLabel}
+        </p>
+        <span
+          className={cn(
+            "inline-flex mt-2 items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]",
+            statusClass
+          )}
+        >
+          {stageStatus}
+        </span>
+      </div>
+
+      <button
+        type="button"
+        disabled={viewingStageIndex >= totalStages - 1}
+        onClick={() => onViewingStageChange(viewingStageIndex + 1)}
+        className="tournament-stage-points-nav__btn btn-12-exempt flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-[oklch(0.35_0.05_295/0.55)] bg-[oklch(0.16_0.03_295/0.5)] text-[var(--cricket-cream)] transition hover:border-[oklch(0.55_0.1_295/0.6)] disabled:cursor-not-allowed disabled:opacity-35 touch-manipulation"
+        aria-label="Next stage"
+      >
+        <ChevronRight className="h-5 w-5" aria-hidden />
+      </button>
+    </div>
+  );
+}
+
 function TournamentStagePointsNavigator({
   preset,
   activeStageIndex,
@@ -436,7 +505,6 @@ function TournamentStagePointsNavigator({
   mappedFixtures: FixtureWithTeams[];
   matchPointsConfig: { totalOvers: number; ballsPerOver: number };
 }) {
-  const totalStages = preset.stages.length;
   const stage = preset.stages[viewingStageIndex];
   const style = stage?.style ?? "round-robin";
   const stageFixtures = mappedFixtures.filter(
@@ -449,13 +517,6 @@ function TournamentStagePointsNavigator({
       : viewingStageIndex === activeStageIndex
         ? "Current"
         : "Upcoming";
-
-  const statusClass =
-    stageStatus === "Current"
-      ? "border-[oklch(0.62_0.12_85/0.55)] bg-[oklch(0.34_0.09_85/0.35)] text-[oklch(0.82_0.12_85)]"
-      : stageStatus === "Completed"
-        ? "border-[oklch(0.45_0.08_295/0.5)] bg-[oklch(0.2_0.04_295/0.45)] text-[oklch(0.7_0.05_288)]"
-        : "border-[oklch(0.35_0.04_255)] bg-[oklch(0.14_0.02_255/0.5)] text-[oklch(0.55_0.03_255)]";
 
   let body: ReactNode;
 
@@ -491,45 +552,13 @@ function TournamentStagePointsNavigator({
 
   return (
     <div className="space-y-3">
-      <div className="tournament-stage-points-nav flex items-center gap-2 sm:gap-3">
-        <button
-          type="button"
-          disabled={viewingStageIndex <= 0}
-          onClick={() => onViewingStageChange(viewingStageIndex - 1)}
-          className="tournament-stage-points-nav__btn flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-[oklch(0.35_0.05_295/0.55)] bg-[oklch(0.16_0.03_295/0.5)] text-[var(--cricket-cream)] transition hover:border-[oklch(0.55_0.1_295/0.6)] disabled:cursor-not-allowed disabled:opacity-35 touch-manipulation"
-          aria-label="Previous stage"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-
-        <div className="min-w-0 flex-1 text-center px-1">
-          <p className="cricket-display text-sm sm:text-base font-semibold text-[var(--cricket-cream)]">
-            Stage {viewingStageIndex + 1} of {totalStages}
-          </p>
-          <p className="text-xs sm:text-sm text-[oklch(0.65_0.04_288)] mt-0.5">
-            {formatStageStyle(style)}
-          </p>
-          <span
-            className={cn(
-              "inline-flex mt-2 items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]",
-              statusClass
-            )}
-          >
-            {stageStatus}
-          </span>
-        </div>
-
-        <button
-          type="button"
-          disabled={viewingStageIndex >= totalStages - 1}
-          onClick={() => onViewingStageChange(viewingStageIndex + 1)}
-          className="tournament-stage-points-nav__btn flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-[oklch(0.35_0.05_295/0.55)] bg-[oklch(0.16_0.03_295/0.5)] text-[var(--cricket-cream)] transition hover:border-[oklch(0.55_0.1_295/0.6)] disabled:cursor-not-allowed disabled:opacity-35 touch-manipulation"
-          aria-label="Next stage"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
-      </div>
-
+      <TournamentStageNavBar
+        viewingStageIndex={viewingStageIndex}
+        totalStages={preset.stages.length}
+        stageStyleLabel={formatStageStyle(style)}
+        activeStageIndex={activeStageIndex}
+        onViewingStageChange={onViewingStageChange}
+      />
       {body}
     </div>
   );
@@ -589,8 +618,19 @@ export default function CustomTournamentGamePage({
   const activeMapped = mappedFixtures.filter(
     (fx) => fx.fixture.stageIndex === activeStageIndex && isPlayable(fx)
   );
+  const safeViewingStageIndex = preset
+    ? Math.min(viewingStageIndex, preset.stages.length - 1)
+    : activeStageIndex;
+  const viewingStageConfig = preset?.stages[safeViewingStageIndex];
+  const viewingMapped = mappedFixtures.filter(
+    (fx) => fx.fixture.stageIndex === safeViewingStageIndex && isPlayable(fx)
+  );
+  const viewingFixtures = fixtures.filter(
+    (fx) => fx.stageIndex === safeViewingStageIndex
+  );
+  const isViewingActiveStage = safeViewingStageIndex === activeStageIndex;
   const nextFixture = activeMapped.find((fx) => !fx.played);
-  const nextFixtureId = nextFixture?.id;
+  const nextFixtureId = isViewingActiveStage ? nextFixture?.id : undefined;
   const championTeam = tournament.championTeamId
     ? teams.find((t) => t.id === tournament.championTeamId)
     : undefined;
@@ -620,9 +660,6 @@ export default function CustomTournamentGamePage({
       .finally(() => setExportingPdf(false));
   };
 
-  const activeFixtures = fixtures.filter(
-    (fx) => fx.stageIndex === activeStageIndex
-  );
   const summaryFx = summaryFixtureId
     ? mappedFixtures.find((fx) => fx.id === summaryFixtureId)
     : undefined;
@@ -733,22 +770,42 @@ export default function CustomTournamentGamePage({
             </TabsList>
 
             <TabsContent value="schedule" className="space-y-3">
-              <TournamentScheduleList
-                rows={activeMapped}
-                fixtures={activeFixtures}
-                nextFixtureId={nextFixtureId}
-                onPlayNow={onPlayNow}
-                onSummary={setSummaryFixtureId}
-                onReplay={(id, teamA, teamB) =>
-                  setReplayTarget({ id, teamA, teamB })
-                }
-                onReorderFixtures={(reorderedActive) => {
-                  const other = fixtures.filter(
-                    (fx) => fx.stageIndex !== activeStageIndex
-                  );
-                  onReorderFixtures([...other, ...reorderedActive]);
-                }}
-              />
+              {preset ? (
+                <TournamentStageNavBar
+                  viewingStageIndex={safeViewingStageIndex}
+                  totalStages={preset.stages.length}
+                  stageStyleLabel={formatStageStyle(
+                    viewingStageConfig?.style ?? "round-robin"
+                  )}
+                  activeStageIndex={activeStageIndex}
+                  onViewingStageChange={setViewingStageIndex}
+                />
+              ) : null}
+              {viewingMapped.length === 0 ? (
+                <div className="rounded-md border border-dashed border-[oklch(0.35_0.04_255)] p-3 text-sm text-[oklch(0.55_0.03_255)]">
+                  {safeViewingStageIndex > activeStageIndex
+                    ? "This stage has not started yet. Finish the previous stage to unlock it."
+                    : "No fixtures recorded for this stage yet."}
+                </div>
+              ) : (
+                <TournamentScheduleList
+                  rows={viewingMapped}
+                  fixtures={viewingFixtures}
+                  nextFixtureId={nextFixtureId}
+                  canReorder={isViewingActiveStage}
+                  onPlayNow={onPlayNow}
+                  onSummary={setSummaryFixtureId}
+                  onReplay={(id, teamA, teamB) =>
+                    setReplayTarget({ id, teamA, teamB })
+                  }
+                  onReorderFixtures={(reorderedStage) => {
+                    const other = fixtures.filter(
+                      (fx) => fx.stageIndex !== safeViewingStageIndex
+                    );
+                    onReorderFixtures([...other, ...reorderedStage]);
+                  }}
+                />
+              )}
             </TabsContent>
 
             <TabsContent value="points" className="space-y-3">
@@ -764,10 +821,7 @@ export default function CustomTournamentGamePage({
                 <TournamentStagePointsNavigator
                   preset={preset}
                   activeStageIndex={activeStageIndex}
-                  viewingStageIndex={Math.min(
-                    viewingStageIndex,
-                    preset.stages.length - 1
-                  )}
+                  viewingStageIndex={safeViewingStageIndex}
                   onViewingStageChange={setViewingStageIndex}
                   teams={teams}
                   mappedFixtures={mappedFixtures}

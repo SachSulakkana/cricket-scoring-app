@@ -8,7 +8,7 @@ export interface LiveMatchMeta {
   tournamentId?: string;
   fixtureId?: string;
   label?: string;
-  /** Set when a tournament match finishes — score bar uses this for COMING UP NEXT. */
+  /** Set when a tournament match starts — score bar / overlays use this for COMING UP NEXT. */
   comingUpNextLabel?: string | null;
 }
 
