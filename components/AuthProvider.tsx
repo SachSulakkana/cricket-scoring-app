@@ -26,7 +26,8 @@ type AuthContextValue = {
   getAccessToken: (forceRefresh?: boolean) => Promise<string | null>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   registerWithEmailPassword: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  /** Resolves true when sign-in finished in-page (popup). False if redirect started. */
+  loginWithGoogle: () => Promise<boolean>;
   logout: () => Promise<void>;
 };
 
@@ -49,8 +50,10 @@ async function clearSessionCookie() {
 }
 
 async function syncSessionForUser(user: User): Promise<void> {
+  console.log("[auth] syncing session cookie for", user.uid);
   const token = await user.getIdToken();
   await createSessionCookie(token);
+  console.log("[auth] session cookie created");
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -59,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isFirebaseConfigured()) {
+      console.warn("[auth] Firebase not configured");
       setUser(null);
       setLoading(false);
       return;
@@ -67,45 +71,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const auth = getClientAuth();
     let cancelled = false;
     let epoch = 0;
+    let redirectSignedIn = false;
 
-    void getRedirectResult(auth)
+    // Must resolve before treating "null" as signed-out, or we wipe the session
+    // while Google redirect completion is still pending.
+    const redirectReady = getRedirectResult(auth)
       .then(async (result) => {
-        if (!result?.user || cancelled) return;
+        console.log(
+          "[auth] getRedirectResult",
+          result?.user ? { uid: result.user.uid, email: result.user.email } : null
+        );
+        if (!result?.user || cancelled) return result;
+        redirectSignedIn = true;
         await syncSessionForUser(result.user);
         if (!cancelled) {
           setUser(result.user);
           setLoading(false);
         }
+        return result;
       })
       .catch((err: unknown) => {
-        console.error("Google redirect sign-in failed", err);
+        console.error("[auth] getRedirectResult failed", err);
+        return null;
       });
 
     const unsubscribe = onAuthStateChanged(auth, (next) => {
       const myEpoch = ++epoch;
+      console.log("[auth] onAuthStateChanged", {
+        uid: next?.uid ?? null,
+        email: next?.email ?? null,
+        epoch: myEpoch,
+      });
 
-      // Keep HomePage from treating "cookie set, React user not yet" as logged out.
       if (next) {
         setLoading(true);
       }
 
       void (async () => {
         try {
-          if (next) {
-            await syncSessionForUser(next);
+          if (!next) {
+            await redirectReady;
             if (cancelled || myEpoch !== epoch) return;
-            setUser(next);
-            setLoading(false);
-          } else {
+            if (auth.currentUser || redirectSignedIn) {
+              console.log("[auth] ignore signed-out event; user present after redirect");
+              return;
+            }
+            console.log("[auth] clearing session (signed out)");
             await clearSessionCookie().catch((err: unknown) => {
-              console.error("Failed to clear auth session cookie", err);
+              console.error("[auth] Failed to clear auth session cookie", err);
             });
             if (cancelled || myEpoch !== epoch) return;
             setUser(null);
             setLoading(false);
+            return;
           }
+
+          await syncSessionForUser(next);
+          if (cancelled || myEpoch !== epoch) return;
+          setUser(next);
+          setLoading(false);
         } catch (err) {
-          console.error("Failed to sync auth session cookie", err);
+          console.error("[auth] Failed to sync auth session cookie", err);
           if (cancelled || myEpoch !== epoch) return;
           try {
             await firebaseSignOut();
@@ -148,8 +174,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const loginWithGoogle = useCallback(async () => {
-    // Navigates away to Google; session is created on return via getRedirectResult.
-    await signInWithGoogle();
+    const cred = await signInWithGoogle();
+    if (!cred) {
+      console.log("[auth] redirect started; waiting for return");
+      return false;
+    }
+    console.log("[auth] popup completed", cred.user.uid);
+    await syncSessionForUser(cred.user);
+    setUser(cred.user);
+    setLoading(false);
+    return true;
   }, []);
 
   const logout = useCallback(async () => {

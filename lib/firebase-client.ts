@@ -4,10 +4,12 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signInWithRedirect,
   signOut as firebaseSignOut,
   type Auth,
   type User,
+  type UserCredential,
 } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 
@@ -64,6 +66,16 @@ export function getClientDb(): Firestore {
 
 export const googleProvider = new GoogleAuthProvider();
 
+function preferGooglePopup(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return (
+    window.location.protocol === "http:" ||
+    host === "localhost" ||
+    host === "127.0.0.1"
+  );
+}
+
 export async function registerWithEmail(email: string, password: string) {
   return createUserWithEmailAndPassword(getClientAuth(), email, password);
 }
@@ -73,11 +85,19 @@ export async function signInWithEmail(email: string, password: string) {
 }
 
 /**
- * Full-page Google sign-in (no popup). The current page navigates away;
- * completion is handled via getRedirectResult / onAuthStateChanged on return.
+ * Localhost/HTTP: popup (redirect is flaky across firebaseapp.com ↔ localhost).
+ * HTTPS: full-page redirect (popups are often blocked).
+ * Returns null when a redirect was started; completion via getRedirectResult.
  */
-export async function signInWithGoogle(): Promise<void> {
-  await signInWithRedirect(getClientAuth(), googleProvider);
+export async function signInWithGoogle(): Promise<UserCredential | null> {
+  const auth = getClientAuth();
+  if (preferGooglePopup()) {
+    console.log("[auth] Google sign-in: popup");
+    return signInWithPopup(auth, googleProvider);
+  }
+  console.log("[auth] Google sign-in: redirect");
+  await signInWithRedirect(auth, googleProvider);
+  return null;
 }
 
 export async function signOut() {

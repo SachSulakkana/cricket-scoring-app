@@ -63,7 +63,10 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
 
   // After Google redirect (or refresh while already signed in), leave auth pages.
   useEffect(() => {
-    if (loading || !user) return;
+    if (loading || !user) {
+      console.log("[auth] AuthForm wait", { loading, hasUser: Boolean(user) });
+      return;
+    }
     let target = returnTo;
     try {
       const saved = sessionStorage.getItem("authReturnTo");
@@ -74,6 +77,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
     } catch {
       /* ignore */
     }
+    console.log("[auth] AuthForm redirecting to", target);
     window.location.replace(target);
   }, [loading, user, returnTo]);
 
@@ -111,10 +115,20 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
     } catch {
       /* ignore */
     }
-    void loginWithGoogle().catch((error) => {
-      appToast.error(authErrorMessage(error));
-      setSubmitting(false);
-    });
+    void loginWithGoogle()
+      .then((completedInPage) => {
+        console.log("[auth] loginWithGoogle done", { completedInPage });
+        if (!completedInPage) {
+          // Redirect flow: page navigates away; keep submitting state.
+          return;
+        }
+        appToast.success("Signed in");
+        finish();
+      })
+      .catch((error) => {
+        appToast.error(authErrorMessage(error));
+        setSubmitting(false);
+      });
   };
 
   return (
