@@ -6,12 +6,13 @@ import type { InningsData, Team } from "@/lib/cricket-types";
 import {
   calculateExtras,
   calculateInningsTotal,
+  formatDismissalShort,
   getBowlerBallByBall,
+  getEffectiveDismissalBall,
 } from "@/lib/scorecard-stats";
 import {
   calculateOvers,
   calculateRunRate,
-  formatDismissalShort,
   getBattingDisplay,
   getInningsHeader,
   getBowlingRows,
@@ -66,10 +67,10 @@ export function SpectatorInningsBattingTable({
         </thead>
         <tbody>
           {battingRows.map((row) => {
-            const dismissalBall = innings.balls.find(
-              (ball) =>
-                ball.dismissal !== "none" &&
-                ball.dismissedPlayer === row.name
+            const dismissalBall = getEffectiveDismissalBall(
+              innings,
+              row.name,
+              row.playerId
             );
             const isAtCrease =
               atCrease.has(row.playerId) && row.dismissal === "not out";

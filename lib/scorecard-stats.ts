@@ -51,7 +51,6 @@ export function calculateBatting(innings: InningsData | null, battingTeam: Team)
     let balls = 0;
     let fours = 0;
     let sixes = 0;
-    let dismissal = "not out";
 
     innings.balls.forEach((ball) => {
       if (ball.batsmanName !== player.name) return;
@@ -67,23 +66,11 @@ export function calculateBatting(innings: InningsData | null, battingTeam: Team)
     });
 
     const strikeRate = balls > 0 ? ((runs * 100) / balls).toFixed(2) : "0.00";
-
-    const dismissalBall = innings.balls.find(
-      (ball) => ball.dismissal !== "none" && ball.dismissedPlayer === player.name
+    const dismissal = formatBattingDismissalStatus(
+      innings,
+      player.name,
+      player.id
     );
-    if (dismissalBall) {
-      if (dismissalBall.dismissal === "bowled")
-        dismissal = `Bowled by ${dismissalBall.bowlerName}`;
-      else if (dismissalBall.dismissal === "lbw")
-        dismissal = `LBW by ${dismissalBall.bowlerName}`;
-      else if (dismissalBall.dismissal === "caught")
-        dismissal = `Caught by ${dismissalBall.fielderName || "Unknown"}, bowled by ${dismissalBall.bowlerName}`;
-      else if (dismissalBall.dismissal === "stumped")
-        dismissal = `Stumped by ${dismissalBall.fielderName || "Unknown"}, bowled by ${dismissalBall.bowlerName}`;
-      else if (dismissalBall.dismissal === "retired-hurt")
-        dismissal = "Retired hurt";
-      else dismissal = `Run out by ${dismissalBall.fielderName || "Unknown"}`;
-    }
 
     return {
       name: player.name,
@@ -216,6 +203,60 @@ export function formatDismissalShort(ball: BallData): string {
     return `run out (${ball.fielderName || "?"})`;
   if (ball.dismissal === "retired-hurt") return "retired hurt";
   return ball.dismissal;
+}
+
+/**
+ * Effective dismissal for scorecard status. Retired-hurt is cleared to not out
+ * once the batter returns (at the crease or has faced again after RH).
+ */
+export function getEffectiveDismissalBall(
+  innings: InningsData,
+  playerName: string,
+  playerId?: string
+): BallData | null {
+  const dismissalBalls = innings.balls.filter(
+    (ball) => ball.dismissal !== "none" && ball.dismissedPlayer === playerName
+  );
+  if (dismissalBalls.length === 0) return null;
+
+  const last = dismissalBalls[dismissalBalls.length - 1]!;
+  if (last.dismissal !== "retired-hurt") return last;
+
+  const lastIndex = innings.balls.lastIndexOf(last);
+  const facedAfterReturn = innings.balls
+    .slice(lastIndex + 1)
+    .some((ball) => ball.batsmanName === playerName);
+  const atCrease =
+    playerId != null &&
+    (innings.strikerPlayerId === playerId ||
+      innings.nonStrikerPlayerId === playerId);
+
+  if (facedAfterReturn || atCrease) return null;
+  return last;
+}
+
+export function formatBattingDismissalStatus(
+  innings: InningsData,
+  playerName: string,
+  playerId?: string
+): string {
+  const dismissalBall = getEffectiveDismissalBall(
+    innings,
+    playerName,
+    playerId
+  );
+  if (!dismissalBall) return "not out";
+
+  if (dismissalBall.dismissal === "bowled")
+    return `Bowled by ${dismissalBall.bowlerName}`;
+  if (dismissalBall.dismissal === "lbw")
+    return `LBW by ${dismissalBall.bowlerName}`;
+  if (dismissalBall.dismissal === "caught")
+    return `Caught by ${dismissalBall.fielderName || "Unknown"}, bowled by ${dismissalBall.bowlerName}`;
+  if (dismissalBall.dismissal === "stumped")
+    return `Stumped by ${dismissalBall.fielderName || "Unknown"}, bowled by ${dismissalBall.bowlerName}`;
+  if (dismissalBall.dismissal === "retired-hurt") return "Retired hurt";
+  return `Run out by ${dismissalBall.fielderName || "Unknown"}`;
 }
 
 export function getLegalBallCount(balls: BallData[]) {

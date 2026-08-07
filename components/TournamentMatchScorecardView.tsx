@@ -13,6 +13,7 @@ import {
   calculateOvers,
   formatDismissalShort,
   getBowlerBallByBall,
+  getEffectiveDismissalBall,
   getLegalBallCount,
   resolveBattingBowlingTeams,
 } from "@/lib/scorecard-stats";
@@ -99,10 +100,13 @@ export default function TournamentMatchScorecardView({
                 </tr>
               ) : (
                 battingRows.map((row) => {
-                  const dismissalBall = innings.balls.find(
-                    (ball) =>
-                      ball.dismissal !== "none" &&
-                      ball.dismissedPlayer === row.name
+                  const playerId = battingTeam.players.find(
+                    (p) => p.name === row.name
+                  )?.id;
+                  const dismissalBall = getEffectiveDismissalBall(
+                    innings,
+                    row.name,
+                    playerId
                   );
                   const dismissalShort = dismissalBall
                     ? formatDismissalShort(dismissalBall)

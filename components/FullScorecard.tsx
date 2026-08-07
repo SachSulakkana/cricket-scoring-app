@@ -11,6 +11,11 @@ import {
 } from "@/lib/cricket-types";
 import { useCricket } from "@/lib/cricket-context";
 import { hasPersistedSuperOver } from "@/lib/match-snapshot";
+import {
+  formatBattingDismissalStatus,
+  formatDismissalShort,
+  getEffectiveDismissalBall,
+} from "@/lib/scorecard-stats";
 import { isRegularInningsTied } from "@/lib/super-over";
 import { cn } from "@/lib/utils";
 
@@ -46,19 +51,6 @@ function abbreviateTeamName(name: string): string {
   const letters = name.replace(/[^a-zA-Z]/g, "");
   if (letters.length >= 3) return letters.slice(0, 3).toUpperCase();
   return name.slice(0, 3).toUpperCase();
-}
-
-function formatDismissalShort(ball: BallData): string {
-  if (ball.dismissal === "bowled") return `b ${ball.bowlerName}`;
-  if (ball.dismissal === "lbw") return `lbw b ${ball.bowlerName}`;
-  if (ball.dismissal === "caught")
-    return `c ${ball.fielderName || "?"} b ${ball.bowlerName}`;
-  if (ball.dismissal === "stumped")
-    return `st ${ball.fielderName || "?"} b ${ball.bowlerName}`;
-  if (ball.dismissal === "run-out")
-    return `run out (${ball.fielderName || "?"})`;
-  if (ball.dismissal === "retired-hurt") return "retired hurt";
-  return ball.dismissal;
 }
 
 export default function FullScorecard({
@@ -125,7 +117,6 @@ export default function FullScorecard({
       let balls = 0;
       let fours = 0;
       let sixes = 0;
-      let dismissal = "not out";
 
       innings.balls.forEach((ball) => {
         if (ball.batsmanName !== player.name) return;
@@ -142,23 +133,11 @@ export default function FullScorecard({
         if (batterRuns === 6) sixes++;
       });
 
-      const dismissalBall = innings.balls.find(
-        (ball) =>
-          ball.dismissal !== "none" && ball.dismissedPlayer === player.name
+      const dismissal = formatBattingDismissalStatus(
+        innings,
+        player.name,
+        player.id
       );
-      if (dismissalBall) {
-        if (dismissalBall.dismissal === "bowled")
-          dismissal = `Bowled by ${dismissalBall.bowlerName}`;
-        else if (dismissalBall.dismissal === "lbw")
-          dismissal = `LBW by ${dismissalBall.bowlerName}`;
-        else if (dismissalBall.dismissal === "caught")
-          dismissal = `Caught by ${dismissalBall.fielderName || "Unknown"}, bowled by ${dismissalBall.bowlerName}`;
-        else if (dismissalBall.dismissal === "stumped")
-          dismissal = `Stumped by ${dismissalBall.fielderName || "Unknown"}, bowled by ${dismissalBall.bowlerName}`;
-        else if (dismissalBall.dismissal === "retired-hurt")
-          dismissal = "Retired hurt";
-        else dismissal = `Run out by ${dismissalBall.fielderName || "Unknown"}`;
-      }
 
       const strikeRate =
         balls > 0 ? ((runs * 100) / balls).toFixed(2) : "0.00";
@@ -376,10 +355,10 @@ export default function FullScorecard({
             </thead>
             <tbody>
               {battingRows.map((row) => {
-                const dismissalBall = innings.balls.find(
-                  (ball) =>
-                    ball.dismissal !== "none" &&
-                    ball.dismissedPlayer === row.name
+                const dismissalBall = getEffectiveDismissalBall(
+                  innings,
+                  row.name,
+                  row.playerId
                 );
                 const isAtCrease =
                   atCrease.has(row.playerId) && row.dismissal === "not out";
