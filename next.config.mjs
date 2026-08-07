@@ -15,6 +15,18 @@ const nextConfig = {
       },
     ];
   },
+  // Same-origin Firebase Auth handler (fixes Google redirect on Vercel).
+  // Pair with NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<your-vercel-host> in production.
+  async rewrites() {
+    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim();
+    if (!projectId) return [];
+    return [
+      {
+        source: "/__/auth/:path*",
+        destination: `https://${projectId}.firebaseapp.com/__/auth/:path*`,
+      },
+    ];
+  },
   async headers() {
     return [
       {

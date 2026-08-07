@@ -7,6 +7,8 @@ const PUBLIC_PATHS = [routes.login, routes.register] as const;
 function isPublicPath(pathname: string): boolean {
   if ((PUBLIC_PATHS as readonly string[]).includes(pathname)) return true;
   if (pathname.startsWith("/_next")) return true;
+  // Firebase Auth handler proxied via next.config rewrites (Google redirect).
+  if (pathname.startsWith("/__/auth")) return true;
   if (pathname.startsWith("/api/auth/session")) return true;
   // OBS / spectator overlays — auth via share key on data APIs
   if (pathname === routes.live || pathname.startsWith(`${routes.live}/`)) {
