@@ -54,7 +54,11 @@ interface CricketContextType {
   getCurrentInningsData: () => InningsData | null;
   setOpeningBatsmen: (strikerId: string, nonStrikerId: string) => void;
   setOpeningBowler: (bowlerId: string) => void;
-  setNextBowler: (bowlerId: string) => void;
+  changeCurrentBowler: (bowlerId: string) => void;
+  setNextBowler: (
+    bowlerId: string,
+    options?: { resetOverBowlers?: boolean }
+  ) => void;
   setNextBatsman: (playerId: string, isStriker: boolean) => void;
   swapStrike: () => void;
   acceptMatchDraw: () => void;
@@ -202,8 +206,19 @@ export function CricketProvider({ children }: { children: React.ReactNode }) {
     (bowlerId: string) => dispatch(matchActions.setOpeningBowler(bowlerId)),
     [dispatch]
   );
+  const changeCurrentBowler = useCallback(
+    (bowlerId: string) =>
+      dispatch(matchActions.changeCurrentBowler(bowlerId)),
+    [dispatch]
+  );
   const setNextBowler = useCallback(
-    (bowlerId: string) => dispatch(matchActions.setNextBowler(bowlerId)),
+    (bowlerId: string, options?: { resetOverBowlers?: boolean }) =>
+      dispatch(
+        matchActions.setNextBowler({
+          bowlerId,
+          resetOverBowlers: options?.resetOverBowlers,
+        })
+      ),
     [dispatch]
   );
   const setNextBatsman = useCallback(
@@ -265,6 +280,7 @@ export function CricketProvider({ children }: { children: React.ReactNode }) {
     getCurrentInningsData,
     setOpeningBatsmen,
     setOpeningBowler,
+    changeCurrentBowler,
     setNextBowler,
     setNextBatsman,
     swapStrike,

@@ -102,6 +102,9 @@ function normalizeInningsData(raw: unknown): InningsData | null {
     nonStrikerPlayerId: r.nonStrikerPlayerId ?? "",
     currentBowlerPlayerId: r.currentBowlerPlayerId ?? "",
     lastBowlerPlayerId: r.lastBowlerPlayerId,
+    currentOverBowlerPlayerIds: Array.isArray(r.currentOverBowlerPlayerIds)
+      ? r.currentOverBowlerPlayerIds.filter((id): id is string => typeof id === "string")
+      : [],
   };
 }
 

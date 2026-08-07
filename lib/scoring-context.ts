@@ -24,6 +24,7 @@ function emptyInnings(team: Team): InningsData {
     strikerPlayerId: "",
     nonStrikerPlayerId: "",
     currentBowlerPlayerId: "",
+    currentOverBowlerPlayerIds: [],
   };
 }
 

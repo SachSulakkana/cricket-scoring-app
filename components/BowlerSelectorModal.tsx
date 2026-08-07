@@ -23,21 +23,62 @@ function bowlingStyleShort(style: Player["bowlingStyle"]): string {
   return BOWLING_STYLE_SHORT[style] ?? style;
 }
 
+export type BowlerSelectorMode =
+  | "end-of-over"
+  | "change-pre-over"
+  | "change-mid-over";
+
 interface BowlerSelectorModalProps {
   players: Player[];
+  /** @deprecated Prefer disabledPlayerIds */
   disabledPlayerId?: string;
+  disabledPlayerIds?: string[];
+  mode?: BowlerSelectorMode;
   onSubmit: (bowlerId: string) => void;
+  onCancel?: () => void;
 }
 
 export default function BowlerSelectorModal({
   players,
   disabledPlayerId,
+  disabledPlayerIds,
+  mode = "end-of-over",
   onSubmit,
+  onCancel,
 }: BowlerSelectorModalProps) {
   const [selectedBowler, setSelectedBowler] = useState<string | null>(null);
 
+  const blockedIds = new Set([
+    ...(disabledPlayerIds ?? []),
+    ...(disabledPlayerId ? [disabledPlayerId] : []),
+  ]);
+
+  const title =
+    mode === "change-mid-over"
+      ? "Replace bowler"
+      : mode === "change-pre-over"
+        ? "Change bowler"
+        : "End of over — select next bowler";
+
+  const description =
+    mode === "change-mid-over"
+      ? "The current bowler cannot continue. Select a replacement to finish this over. Bowlers who already bowled this over or the previous over cannot be selected."
+      : mode === "change-pre-over"
+        ? "Select who will bowl this over. The previous over’s bowler cannot bowl consecutive overs."
+        : "The previous bowler cannot bowl consecutive overs. Select a new bowler to continue.";
+
+  const submitLabel =
+    mode === "change-mid-over"
+      ? "Confirm replacement"
+      : mode === "change-pre-over"
+        ? "Confirm bowler"
+        : "Start next over";
+
+  const disabledBadge =
+    mode === "end-of-over" ? "LAST OVER" : "UNAVAILABLE";
+
   const getPlayerCard = (player: Player) => {
-    const isDisabled = disabledPlayerId === player.id;
+    const isDisabled = blockedIds.has(player.id);
     const isSelected = selectedBowler === player.id;
 
     return (
@@ -63,7 +104,7 @@ export default function BowlerSelectorModal({
         )}
         {isDisabled && (
           <span className="mb-1 text-[0.6rem] font-bold leading-none tracking-wide text-[oklch(0.5_0.03_255)] sm:text-[0.65rem]">
-            LAST OVER
+            {disabledBadge}
           </span>
         )}
 
@@ -90,26 +131,24 @@ export default function BowlerSelectorModal({
   };
 
   const isSubmitEnabled = selectedBowler !== null;
+  const canCancel = mode !== "end-of-over" && Boolean(onCancel);
 
   return (
     <div className="cricket-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
       <Card className="cricket-modal w-full max-w-2xl gap-0 border-0 py-0 shadow-none">
         <CardHeader className="px-5 pt-5">
           <CardTitle className="cricket-display text-[var(--cricket-cream)]">
-            End of over — select next bowler
+            {title}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex max-h-[min(80dvh,44rem)] flex-col gap-4 px-5 pb-5">
-          <p className="text-sm text-[oklch(0.65_0.03_255)]">
-            The previous bowler cannot bowl consecutive overs. Select a new bowler to
-            continue.
-          </p>
+          <p className="text-sm text-[oklch(0.65_0.03_255)]">{description}</p>
 
           {selectedBowler && (
             <div className="rounded-lg border border-[oklch(0.32_0.04_255)] bg-[oklch(0.12_0.04_295)] p-3">
               <div className="flex items-center gap-2">
                 <span className="rounded bg-[oklch(0.48_0.12_295)] px-2 py-1 text-xs font-bold text-[var(--cricket-cream)]">
-                  NEXT BOWLER
+                  {mode === "end-of-over" ? "NEXT BOWLER" : "BOWLER"}
                 </span>
                 <span className="font-semibold text-[var(--cricket-cream)]">
                   {players.find((p) => p.id === selectedBowler)?.name}
@@ -124,7 +163,7 @@ export default function BowlerSelectorModal({
             </div>
           </div>
 
-          <div className="sticky bottom-0 border-t border-[oklch(0.28_0.04_288/0.45)] bg-[var(--cricket-surface)] pt-4">
+          <div className="sticky bottom-0 space-y-2 border-t border-[oklch(0.28_0.04_288/0.45)] bg-[var(--cricket-surface)] pt-4">
             <Button
               onClick={() => onSubmit(selectedBowler!)}
               disabled={!isSubmitEnabled}
@@ -135,8 +174,18 @@ export default function BowlerSelectorModal({
                   : "cursor-not-allowed bg-[oklch(0.2_0.03_255)] text-[oklch(0.5_0.03_255)]"
               )}
             >
-              Start next over
+              {submitLabel}
             </Button>
+            {canCancel ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                className="btn-12 btn-12--outline btn-12--md w-full"
+              >
+                Cancel
+              </Button>
+            ) : null}
           </div>
         </CardContent>
       </Card>

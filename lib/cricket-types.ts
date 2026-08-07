@@ -84,6 +84,8 @@ export interface InningsData {
   nonStrikerPlayerId: string;
   currentBowlerPlayerId: string;
   lastBowlerPlayerId?: string;
+  /** Bowlers who have delivered in the current (incomplete) over — blocked from the next over. */
+  currentOverBowlerPlayerIds?: string[];
 }
 
 export interface MatchState {

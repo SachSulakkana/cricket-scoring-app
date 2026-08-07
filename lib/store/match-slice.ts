@@ -1,5 +1,11 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { BallData, MatchConfig, MatchState, Team } from "@/lib/cricket-types";
+import type {
+  BallData,
+  InningsData,
+  MatchConfig,
+  MatchState,
+  Team,
+} from "@/lib/cricket-types";
 import { createSuperOverInnings } from "@/lib/scoring-context";
 import { SUPER_OVER_MAX_BALLS } from "@/lib/super-over";
 
@@ -79,6 +85,43 @@ function mutateActiveInnings(
   const innings = state[key];
   if (!innings) return;
   mutate(innings);
+}
+
+function getBowlingTeamForInnings(
+  state: MatchState,
+  innings: InningsData
+): Team {
+  if (innings.teamId === state.team1.id) return state.team2;
+  if (innings.teamId === state.team2.id) return state.team1;
+  return state.team2;
+}
+
+/** Rebuild participant ids from balls in the incomplete over (for undo). */
+function rebuildCurrentOverBowlerIds(state: MatchState, innings: InningsData) {
+  const ballsPerOver =
+    isSuperOverScoring(state) && state.superOver
+      ? state.superOver.ballsPerOver
+      : state.config?.ballsPerOver;
+  if (!ballsPerOver || ballsPerOver < 1) {
+    innings.currentOverBowlerPlayerIds = [];
+    return;
+  }
+
+  const legalCount = innings.balls.filter(
+    (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
+  ).length;
+  const currentOver = Math.floor(legalCount / ballsPerOver);
+  const bowlingTeam = getBowlingTeamForInnings(state, innings);
+  const nameToId = new Map(
+    bowlingTeam.players.map((player) => [player.name, player.id])
+  );
+  const ids: string[] = [];
+  for (const ball of innings.balls) {
+    if (ball.overNumber !== currentOver) continue;
+    const id = nameToId.get(ball.bowlerName);
+    if (id && !ids.includes(id)) ids.push(id);
+  }
+  innings.currentOverBowlerPlayerIds = ids;
 }
 
 const matchSlice = createSlice({
@@ -179,12 +222,19 @@ const matchSlice = createSlice({
     addBall(state, action: PayloadAction<BallData>) {
       mutateActiveInnings(state.matchState, (innings) => {
         innings.balls.push(action.payload);
+        const bowlerId = innings.currentBowlerPlayerId;
+        if (!bowlerId) return;
+        const ids = innings.currentOverBowlerPlayerIds ?? [];
+        if (!ids.includes(bowlerId)) {
+          innings.currentOverBowlerPlayerIds = [...ids, bowlerId];
+        }
       });
     },
     undoLastBall(state) {
       mutateActiveInnings(state.matchState, (innings) => {
         if (innings.balls.length === 0) return;
         innings.balls.pop();
+        rebuildCurrentOverBowlerIds(state.matchState, innings);
       });
     },
     switchInnings(state) {
@@ -208,12 +258,33 @@ const matchSlice = createSlice({
     setOpeningBowler(state, action: PayloadAction<string>) {
       mutateActiveInnings(state.matchState, (innings) => {
         innings.currentBowlerPlayerId = action.payload;
+        innings.currentOverBowlerPlayerIds = [];
       });
     },
-    setNextBowler(state, action: PayloadAction<string>) {
+    /** Re-pick bowler before any delivery in the over — preserves lastBowler. */
+    changeCurrentBowler(state, action: PayloadAction<string>) {
       mutateActiveInnings(state.matchState, (innings) => {
-        innings.lastBowlerPlayerId = innings.currentBowlerPlayerId;
         innings.currentBowlerPlayerId = action.payload;
+        innings.currentOverBowlerPlayerIds = [];
+      });
+    },
+    setNextBowler(
+      state,
+      action: PayloadAction<{ bowlerId: string; resetOverBowlers?: boolean }>
+    ) {
+      mutateActiveInnings(state.matchState, (innings) => {
+        const prevId = innings.currentBowlerPlayerId;
+        if (!action.payload.resetOverBowlers && prevId) {
+          const ids = innings.currentOverBowlerPlayerIds ?? [];
+          if (!ids.includes(prevId)) {
+            innings.currentOverBowlerPlayerIds = [...ids, prevId];
+          }
+        }
+        innings.lastBowlerPlayerId = prevId;
+        innings.currentBowlerPlayerId = action.payload.bowlerId;
+        if (action.payload.resetOverBowlers) {
+          innings.currentOverBowlerPlayerIds = [];
+        }
       });
     },
     setNextBatsman(

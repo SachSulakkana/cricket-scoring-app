@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { Pencil } from "lucide-react";
 import { useCricket } from "@/lib/cricket-context";
 import {
   countsAsBowlerWicket,
@@ -12,7 +13,9 @@ import { getDismissalReplacementEnd, getBatsmanBalls, getBatsmanRuns } from "@/l
 import DismissalModal from "./DismissalModal";
 import CricketLoader from "@/components/CricketLoader";
 import ReplacementBatsmanModal from "./ReplacementBatsmanModal";
-import BowlerSelectorModal from "./BowlerSelectorModal";
+import BowlerSelectorModal, {
+  type BowlerSelectorMode,
+} from "./BowlerSelectorModal";
 
 interface BallEntryProps {
   onOverComplete?: () => void;
@@ -26,10 +29,10 @@ export default function BallEntry({
   onUnlockAfterUndo,
 }: BallEntryProps) {
   const {
-    matchState,
     getActiveScoringContext,
     addBall,
     setNextBowler,
+    changeCurrentBowler,
     setNextBatsman,
     swapStrike,
     undoLastBall,
@@ -45,6 +48,9 @@ export default function BallEntry({
     isStriker: boolean;
   } | null>(null);
   const [showBowlerSelector, setShowBowlerSelector] = useState(false);
+  const [changeBowlerMode, setChangeBowlerMode] = useState<
+    Extract<BowlerSelectorMode, "change-pre-over" | "change-mid-over"> | null
+  >(null);
   const [pendingExtraType, setPendingExtraType] = useState<ExtraType | null>(null);
   const [overthrowBatRuns, setOverthrowBatRuns] = useState<number | null>(null);
   const [pendingRunOutDismissal, setPendingRunOutDismissal] = useState<{
@@ -324,9 +330,55 @@ export default function BallEntry({
   };
 
   const handleNextBowler = (bowlerId: string) => {
-    setNextBowler(bowlerId);
+    setNextBowler(bowlerId, { resetOverBowlers: true });
     setShowBowlerSelector(false);
   };
+
+  const handleChangeBowler = (bowlerId: string) => {
+    if (changeBowlerMode === "change-pre-over") {
+      changeCurrentBowler(bowlerId);
+    } else {
+      setNextBowler(bowlerId);
+    }
+    setChangeBowlerMode(null);
+  };
+
+  const hasDeliveryThisOver = useMemo(() => {
+    if (!currentInnings) return false;
+    return currentInnings.balls.some((ball) => ball.overNumber === currentOver);
+  }, [currentInnings, currentOver]);
+
+  const endOfOverDisabledIds = useMemo(() => {
+    if (!currentInnings) return [];
+    const participants = currentInnings.currentOverBowlerPlayerIds ?? [];
+    if (participants.length > 0) return participants;
+    return currentInnings.currentBowlerPlayerId
+      ? [currentInnings.currentBowlerPlayerId]
+      : [];
+  }, [currentInnings]);
+
+  const changeBowlerDisabledIds = useMemo(() => {
+    if (!currentInnings) return [];
+    const ids = new Set<string>();
+    if (currentInnings.currentBowlerPlayerId) {
+      ids.add(currentInnings.currentBowlerPlayerId);
+    }
+    if (currentInnings.lastBowlerPlayerId) {
+      ids.add(currentInnings.lastBowlerPlayerId);
+    }
+    if (changeBowlerMode === "change-mid-over") {
+      for (const id of currentInnings.currentOverBowlerPlayerIds ?? []) {
+        ids.add(id);
+      }
+    }
+    return [...ids];
+  }, [currentInnings, changeBowlerMode]);
+
+  const canChangeBowler =
+    !isSuperOver &&
+    !scoringLocked &&
+    !showBowlerSelector &&
+    changeBowlerMode === null;
 
   const handleExtraTypeClick = (extraType: ExtraType) => {
     if (scoringLocked) return;
@@ -423,14 +475,31 @@ export default function BallEntry({
             </div>
           </div>
 
-          <div className="cricket-bowler-panel">
-            <p className="cricket-panel-label text-[var(--cricket-gold)]">Bowler</p>
-            <p className="cricket-score text-xl text-[var(--cricket-cream)] mt-1">
-              {bowlerInfo.name}{" "}
-              <span className="text-[oklch(0.7_0.08_75)]">
-                ({bowlerStats.runsConceded}-{bowlerStats.wickets})
-              </span>
-            </p>
+          <div className="cricket-bowler-panel flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="cricket-panel-label text-[var(--cricket-gold)]">Bowler</p>
+              <p className="cricket-score text-xl text-[var(--cricket-cream)] mt-1">
+                {bowlerInfo.name}{" "}
+                <span className="text-[oklch(0.7_0.08_75)]">
+                  ({bowlerStats.runsConceded}-{bowlerStats.wickets})
+                </span>
+              </p>
+            </div>
+            {canChangeBowler ? (
+              <button
+                type="button"
+                aria-label="Change bowler"
+                title="Change bowler"
+                onClick={() =>
+                  setChangeBowlerMode(
+                    hasDeliveryThisOver ? "change-mid-over" : "change-pre-over"
+                  )
+                }
+                className="btn-12-exempt mt-0.5 shrink-0 border-0 bg-transparent p-1 text-[oklch(0.72_0.04_300)] shadow-none outline-none hover:bg-transparent hover:text-[var(--cricket-cream)]"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            ) : null}
           </div>
 
           <div>
@@ -548,8 +617,19 @@ export default function BallEntry({
       {showBowlerSelector && !isSuperOver && (
         <BowlerSelectorModal
           players={bowlingTeam.players}
-          disabledPlayerId={currentInnings.currentBowlerPlayerId}
+          mode="end-of-over"
+          disabledPlayerIds={endOfOverDisabledIds}
           onSubmit={handleNextBowler}
+        />
+      )}
+
+      {changeBowlerMode && !isSuperOver && (
+        <BowlerSelectorModal
+          players={bowlingTeam.players}
+          mode={changeBowlerMode}
+          disabledPlayerIds={changeBowlerDisabledIds}
+          onSubmit={handleChangeBowler}
+          onCancel={() => setChangeBowlerMode(null)}
         />
       )}
 
