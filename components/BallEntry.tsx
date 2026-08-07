@@ -5,6 +5,8 @@ import { Pencil } from "lucide-react";
 import { useCricket } from "@/lib/cricket-context";
 import {
   countsAsBowlerWicket,
+  countsAsDelivery,
+  countsAsLegalBall,
   countsAsWicket,
   DismissalType,
   ExtraType,
@@ -130,9 +132,8 @@ export default function BallEntry({
   }, [currentInnings.balls.length]);
 
   const currentLegalBallCount = useMemo(() => {
-    return currentInnings.balls.filter(
-      (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
-    ).length;
+    return currentInnings.balls.filter((ball) => countsAsLegalBall(ball))
+      .length;
   }, [currentInnings.balls]);
 
   const currentOver = useMemo(() => {
@@ -151,8 +152,8 @@ export default function BallEntry({
   }, [currentLegalBallCount, ballsPerOver]);
 
   const isInningsComplete = useMemo(() => {
-    const legalBalls = currentInnings.balls.filter(
-      (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
+    const legalBalls = currentInnings.balls.filter((ball) =>
+      countsAsLegalBall(ball)
     ).length;
     const wickets = currentInnings.balls.filter((ball) => countsAsWicket(ball.dismissal)).length;
     const maxWickets = scoring.maxWickets;
@@ -209,7 +210,10 @@ export default function BallEntry({
     // Even runs (0, 2, 4, 6) keep same strike
 
     // Only legal balls advance over progression.
-    const isLegalBall = extra !== "wide" && extra !== "no-ball";
+    const isLegalBall = countsAsLegalBall({
+      extra: extra as ExtraType,
+      dismissal: "none",
+    });
     const nextLegalBallCount = isLegalBall
       ? currentLegalBallCount + 1
       : currentLegalBallCount;
@@ -345,7 +349,10 @@ export default function BallEntry({
 
   const hasDeliveryThisOver = useMemo(() => {
     if (!currentInnings) return false;
-    return currentInnings.balls.some((ball) => ball.overNumber === currentOver);
+    return currentInnings.balls.some(
+      (ball) =>
+        ball.overNumber === currentOver && countsAsDelivery(ball)
+    );
   }, [currentInnings, currentOver]);
 
   const endOfOverDisabledIds = useMemo(() => {

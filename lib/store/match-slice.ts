@@ -6,6 +6,7 @@ import type {
   MatchState,
   Team,
 } from "@/lib/cricket-types";
+import { countsAsDelivery, countsAsLegalBall } from "@/lib/cricket-types";
 import { createSuperOverInnings } from "@/lib/scoring-context";
 import { SUPER_OVER_MAX_BALLS } from "@/lib/super-over";
 
@@ -107,8 +108,8 @@ function rebuildCurrentOverBowlerIds(state: MatchState, innings: InningsData) {
     return;
   }
 
-  const legalCount = innings.balls.filter(
-    (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
+  const legalCount = innings.balls.filter((ball) =>
+    countsAsLegalBall(ball)
   ).length;
   const currentOver = Math.floor(legalCount / ballsPerOver);
   const bowlingTeam = getBowlingTeamForInnings(state, innings);
@@ -118,6 +119,7 @@ function rebuildCurrentOverBowlerIds(state: MatchState, innings: InningsData) {
   const ids: string[] = [];
   for (const ball of innings.balls) {
     if (ball.overNumber !== currentOver) continue;
+    if (!countsAsDelivery(ball)) continue;
     const id = nameToId.get(ball.bowlerName);
     if (id && !ids.includes(id)) ids.push(id);
   }
@@ -222,6 +224,7 @@ const matchSlice = createSlice({
     addBall(state, action: PayloadAction<BallData>) {
       mutateActiveInnings(state.matchState, (innings) => {
         innings.balls.push(action.payload);
+        if (!countsAsDelivery(action.payload)) return;
         const bowlerId = innings.currentBowlerPlayerId;
         if (!bowlerId) return;
         const ids = innings.currentOverBowlerPlayerIds ?? [];

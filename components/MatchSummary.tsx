@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Database } from "lucide-react";
 import { useCricket } from "@/lib/cricket-context";
-import { countsAsWicket } from "@/lib/cricket-types";
+import { countsAsLegalBall, countsAsWicket } from "@/lib/cricket-types";
 import { getMatchResult } from "@/lib/match-result";
 import { getSuperOverTeamTotals, isRegularInningsTied } from "@/lib/super-over";
 import { buildPersistedMatchSnapshot, hasPersistedSuperOver } from "@/lib/match-snapshot";
@@ -92,7 +92,7 @@ export default function MatchSummary({
     innings.balls.forEach((ball) => {
       runs += ball.runs + (ball.extra !== "none" ? ball.extraRuns : 0);
       if (countsAsWicket(ball.dismissal)) wickets++;
-      if (ball.extra !== "wide" && ball.extra !== "no-ball") legalBalls++;
+      if (countsAsLegalBall(ball)) legalBalls++;
     });
 
     const ballsPerOver = matchState.config?.ballsPerOver || 6;

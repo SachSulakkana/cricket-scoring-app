@@ -1,7 +1,7 @@
 "use client";
 
 import { useCricket } from "@/lib/cricket-context";
-import { InningsData, BallData, countsAsWicket } from "@/lib/cricket-types";
+import { InningsData, BallData, countsAsDelivery, countsAsLegalBall, countsAsWicket } from "@/lib/cricket-types";
 import {
   CricketBroadcastCard,
   CricketEyebrow,
@@ -26,7 +26,7 @@ export default function Scoresheet({ innings }: ScoresheetProps) {
     innings.balls.forEach((ball) => {
       totalRuns += ball.runs + (ball.extra !== "none" ? ball.extraRuns : 0);
       if (countsAsWicket(ball.dismissal)) wickets++;
-      if (ball.extra !== "wide" && ball.extra !== "no-ball") legalBalls++;
+      if (countsAsLegalBall(ball)) legalBalls++;
     });
 
     return { totalRuns, wickets, legalBalls };
@@ -41,6 +41,7 @@ export default function Scoresheet({ innings }: ScoresheetProps) {
   const groupBallsByOver = () => {
     const overs: { [key: number]: BallData[] } = {};
     innings.balls.forEach((ball) => {
+      if (!countsAsDelivery(ball)) return;
       if (!overs[ball.overNumber]) {
         overs[ball.overNumber] = [];
       }
@@ -59,7 +60,6 @@ export default function Scoresheet({ innings }: ScoresheetProps) {
       caught: "c",
       stumped: "st",
       "run-out": "run out",
-      "retired-hurt": "retired hurt",
     };
     return `${dismissalMap[ball.dismissal]} ${ball.dismissedPlayer || ""}`;
   };

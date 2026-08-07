@@ -27,6 +27,7 @@ import { routes } from "@/lib/app-routes";
 import { deriveLiveScoreView } from "@/lib/live-score-view";
 import { getMatchResult } from "@/lib/match-result";
 import type { MatchState } from "@/lib/cricket-types";
+import { countsAsDelivery } from "@/lib/cricket-types";
 import type { LiveMatchMeta } from "@/lib/store/match-slice";
 import {
   formatBallChip,
@@ -640,7 +641,9 @@ export default function SpectatorView() {
   const innings1Wickets = getInningsWickets(matchState.innings1);
   const innings2Runs = getInningsRuns(matchState.innings2);
   const innings2Wickets = getInningsWickets(matchState.innings2);
-  const recentBalls = currentInnings.balls.slice(-8);
+  const recentBalls = currentInnings.balls
+    .filter((ball) => countsAsDelivery(ball))
+    .slice(-8);
 
   const currentRuns = getInningsRuns(currentInnings);
   const currentWickets = getInningsWickets(currentInnings);

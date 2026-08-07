@@ -1,6 +1,8 @@
 import type { BallData, InningsData, MatchConfig, Team } from "./cricket-types";
 import {
   countsAsBowlerWicket,
+  countsAsDelivery,
+  countsAsLegalBall,
   countsAsWicket,
 } from "./cricket-types";
 import { formatWideNoBallChip } from "./spectator-live-stats";
@@ -37,9 +39,7 @@ export function calculateInningsTotal(innings: InningsData | null) {
 }
 
 export function calculateOvers(balls: BallData[], ballsPerOver: number) {
-  const legalBalls = balls.filter(
-    (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
-  ).length;
+  const legalBalls = balls.filter((ball) => countsAsLegalBall(ball)).length;
   return `${Math.floor(legalBalls / ballsPerOver)}.${legalBalls % ballsPerOver}`;
 }
 
@@ -60,7 +60,7 @@ export function calculateBatting(innings: InningsData | null, battingTeam: Team)
         ball.extra === "overthrow" ? ball.extraRuns : 0;
       const batterRuns = ball.runs + noBallBatRuns + overthrowRuns;
       runs += batterRuns;
-      if (ball.extra !== "wide" && ball.extra !== "no-ball") balls++;
+      if (countsAsLegalBall(ball)) balls++;
       if (batterRuns === 4) fours++;
       if (batterRuns === 6) sixes++;
     });
@@ -105,7 +105,8 @@ export function calculateBowling(
 
     innings.balls.forEach((ball) => {
       if (ball.bowlerName !== player.name) return;
-      const legalBall = ball.extra !== "wide" && ball.extra !== "no-ball";
+      if (ball.dismissal === "retired-hurt") return;
+      const legalBall = countsAsLegalBall(ball);
       if (legalBall) {
         balls++;
         byOver[ball.overNumber] = (byOver[ball.overNumber] || 0) + ball.runs;
@@ -153,7 +154,9 @@ export function calculateExtras(innings: InningsData | null) {
 
 export function getBowlerBallByBall(innings: InningsData, bowlerName: string) {
   return innings.balls
-    .filter((ball) => ball.bowlerName === bowlerName)
+    .filter(
+      (ball) => ball.bowlerName === bowlerName && countsAsDelivery(ball)
+    )
     .map((ball) => {
       if (countsAsWicket(ball.dismissal)) {
         if (ball.dismissal === "run-out") {
@@ -161,7 +164,6 @@ export function getBowlerBallByBall(innings: InningsData, bowlerName: string) {
         }
         return "W";
       }
-      if (ball.dismissal === "retired-hurt") return "RH";
       if (ball.extra === "wide") return formatWideNoBallChip(ball.extraRuns, "Wd");
       if (ball.extra === "no-ball") return formatWideNoBallChip(ball.extraRuns, "Nb");
       if (ball.extra === "bye") return `${ball.extraRuns}B`;
@@ -260,7 +262,5 @@ export function formatBattingDismissalStatus(
 }
 
 export function getLegalBallCount(balls: BallData[]) {
-  return balls.filter(
-    (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
-  ).length;
+  return balls.filter((ball) => countsAsLegalBall(ball)).length;
 }

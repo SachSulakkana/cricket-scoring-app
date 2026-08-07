@@ -15,7 +15,7 @@ import {
 import { computeStandings } from "./tournament-stage-engine/standings";
 import { formatTournamentNrr } from "./tournament-nrr";
 import { buildTournamentPlayerStats } from "./tournament-stats";
-import { countsAsWicket } from "./cricket-types";
+import { countsAsLegalBall, countsAsWicket } from "./cricket-types";
 import { getMatchResult } from "./match-result";
 import { hasPersistedSuperOver } from "./match-snapshot";
 import {
@@ -183,8 +183,8 @@ function appendInningsSection(
 ): number {
   y = ensureSpace(doc, y, 24);
   const totals = calculateInningsTotal(innings);
-  const legalBalls = innings.balls.filter(
-    (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
+  const legalBalls = innings.balls.filter((ball) =>
+    countsAsLegalBall(ball)
   ).length;
   const overs = options?.useBallCount
     ? `${legalBalls}/${config.ballsPerOver} balls`

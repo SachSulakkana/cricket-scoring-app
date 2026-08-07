@@ -15,6 +15,24 @@ export function countsAsBowlerWicket(dismissal: DismissalType): boolean {
   return countsAsWicket(dismissal) && dismissal !== "run-out";
 }
 
+/** Retired hurt is not a delivery — excluded from overs, balls faced, and bowler balls. */
+export function countsAsDelivery(ball: {
+  dismissal: DismissalType;
+}): boolean {
+  return ball.dismissal !== "retired-hurt";
+}
+
+export function countsAsLegalBall(ball: {
+  extra: ExtraType;
+  dismissal: DismissalType;
+}): boolean {
+  return (
+    countsAsDelivery(ball) &&
+    ball.extra !== "wide" &&
+    ball.extra !== "no-ball"
+  );
+}
+
 export type ExtraType = "wide" | "no-ball" | "bye" | "leg-bye" | "overthrow" | "none";
 
 export type TournamentPreset = "T20" | "ODI" | "T10";

@@ -1,7 +1,7 @@
 "use client";
 
 import type { InningsData, BallData } from "@/lib/cricket-types";
-import { countsAsWicket } from "@/lib/cricket-types";
+import { countsAsDelivery, countsAsWicket } from "@/lib/cricket-types";
 import {
   CricketBroadcastCard,
   CricketEyebrow,
@@ -29,7 +29,6 @@ function getDismissalText(ball: BallData) {
     caught: "c",
     stumped: "st",
     "run-out": "run out",
-    "retired-hurt": "retired hurt",
   };
   return `${dismissalMap[ball.dismissal]} ${ball.dismissedPlayer || ""}`;
 }
@@ -46,6 +45,7 @@ export default function SpectatorScoresheet({
 
   const overGroups: Record<number, BallData[]> = {};
   innings.balls.forEach((ball) => {
+    if (!countsAsDelivery(ball)) return;
     if (!overGroups[ball.overNumber]) overGroups[ball.overNumber] = [];
     overGroups[ball.overNumber].push(ball);
   });

@@ -1,5 +1,5 @@
 import type { InningsData } from "./cricket-types";
-import { countsAsWicket } from "./cricket-types";
+import { countsAsLegalBall, countsAsWicket } from "./cricket-types";
 import type { TournamentFixtureResult, TournamentMatchSnapshot } from "./roster-types";
 
 export interface TeamNrrTotals {
@@ -44,8 +44,8 @@ function getOversFacedForNrr(
   totalOvers: number,
   ballsPerOver: number
 ): number {
-  const legalBalls = innings.balls.filter(
-    (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
+  const legalBalls = innings.balls.filter((ball) =>
+    countsAsLegalBall(ball)
   ).length;
   const wickets = getInningsWickets(innings);
   const isAllOut = maxWickets > 0 && wickets >= maxWickets;

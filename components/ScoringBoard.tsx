@@ -7,7 +7,7 @@ import {
   CricketScoreDisplay,
 } from "@/components/cricket-shell";
 import { useCricket } from "@/lib/cricket-context";
-import { countsAsWicket } from "@/lib/cricket-types";
+import { countsAsWicket, countsAsLegalBall } from "@/lib/cricket-types";
 import { isInningsComplete } from "@/lib/match-result";
 import {
   isRegularInningsTied,
@@ -65,9 +65,7 @@ export default function ScoringBoard({
 
   const getLegalBalls = (innings: typeof scoring.innings1) => {
     if (!innings) return 0;
-    return innings.balls.filter(
-      (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
-    ).length;
+    return innings.balls.filter((ball) => countsAsLegalBall(ball)).length;
   };
 
   const getOversTextFromBalls = (balls: number) => {

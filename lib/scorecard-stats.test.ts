@@ -134,4 +134,37 @@ describe("scorecard-stats", () => {
     );
     assert.equal(calculateBatting(returned, team)[0]?.dismissal, "not out");
   });
+
+  it("does not count retired hurt as a legal ball or ball faced", () => {
+    const rhInnings: InningsData = {
+      ...innings,
+      balls: [
+        {
+          id: "1",
+          runs: 2,
+          extra: "none",
+          extraRuns: 0,
+          dismissal: "none",
+          bowlerName: "Bowler",
+          batsmanName: "Striker",
+          ballNumber: 1,
+          overNumber: 0,
+        },
+        {
+          id: "2",
+          runs: 0,
+          extra: "none",
+          extraRuns: 0,
+          dismissal: "retired-hurt",
+          dismissedPlayer: "Striker",
+          bowlerName: "Bowler",
+          batsmanName: "Striker",
+          ballNumber: 2,
+          overNumber: 0,
+        },
+      ],
+    };
+    assert.equal(calculateOvers(rhInnings.balls, 6), "0.1");
+    assert.equal(calculateBatting(rhInnings, team)[0]?.balls, 1);
+  });
 });

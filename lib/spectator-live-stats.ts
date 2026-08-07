@@ -1,6 +1,8 @@
 import type { InningsData } from "./cricket-types";
 import {
   countsAsBowlerWicket,
+  countsAsDelivery,
+  countsAsLegalBall,
   countsAsWicket,
 } from "./cricket-types";
 
@@ -19,9 +21,7 @@ export function getInningsWickets(innings: InningsData | null): number {
 
 export function getLegalBalls(innings: InningsData | null): number {
   if (!innings) return 0;
-  return innings.balls.filter(
-    (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
-  ).length;
+  return innings.balls.filter((ball) => countsAsLegalBall(ball)).length;
 }
 
 export function formatOversFromLegalBalls(
@@ -144,7 +144,7 @@ export function getBatsmanBalls(
   if (!batsmanName) return 0;
   return innings.balls.reduce((count, ball) => {
     if (ball.batsmanName !== batsmanName) return count;
-    if (ball.extra === "wide") return count;
+    if (ball.extra === "wide" || ball.dismissal === "retired-hurt") return count;
     return count + 1;
   }, 0);
 }
@@ -156,10 +156,7 @@ export function getBowlerOversBowled(
 ): string {
   if (!bowlerName) return "0.0";
   const legal = innings.balls.filter(
-    (ball) =>
-      ball.bowlerName === bowlerName &&
-      ball.extra !== "wide" &&
-      ball.extra !== "no-ball"
+    (ball) => ball.bowlerName === bowlerName && countsAsLegalBall(ball)
   ).length;
   return formatOversFromLegalBalls(legal, ballsPerOver);
 }
@@ -178,7 +175,8 @@ export function getBallsInCurrentOver(
   }
 
   const byStoredOver = innings.balls.filter(
-    (ball) => ball.overNumber === currentOverIndex
+    (ball) =>
+      ball.overNumber === currentOverIndex && countsAsDelivery(ball)
   );
   if (byStoredOver.length > 0) return byStoredOver;
 
@@ -192,7 +190,7 @@ export function getBallsInCurrentOver(
 
   for (let i = 0; i < innings.balls.length; i++) {
     const ball = innings.balls[i];
-    const isLegal = ball.extra !== "wide" && ball.extra !== "no-ball";
+    const isLegal = countsAsLegalBall(ball);
     if (isLegal && legalSeen === completedFullOvers * ballsPerOver) {
       startIndex = i;
       break;
@@ -206,5 +204,7 @@ export function getBallsInCurrentOver(
     }
   }
 
-  return innings.balls.slice(startIndex);
+  return innings.balls
+    .slice(startIndex)
+    .filter((ball) => countsAsDelivery(ball));
 }

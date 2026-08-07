@@ -7,6 +7,8 @@ import {
   InningsData,
   Team,
   countsAsBowlerWicket,
+  countsAsDelivery,
+  countsAsLegalBall,
   countsAsWicket,
 } from "@/lib/cricket-types";
 import { useCricket } from "@/lib/cricket-context";
@@ -91,16 +93,12 @@ export default function FullScorecard({
   };
 
   const calculateOvers = (balls: BallData[]) => {
-    const legalBalls = balls.filter(
-      (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
-    ).length;
+    const legalBalls = balls.filter((ball) => countsAsLegalBall(ball)).length;
     return `${Math.floor(legalBalls / ballsPerOver)}.${legalBalls % ballsPerOver}`;
   };
 
   const getLegalBallCount = (balls: BallData[]) =>
-    balls.filter(
-      (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
-    ).length;
+    balls.filter((ball) => countsAsLegalBall(ball)).length;
 
   const calculateRunRate = (balls: BallData[], runs: number) => {
     const legalBalls = getLegalBallCount(balls);
@@ -128,7 +126,7 @@ export default function FullScorecard({
         const batterRuns = ball.runs + noBallBatRuns + overthrowRuns;
         runs += batterRuns;
 
-        if (ball.extra !== "wide" && ball.extra !== "no-ball") balls++;
+        if (countsAsLegalBall(ball)) balls++;
         if (batterRuns === 4) fours++;
         if (batterRuns === 6) sixes++;
       });
@@ -199,7 +197,8 @@ export default function FullScorecard({
       innings.balls.forEach((ball) => {
         if (ball.bowlerName !== player.name) return;
 
-        const legalBall = ball.extra !== "wide" && ball.extra !== "no-ball";
+        if (ball.dismissal === "retired-hurt") return;
+        const legalBall = countsAsLegalBall(ball);
         if (legalBall) {
           balls++;
           byOver[ball.overNumber] = (byOver[ball.overNumber] || 0) + ball.runs;
@@ -262,10 +261,11 @@ export default function FullScorecard({
 
   const getBowlerBallByBall = (innings: InningsData, bowlerName: string) => {
     return innings.balls
-      .filter((ball) => ball.bowlerName === bowlerName)
+      .filter(
+        (ball) => ball.bowlerName === bowlerName && countsAsDelivery(ball)
+      )
       .map((ball) => {
         if (countsAsWicket(ball.dismissal)) return "W";
-        if (ball.dismissal === "retired-hurt") return "RH";
         if (ball.extra === "wide") return `${ball.extraRuns}Wd`;
         if (ball.extra === "no-ball") return `${ball.extraRuns}Nb`;
         if (ball.extra === "bye") return `${ball.extraRuns}B`;

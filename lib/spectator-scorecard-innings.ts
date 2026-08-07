@@ -1,4 +1,5 @@
 import type { BallData, InningsData, MatchState, Team } from "@/lib/cricket-types";
+import { countsAsLegalBall } from "@/lib/cricket-types";
 import {
   calculateBowling,
   calculateExtras,
@@ -10,9 +11,7 @@ import {
 export { formatDismissalShort };
 
 function getLegalBallCount(balls: BallData[]) {
-  return balls.filter(
-    (ball) => ball.extra !== "wide" && ball.extra !== "no-ball"
-  ).length;
+  return balls.filter((ball) => countsAsLegalBall(ball)).length;
 }
 
 export function calculateOvers(balls: BallData[], ballsPerOver: number) {
@@ -46,7 +45,7 @@ export function buildBattingRows(innings: InningsData, battingTeam: Team) {
       const batterRuns = ball.runs + noBallBatRuns + overthrowRuns;
       runs += batterRuns;
 
-      if (ball.extra !== "wide" && ball.extra !== "no-ball") balls++;
+      if (countsAsLegalBall(ball)) balls++;
       if (batterRuns === 4) fours++;
       if (batterRuns === 6) sixes++;
     });
