@@ -210,12 +210,24 @@ export default function LiveMatchShareDialog({
   }, [open, meta]);
 
   const openBigScoreWindow = () => {
-    if (!scoreUrl) return;
-    window.open(
-      scoreUrl,
-      "cricket-big-score",
-      "noopener,noreferrer,width=1280,height=720"
-    );
+    const url = scoreUrl || getLocalEmbedScoreUrl();
+    if (!url) return;
+
+    // Do not put noopener/noreferrer in windowFeatures — browsers return null
+    // and may treat the open as blocked. Size alone requests a popup window.
+    const win = window.open(url, "cricket-big-score", "width=1280,height=720");
+    if (!win) {
+      // Popup blocked: fall back to a normal tab (same as preview link).
+      const tab = window.open(url, "_blank");
+      if (!tab) {
+        appToast.error("Pop-up blocked — allow pop-ups for this site");
+        return;
+      }
+      tab.opener = null;
+      return;
+    }
+    win.opener = null;
+    win.focus();
   };
 
   return (
@@ -338,7 +350,6 @@ export default function LiveMatchShareDialog({
             type="button"
             className="live-share-dialog__preview-btn btn-12-exempt"
             onClick={openBigScoreWindow}
-            disabled={!scoreUrl}
           >
             <ExternalLink size={16} strokeWidth={2.25} aria-hidden />
             Open big score window
