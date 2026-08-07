@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { APP_NAME } from "@/lib/app-brand";
 import { getSafeReturnTo, routes } from "@/lib/app-routes";
 
+const GOOGLE_PENDING_KEY = "authGooglePending";
+
 function authErrorMessage(error: unknown): string {
   const code =
     error && typeof error === "object" && "code" in error
@@ -51,9 +53,60 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [googleReturnPending, setGoogleReturnPending] = useState(false);
 
   const title = mode === "login" ? "Sign in" : "Create account";
   const submitLabel = mode === "login" ? "Sign in" : "Create account";
+
+  // After Google redirect, show a blocking loader immediately on return.
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(GOOGLE_PENDING_KEY) === "1") {
+        setGoogleReturnPending(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  // Success/fail settled: drop the Google-return lock so the form unlocks.
+  useEffect(() => {
+    if (loading || submitting || user) return;
+    if (!googleReturnPending) return;
+    try {
+      sessionStorage.removeItem(GOOGLE_PENDING_KEY);
+    } catch {
+      /* ignore */
+    }
+    setGoogleReturnPending(false);
+  }, [loading, submitting, user, googleReturnPending]);
+
+  // Fallback: never leave the overlay stuck if auth hangs.
+  useEffect(() => {
+    if (!googleReturnPending && !submitting) return;
+    if (user) return;
+
+    const timer = window.setTimeout(() => {
+      console.warn("[auth] sign-in overlay timed out; unlocking form");
+      try {
+        sessionStorage.removeItem(GOOGLE_PENDING_KEY);
+      } catch {
+        /* ignore */
+      }
+      setGoogleReturnPending(false);
+      setSubmitting(false);
+      appToast.error("Sign-in is taking too long. Please try again.");
+    }, 45_000);
+
+    return () => window.clearTimeout(timer);
+  }, [googleReturnPending, submitting, user]);
+
+  const blocked =
+    loading || submitting || Boolean(user) || googleReturnPending;
+  const overlayMessage =
+    user || submitting || googleReturnPending
+      ? "Signing you in…"
+      : "Checking sign-in…";
 
   const finish = () => {
     // Hard navigation so middleware + HomePage see the new `__session` cookie
@@ -74,6 +127,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
         target = saved;
       }
       sessionStorage.removeItem("authReturnTo");
+      sessionStorage.removeItem(GOOGLE_PENDING_KEY);
     } catch {
       /* ignore */
     }
@@ -112,6 +166,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
     // Persist return path across the full-page Google redirect.
     try {
       sessionStorage.setItem("authReturnTo", returnTo);
+      sessionStorage.setItem(GOOGLE_PENDING_KEY, "1");
     } catch {
       /* ignore */
     }
@@ -122,17 +177,40 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
           // Redirect flow: page navigates away; keep submitting state.
           return;
         }
+        try {
+          sessionStorage.removeItem(GOOGLE_PENDING_KEY);
+        } catch {
+          /* ignore */
+        }
         appToast.success("Signed in");
         finish();
       })
       .catch((error) => {
+        try {
+          sessionStorage.removeItem(GOOGLE_PENDING_KEY);
+        } catch {
+          /* ignore */
+        }
+        setGoogleReturnPending(false);
         appToast.error(authErrorMessage(error));
         setSubmitting(false);
       });
   };
 
   return (
-    <div className="auth-page">
+    <div className="auth-page" aria-busy={blocked}>
+      {blocked ? (
+        <div className="auth-page__overlay" role="status" aria-live="polite">
+          <div className="auth-page__overlay-card">
+            <div className="auth-page__spinner" aria-hidden />
+            <p className="auth-page__overlay-title">{overlayMessage}</p>
+            <p className="auth-page__overlay-text">
+              Please wait — you’ll be redirected shortly.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       <div className="auth-page__panel">
         <p className="auth-page__brand">{APP_NAME}</p>
         <h1 className="auth-page__title">{title}</h1>
@@ -153,7 +231,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="cricket-form-input"
-              disabled={submitting}
+              disabled={blocked}
             />
           </div>
           <div className="auth-page__field">
@@ -169,7 +247,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="cricket-form-input"
-              disabled={submitting}
+              disabled={blocked}
             />
           </div>
           {mode === "register" ? (
@@ -184,13 +262,13 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 className="cricket-form-input"
-                disabled={submitting}
+                disabled={blocked}
               />
             </div>
           ) : null}
 
-          <Button type="submit" className="w-full" disabled={submitting}>
-            {submitting ? "Please wait…" : submitLabel}
+          <Button type="submit" className="w-full" disabled={blocked}>
+            {blocked ? "Please wait…" : submitLabel}
           </Button>
         </form>
 
@@ -202,7 +280,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
           type="button"
           variant="secondary"
           className="w-full gap-2"
-          disabled={submitting}
+          disabled={blocked}
           onClick={onGoogle}
         >
           <svg
@@ -234,12 +312,20 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
           {mode === "login" ? (
             <>
               No account?{" "}
-              <Link href={routes.register}>Create one</Link>
+              {blocked ? (
+                <span>Create one</span>
+              ) : (
+                <Link href={routes.register}>Create one</Link>
+              )}
             </>
           ) : (
             <>
               Already registered?{" "}
-              <Link href={routes.login}>Sign in</Link>
+              {blocked ? (
+                <span>Sign in</span>
+              ) : (
+                <Link href={routes.login}>Sign in</Link>
+              )}
             </>
           )}
         </p>

@@ -7551,4 +7551,61 @@
     text-underline-offset: 0.15em;
   }
 
+  .auth-page__overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: grid;
+    place-items: center;
+    padding: 1.5rem;
+    background: oklch(0.08 0.02 295 / 0.82);
+    backdrop-filter: blur(6px);
+  }
+
+  .auth-page__overlay-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    width: min(100%, 18rem);
+    padding: 1.5rem 1.25rem;
+    border-radius: 0.85rem;
+    border: 1px solid oklch(0.35 0.05 295 / 0.55);
+    background: oklch(0.12 0.03 295 / 0.96);
+    box-shadow: 0 24px 60px oklch(0 0 0 / 0.45);
+    text-align: center;
+  }
+
+  .auth-page__spinner {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    border: 2px solid oklch(0.4 0.04 295);
+    border-top-color: var(--cricket-gold);
+    animation: auth-spin 0.7s linear infinite;
+  }
+
+  .auth-page__overlay-title {
+    margin: 0;
+    font-family: var(--font-display), sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cricket-cream);
+  }
+
+  .auth-page__overlay-text {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    color: oklch(0.68 0.03 295);
+  }
+
+  @keyframes auth-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
 }
