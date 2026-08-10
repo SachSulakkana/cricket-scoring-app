@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { isAuthError, requireUser } from "@/lib/api-auth";
 import { parseJsonBody } from "@/lib/api-route-utils";
 import { rosterMigrateSchema } from "@/lib/api-schemas";
-import { isLegacyMigrated, migrateFromLegacy } from "@/lib/firestore-db";
-import type { DbTournament } from "@/lib/firestore-db";
+import { isLegacyMigrated, migrateFromLegacy } from "@/lib/db";
+import type { DbTournament } from "@/lib/db";
 import type { Player, Team } from "@/lib/cricket-types";
 
 export const runtime = "nodejs";

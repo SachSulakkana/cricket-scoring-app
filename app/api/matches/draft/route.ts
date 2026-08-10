@@ -6,7 +6,7 @@ import {
   clearLiveMatchDraft,
   getLiveMatchDraft,
   saveLiveMatchDraft,
-} from "@/lib/firestore-db";
+} from "@/lib/db";
 
 export const runtime = "nodejs";
 

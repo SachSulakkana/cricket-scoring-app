@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { isAuthError, requireUser } from "@/lib/api-auth";
 import { parseJsonBody } from "@/lib/api-route-utils";
 import { teamSchema } from "@/lib/api-schemas";
-import { saveTeam } from "@/lib/firestore-db";
+import { saveTeam } from "@/lib/db";
 import type { Team } from "@/lib/cricket-types";
 
 export const runtime = "nodejs";

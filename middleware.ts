@@ -27,7 +27,13 @@ function isPublicPath(pathname: string): boolean {
   return false;
 }
 
+const AUTH_DISABLED = process.env.AUTH_MODE?.trim().toLowerCase() === "none";
+
 export function middleware(request: NextRequest) {
+  if (AUTH_DISABLED) {
+    return NextResponse.next();
+  }
+
   const { pathname } = request.nextUrl;
 
   if (isPublicPath(pathname)) {

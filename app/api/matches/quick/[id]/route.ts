@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAuthError, requireUser } from "@/lib/api-auth";
-import { deleteQuickMatch, getQuickMatchById } from "@/lib/firestore-db";
+import { deleteQuickMatch, getQuickMatchById } from "@/lib/db";
 
 export const runtime = "nodejs";
 

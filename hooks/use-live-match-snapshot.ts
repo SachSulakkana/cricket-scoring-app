@@ -8,6 +8,7 @@ import { useLiveMatchPoll } from "@/hooks/use-live-match-poll";
 import { usePublicLiveMatchPoll } from "@/hooks/use-public-live-match-poll";
 import { useLiveShareKeyFromUrl } from "@/hooks/use-live-share-key";
 import { useAuth } from "@/components/AuthProvider";
+import { isSqliteBackendClient } from "@/lib/client-flags";
 
 function parseDraft(data: unknown): LiveMatchDraft | null {
   if (!data || typeof data !== "object") return null;
@@ -60,7 +61,9 @@ function useFirestoreLiveDraft(uid: string | null, enabled: boolean) {
 export function useLiveMatchSnapshot() {
   const { user, loading: authLoading } = useAuth();
   const shareKey = useLiveShareKeyFromUrl();
-  const firebaseEnabled = isFirebaseConfigured();
+  // Data lives in SQLite (not Firestore) when DB_BACKEND=sqlite, so fall back
+  // to polling the API even if Firebase client credentials are still set.
+  const firebaseEnabled = isFirebaseConfigured() && !isSqliteBackendClient();
   const usePublic = Boolean(shareKey);
   const useOwnerRealtime = firebaseEnabled && Boolean(user) && !usePublic;
 

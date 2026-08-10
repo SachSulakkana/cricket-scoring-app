@@ -19,9 +19,12 @@ import {
   signInWithGoogle,
   signOut as firebaseSignOut,
 } from "@/lib/firebase-client";
+import { isAuthDisabled, LOCAL_UID } from "@/lib/client-flags";
+
+export type SessionUser = { uid: string; email: string | null };
 
 type AuthContextValue = {
-  user: User | null;
+  user: SessionUser | null;
   loading: boolean;
   getAccessToken: (forceRefresh?: boolean) => Promise<string | null>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
@@ -30,6 +33,12 @@ type AuthContextValue = {
   loginWithGoogle: () => Promise<boolean>;
   logout: () => Promise<void>;
 };
+
+const LOCAL_USER: SessionUser = { uid: LOCAL_UID, email: null };
+
+function toSessionUser(user: User): SessionUser {
+  return { uid: user.uid, email: user.email };
+}
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -57,10 +66,18 @@ async function syncSessionForUser(user: User): Promise<void> {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<SessionUser | null>(
+    isAuthDisabled() ? LOCAL_USER : null
+  );
+  const [loading, setLoading] = useState(!isAuthDisabled());
 
   useEffect(() => {
+    if (isAuthDisabled()) {
+      setUser(LOCAL_USER);
+      setLoading(false);
+      return;
+    }
+
     if (!isFirebaseConfigured()) {
       console.warn("[auth] Firebase not configured");
       setUser(null);
@@ -85,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         redirectSignedIn = true;
         await syncSessionForUser(result.user);
         if (!cancelled) {
-          setUser(result.user);
+          setUser(toSessionUser(result.user));
           setLoading(false);
         }
         return result;
@@ -128,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           await syncSessionForUser(next);
           if (cancelled || myEpoch !== epoch) return;
-          setUser(next);
+          setUser(toSessionUser(next));
           setLoading(false);
         } catch (err) {
           console.error("[auth] Failed to sync auth session cookie", err);
@@ -153,27 +170,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getAccessToken = useCallback(async (forceRefresh = false) => {
+    if (isAuthDisabled()) return null;
     return getIdToken(forceRefresh);
   }, []);
 
   const loginWithEmail = useCallback(async (email: string, password: string) => {
+    if (isAuthDisabled()) return;
     const cred = await signInWithEmail(email, password);
     await syncSessionForUser(cred.user);
-    setUser(cred.user);
+    setUser(toSessionUser(cred.user));
     setLoading(false);
   }, []);
 
   const registerWithEmailPassword = useCallback(
     async (email: string, password: string) => {
+      if (isAuthDisabled()) return;
       const cred = await registerWithEmail(email, password);
       await syncSessionForUser(cred.user);
-      setUser(cred.user);
+      setUser(toSessionUser(cred.user));
       setLoading(false);
     },
     []
   );
 
   const loginWithGoogle = useCallback(async () => {
+    if (isAuthDisabled()) return true;
     const cred = await signInWithGoogle();
     if (!cred) {
       console.log("[auth] redirect started; waiting for return");
@@ -181,12 +202,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     console.log("[auth] popup completed", cred.user.uid);
     await syncSessionForUser(cred.user);
-    setUser(cred.user);
+    setUser(toSessionUser(cred.user));
     setLoading(false);
     return true;
   }, []);
 
   const logout = useCallback(async () => {
+    if (isAuthDisabled()) return;
     await clearSessionCookie();
     await firebaseSignOut();
     setUser(null);

@@ -44,7 +44,9 @@ export default function LiveEmbedBowlingOverlay({
         ctx={ctx}
         matchState={draft.matchState}
         title={
-          innings === "first" ? "1st innings bowling" : "Bowling scorecard"
+          ctx.inningsNumber === 1
+            ? "1st innings bowling"
+            : "2nd innings bowling"
         }
       />
     </LiveEmbedPanelShell>

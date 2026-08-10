@@ -2,7 +2,9 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/auth-session-constants";
-import { getAdminAuth, getAdminFirestore } from "@/lib/firebase-admin";
+import { getAdminAuth } from "@/lib/firebase-admin";
+import { upsertUserProfile } from "@/lib/db";
+import { AUTH_DISABLED, LOCAL_USER } from "@/lib/auth-mode";
 
 export type AuthUser = {
   uid: string;
@@ -28,32 +30,16 @@ function sessionCookieFromRequest(request: Request): string | null {
   return null;
 }
 
-/** Ensures users/{uid} exists so the collection is visible in Firestore console. */
+/** Ensures the user's profile record exists in the active data backend. */
 export async function ensureUserProfile(user: AuthUser): Promise<void> {
-  const ref = getAdminFirestore().collection("users").doc(user.uid);
-  const snap = await ref.get();
-  const now = new Date().toISOString();
-  if (!snap.exists) {
-    await ref.set({
-      uid: user.uid,
-      email: user.email,
-      createdAt: now,
-      updatedAt: now,
-    });
-    return;
-  }
-  await ref.set(
-    {
-      email: user.email,
-      updatedAt: now,
-    },
-    { merge: true }
-  );
+  await upsertUserProfile(user.uid, user.email);
 }
 
 export async function verifyRequestUser(
   request: Request
 ): Promise<AuthUser | null> {
+  if (AUTH_DISABLED) return LOCAL_USER;
+
   const auth = getAdminAuth();
   const token = bearerToken(request);
   if (token) {

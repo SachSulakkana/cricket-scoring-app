@@ -1,0 +1,22 @@
+{
+  "name": "crickscore-electron",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Electron desktop wrapper for CrickScore (Next.js standalone)",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "prepare-standalone": "node scripts/prepare-standalone.cjs",
+    "build": "npm run build --prefix .. && npm run prepare-standalone",
+    "app": "npm run build && electron .",
+    "postinstall": "electron-rebuild -f -w better-sqlite3"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "crickscore": "file:.."
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
+    "electron": "^37.2.0"
+  }
+}

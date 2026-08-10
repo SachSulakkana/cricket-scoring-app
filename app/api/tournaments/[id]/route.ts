@@ -7,8 +7,8 @@ import {
   getTournament,
   listTeams,
   saveTournament,
-} from "@/lib/firestore-db";
-import type { DbTournament } from "@/lib/firestore-db";
+} from "@/lib/db";
+import type { DbTournament } from "@/lib/db";
 import {
   LIVE_SHARE_QUERY_PARAM,
   resolveUidFromLiveShareKey,

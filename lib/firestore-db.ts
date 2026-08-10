@@ -633,6 +633,58 @@ async function clearCollection(uid: string, name: string): Promise<number> {
   return snapshot.size;
 }
 
+// ---------------------------------------------------------------------------
+// User profile + live-share keys (used by lib/api-auth.ts and lib/live-share.ts)
+// ---------------------------------------------------------------------------
+
+const LIVE_SHARE_KEYS_COLLECTION = "live_share_keys";
+
+function userDocRef(uid: string) {
+  return getDb().collection("users").doc(uid);
+}
+
+/** Ensures users/{uid} exists so the collection is visible in Firestore console. */
+export async function upsertUserProfile(uid: string, email: string | null): Promise<void> {
+  const ref = userDocRef(uid);
+  const snap = await ref.get();
+  const now = new Date().toISOString();
+  if (!snap.exists) {
+    await ref.set({ uid, email, createdAt: now, updatedAt: now });
+    return;
+  }
+  await ref.set({ email, updatedAt: now }, { merge: true });
+}
+
+export async function getUserLiveShareKey(uid: string): Promise<string | null> {
+  const snap = await userDocRef(uid).get();
+  const key = snap.data()?.liveShareKey;
+  return typeof key === "string" && key.trim() ? key.trim() : null;
+}
+
+export async function setUserLiveShareKey(uid: string, key: string): Promise<void> {
+  await userDocRef(uid).set(
+    { liveShareKey: key, updatedAt: new Date().toISOString() },
+    { merge: true }
+  );
+}
+
+export async function getUidForLiveShareKey(key: string): Promise<string | null> {
+  const snap = await getDb().collection(LIVE_SHARE_KEYS_COLLECTION).doc(key).get();
+  const uid = snap.data()?.uid;
+  return typeof uid === "string" && uid ? uid : null;
+}
+
+export async function setLiveShareKeyMapping(key: string, uid: string): Promise<void> {
+  await getDb()
+    .collection(LIVE_SHARE_KEYS_COLLECTION)
+    .doc(key)
+    .set({ uid, createdAt: new Date().toISOString() });
+}
+
+export async function deleteLiveShareKeyMapping(key: string): Promise<void> {
+  await getDb().collection(LIVE_SHARE_KEYS_COLLECTION).doc(key).delete();
+}
+
 export async function runDataClear(uid: string, action: DataClearAction): Promise<void> {
   switch (action) {
     case "match-history":

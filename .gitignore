@@ -15,3 +15,6 @@ node_modules
 .DS_Store
 data/*.db
 data/*.db-*
+data/*.sqlite
+data/*.sqlite-*
+electron/.native-cache/

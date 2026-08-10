@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getLiveMatchDraft } from "@/lib/firestore-db";
+import { getLiveMatchDraft } from "@/lib/db";
 import {
   LIVE_SHARE_QUERY_PARAM,
   resolveUidFromLiveShareKey,

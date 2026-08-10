@@ -7,6 +7,7 @@ import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import RefreshRosterButton from "@/components/RefreshRosterButton";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/AuthProvider";
+import { isAuthDisabled } from "@/lib/client-flags";
 import {
   clearAppData,
   DATA_CLEAR_OPTIONS,
@@ -97,7 +98,7 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
           <div className="min-w-0 flex-1">
             <CricketEyebrow className="mb-1">Account</CricketEyebrow>
             <p className="text-sm text-[var(--cricket-cream)] truncate">
-              {user?.email ?? "Signed in"}
+              {isAuthDisabled() ? "Local device (no login)" : user?.email ?? "Signed in"}
             </p>
             <p className="text-xs text-[oklch(0.55_0.03_255)] mt-0.5">
               Your players, teams, and tournaments are private to this account.
@@ -114,7 +115,7 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
               Clear data
             </CricketEyebrow>
             <p className="text-xs text-[oklch(0.55_0.03_255)] leading-relaxed">
-              These actions permanently delete data from your account in Firestore.
+              These actions permanently delete data from your account.
               You will be asked to confirm each one.
             </p>
           </div>
@@ -144,18 +145,20 @@ export default function SettingsPage({ onBack }: SettingsPageProps) {
         </div>
       </CricketBroadcastCard>
 
-      <CricketBroadcastCard className="p-5 mt-4 mb-2">
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={signingOut}
-          onClick={onSignOut}
-          className="w-full gap-2"
-        >
-          <LogOut className="h-4 w-4" />
-          {signingOut ? "Logging out…" : "Logout"}
-        </Button>
-      </CricketBroadcastCard>
+      {!isAuthDisabled() && (
+        <CricketBroadcastCard className="p-5 mt-4 mb-2">
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={signingOut}
+            onClick={onSignOut}
+            className="w-full gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            {signingOut ? "Logging out…" : "Logout"}
+          </Button>
+        </CricketBroadcastCard>
+      )}
 
       <ConfirmDeleteDialog
         open={pendingAction != null}

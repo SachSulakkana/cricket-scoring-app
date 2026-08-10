@@ -11,7 +11,11 @@
     "start": "next start",
     "lint": "eslint lib app/api",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test lib/match-result.test.ts lib/super-over.test.ts lib/scorecard-stats.test.ts lib/tournament-nrr.test.ts lib/tournament-stage-engine/tournament-stage-engine.test.ts"
+    "test": "tsx --test lib/match-result.test.ts lib/super-over.test.ts lib/scorecard-stats.test.ts lib/tournament-nrr.test.ts lib/tournament-stage-engine/tournament-stage-engine.test.ts",
+    "electron:prepare": "npm run prepare-standalone --prefix electron",
+    "electron:build": "npm run build && npm run electron:prepare",
+    "electron:install": "npm install --prefix electron",
+    "electron:start": "npm run electron:build && npm start --prefix electron"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -45,6 +49,7 @@
     "@reduxjs/toolkit": "^2.12.0",
     "@vercel/analytics": "1.6.1",
     "autoprefixer": "^10.4.20",
+    "better-sqlite3": "^12.11.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.1.1",
@@ -72,6 +77,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.0",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

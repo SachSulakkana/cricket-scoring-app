@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Standalone server bundle for the Electron desktop wrapper.
+  output: "standalone",
+  // better-sqlite3 ships a native .node binary — keep it external so it's
+  // required at runtime instead of bundled, and traced into the standalone
+  // output correctly.
+  serverExternalPackages: ["better-sqlite3"],
   typescript: {
     ignoreBuildErrors: false,
   },

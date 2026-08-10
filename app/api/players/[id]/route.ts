@@ -6,7 +6,7 @@ import {
   deletePlayer,
   savePlayer,
   syncPlayerInTeams,
-} from "@/lib/firestore-db";
+} from "@/lib/db";
 import type { Player } from "@/lib/cricket-types";
 
 export const runtime = "nodejs";

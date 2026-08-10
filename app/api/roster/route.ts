@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAuthError, requireUser } from "@/lib/api-auth";
-import { loadAll } from "@/lib/firestore-db";
+import { loadAll } from "@/lib/db";
 
 export const runtime = "nodejs";
 

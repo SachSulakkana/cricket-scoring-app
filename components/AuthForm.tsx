@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { appToast } from "@/lib/app-toast";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { APP_NAME } from "@/lib/app-brand";
 import { getSafeReturnTo, routes } from "@/lib/app-routes";
+import { isAuthDisabled } from "@/lib/client-flags";
 
 const GOOGLE_PENDING_KEY = "authGooglePending";
 
@@ -39,6 +40,7 @@ function authErrorMessage(error: unknown): string {
 }
 
 export default function AuthForm({ mode }: { mode: "login" | "register" }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = getSafeReturnTo(searchParams.get("returnTo")) ?? routes.home;
   const {
@@ -48,6 +50,12 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
     registerWithEmailPassword,
     loginWithGoogle,
   } = useAuth();
+
+  useEffect(() => {
+    if (isAuthDisabled()) {
+      router.replace(returnTo);
+    }
+  }, [router, returnTo]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
