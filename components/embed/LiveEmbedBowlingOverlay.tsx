@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import LiveEmbedPanelShell from "@/components/embed/LiveEmbedPanelShell";
-import { LiveEmbedScorecardFrame } from "@/components/embed/LiveEmbedScorecardFrame";
+import { LiveEmbedBowlingBroadcast } from "@/components/embed/LiveEmbedBowlingBroadcast";
 import { useLiveMatchSnapshot } from "@/hooks/use-live-match-snapshot";
 import {
   resolveCurrentInningsContext,
@@ -40,13 +40,12 @@ export default function LiveEmbedBowlingOverlay({
 
   return (
     <LiveEmbedPanelShell centered>
-      <LiveEmbedScorecardFrame
+      <LiveEmbedBowlingBroadcast
+        ctx={ctx}
+        matchState={draft.matchState}
         title={
           innings === "first" ? "1st innings bowling" : "Bowling scorecard"
         }
-        mode="bowling"
-        ctx={ctx}
-        matchState={draft.matchState}
       />
     </LiveEmbedPanelShell>
   );

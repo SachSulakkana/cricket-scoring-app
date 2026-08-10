@@ -13,12 +13,6 @@ const nextConfig = {
         destination: "/tournament/play/new",
         permanent: false,
       },
-      // Old match URLs nested under /game/[fixtureId] 404'd next to game/page.
-      {
-        source: "/tournament/play/custom/:id/game/:fixtureId",
-        destination: "/tournament/play/custom/:id/match/:fixtureId",
-        permanent: false,
-      },
     ];
   },
   // Same-origin Firebase Auth handler (fixes Google redirect on Vercel).

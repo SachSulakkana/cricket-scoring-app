@@ -13,7 +13,7 @@ const nextConfig = {
         destination: "/tournament/play/new",
         permanent: false,
       },
-      // Old match URLs nested under /game/[fixtureId] 404'd next to game/page.
+      // Nested game/[fixtureId] next to game/page 404s under Next 16 / Turbopack.
       {
         source: "/tournament/play/custom/:id/game/:fixtureId",
         destination: "/tournament/play/custom/:id/match/:fixtureId",

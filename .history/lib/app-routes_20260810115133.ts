@@ -35,7 +35,7 @@ export const routes = {
   playCustomTournamentGame: (id: string) =>
     `/tournament/play/custom/${encodeURIComponent(id)}/game`,
   playCustomTournamentMatch: (id: string, fixtureId: string) =>
-    `/tournament/play/custom/${encodeURIComponent(id)}/match/${encodeURIComponent(fixtureId)}`,
+    `/tournament/play/custom/${encodeURIComponent(id)}/game/${encodeURIComponent(fixtureId)}`,
 } as const;
 
 export const RETURN_TO_PARAM = "returnTo";

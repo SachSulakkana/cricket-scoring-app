@@ -4694,8 +4694,8 @@
     --lsb-purple-deep: #1a0033;
     --lsb-pink: #ff007f;
     --lsb-yellow: #ffd700;
-    --lsb-ink: #1a0033;
-    --lsb-muted: #4a2d73;
+    --lsb-ink: #ffffff;
+    --lsb-muted: oklch(0.82 0.03 250);
     --lsb-white: #ffffff;
     display: flex;
     flex-direction: column;
@@ -4705,14 +4705,18 @@
     padding: clamp(1.25rem, 2.8vh, 2.25rem) clamp(1.5rem, 3.5vw, 2.75rem);
     font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
     color: var(--lsb-ink);
-    background: var(--lsb-white);
-    border: 1px solid oklch(0.88 0.02 295);
+    background-color: #061428;
+    background-image: url("/bowling-scorecard-bg.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: 1px solid oklch(0.45 0.08 295 / 0.45);
     border-top: 5px solid var(--lsb-pink);
     border-bottom: 5px solid var(--lsb-pink);
     border-radius: 0.5rem;
     box-shadow:
-      0 20px 60px oklch(0 0 0 / 0.28),
-      0 0 0 1px oklch(1 0 0 / 0.65) inset;
+      0 20px 60px oklch(0 0 0 / 0.4),
+      0 0 0 1px oklch(1 0 0 / 0.08) inset;
   }
 
   .live-embed-bowling__header {
@@ -4784,7 +4788,7 @@
     font-weight: 800;
     letter-spacing: 0.04em;
     line-height: 1;
-    color: var(--lsb-purple);
+    color: #1a0033;
   }
 
   .live-embed-bowling__header .live-embed-scorecard__team {
@@ -4822,8 +4826,8 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
     text-align: right;
-    color: var(--lsb-muted);
-    border-bottom: 1px solid oklch(0.88 0.02 295);
+    color: oklch(0.82 0.04 250);
+    border-bottom: 1px solid oklch(1 0 0 / 0.22);
   }
 
   .live-embed-bowling__table thead th.live-embed-bowling__col-name,
@@ -4847,8 +4851,8 @@
     font-size: clamp(1.15rem, 2.1vw, 1.85rem);
     font-weight: 500;
     text-align: right;
-    color: var(--lsb-ink);
-    border-bottom: 1px solid oklch(0.9 0.015 295 / 0.9);
+    color: var(--lsb-white);
+    border-bottom: 1px solid oklch(1 0 0 / 0.16);
     vertical-align: middle;
     white-space: nowrap;
   }
@@ -4874,12 +4878,12 @@
 
   .live-embed-bowling__given {
     font-weight: 500;
-    color: var(--lsb-muted);
+    color: oklch(0.82 0.04 250);
   }
 
   .live-embed-bowling__family {
     font-weight: 800;
-    color: var(--lsb-purple);
+    color: var(--lsb-white);
   }
 
   .live-embed-bowling__spacer {
@@ -4894,9 +4898,10 @@
     align-items: center;
     gap: clamp(1rem, 2.5vw, 2rem);
     padding: clamp(0.85rem, 1.8vh, 1.25rem) clamp(0.75rem, 1.5vw, 1.15rem);
-    background: var(--lsb-white);
-    border: 1px solid oklch(0.88 0.02 295);
+    background: oklch(0.12 0.04 260 / 0.55);
+    border: 1px solid oklch(1 0 0 / 0.16);
     border-radius: 0.4rem;
+    backdrop-filter: blur(6px);
   }
 
   .live-embed-bowling__fow {
@@ -4925,7 +4930,7 @@
     padding: 0;
     border-radius: 0;
     background: transparent;
-    color: var(--lsb-purple);
+    color: var(--lsb-white);
     font-size: 20px;
     font-weight: 800;
     letter-spacing: 0.08em;
@@ -4954,20 +4959,20 @@
   .live-embed-bowling__fow-cell--wicket {
     font-size: clamp(1.05rem, 1.9vw, 1.55rem);
     font-weight: 700;
-    color: var(--lsb-muted);
+    color: oklch(0.78 0.04 250);
   }
 
   .live-embed-bowling__fow-cell--score {
     font-size: clamp(1.45rem, 2.6vw, 2.15rem);
     font-weight: 800;
-    color: var(--lsb-purple);
+    color: var(--lsb-white);
     min-height: 1.2em;
   }
 
   .live-embed-bowling__footer-rule {
     width: 1px;
     align-self: stretch;
-    background: oklch(0.82 0.03 295);
+    background: oklch(1 0 0 / 0.28);
   }
 
   .live-embed-bowling__summary {
@@ -4985,7 +4990,7 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--lsb-muted);
+    color: oklch(0.82 0.04 250);
   }
 
   .live-embed-bowling__score-block {
@@ -4998,7 +5003,7 @@
     font-weight: 800;
     letter-spacing: 0.02em;
     line-height: 1.1;
-    color: var(--lsb-purple);
+    color: var(--lsb-white);
     text-transform: uppercase;
   }
 
@@ -5016,7 +5021,7 @@
     font-weight: 650;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--lsb-muted);
+    color: oklch(0.78 0.04 250);
   }
 
   .live-embed-bowling__meta-sep {

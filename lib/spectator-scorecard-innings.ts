@@ -1,5 +1,5 @@
 import type { BallData, InningsData, MatchState, Team } from "@/lib/cricket-types";
-import { countsAsLegalBall } from "@/lib/cricket-types";
+import { countsAsLegalBall, countsAsWicket } from "@/lib/cricket-types";
 import {
   calculateBowling,
   calculateExtras,
@@ -9,6 +9,35 @@ import {
 } from "@/lib/scorecard-stats";
 
 export { formatDismissalShort };
+
+/** Split a player name for broadcast typography (given regular, family bold). */
+export function splitBroadcastPlayerName(name: string): {
+  given: string;
+  family: string;
+} {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return { given: "", family: "" };
+  if (parts.length === 1) {
+    return { given: "", family: parts[0].toUpperCase() };
+  }
+  return {
+    given: parts.slice(0, -1).join(" ").toUpperCase(),
+    family: parts[parts.length - 1].toUpperCase(),
+  };
+}
+
+/** Cumulative team score when each wicket fell (innings order). */
+export function getFallOfWickets(innings: InningsData): number[] {
+  let runs = 0;
+  const falls: number[] = [];
+  for (const ball of innings.balls) {
+    runs += ball.runs + (ball.extra !== "none" ? ball.extraRuns : 0);
+    if (countsAsWicket(ball.dismissal)) {
+      falls.push(runs);
+    }
+  }
+  return falls;
+}
 
 function getLegalBallCount(balls: BallData[]) {
   return balls.filter((ball) => countsAsLegalBall(ball)).length;
