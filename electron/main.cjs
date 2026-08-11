@@ -1,12 +1,14 @@
 const { app, BrowserWindow, dialog, shell, Menu } = require("electron");
 const { fork } = require("child_process");
 const http = require("http");
+const net = require("net");
 const os = require("os");
 const path = require("path");
 const fs = require("fs");
 const { initSqlBridge, attachToChild } = require("./sql-bridge.cjs");
 
-const PORT = Number(process.env.CRICKSCORE_PORT || 3000);
+// Default away from 3000 so Electron can run alongside `next dev`.
+const PORT = Number(process.env.CRICKSCORE_PORT || 3456);
 const HOST = "0.0.0.0";
 const LOCAL_URL = `http://127.0.0.1:${PORT}`;
 
@@ -27,23 +29,75 @@ function getLanUrls() {
   return urls;
 }
 
+/** Fail fast if something else (usually `next dev`) already owns our port. */
+function assertPortFree(port) {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.once("error", (err) => {
+      if (err && err.code === "EADDRINUSE") {
+        reject(
+          new Error(
+            `Port ${port} is already in use (often by \`next dev\` on 3000).\n\n` +
+              `Stop that process, or start Electron with a free port:\n` +
+              `  set CRICKSCORE_PORT=3457 && npm start`
+          )
+        );
+        return;
+      }
+      reject(err);
+    });
+    server.once("listening", () => {
+      server.close(() => resolve());
+    });
+    server.listen(port, "127.0.0.1");
+  });
+}
+
 function waitForServer(url, timeoutMs = 60_000) {
   const started = Date.now();
   return new Promise((resolve, reject) => {
+    let settled = false;
+
+    const finish = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      nextProcess?.off("exit", onChildExit);
+      fn(value);
+    };
+
+    const onChildExit = (code) => {
+      const detail = nextLogTail();
+      finish(
+        reject,
+        new Error(
+          `Next.js server exited before becoming ready (code ${code ?? "unknown"}).\n` +
+            `If another app is using port ${PORT}, stop it or set CRICKSCORE_PORT.` +
+            (detail ? `\n\n${detail}` : "")
+        )
+      );
+    };
+
     const retry = () => {
+      if (settled) return;
       if (Date.now() - started > timeoutMs) {
-        reject(new Error(`Server did not become ready at ${url}`));
+        finish(reject, new Error(`Server did not become ready at ${url}`));
         return;
       }
       setTimeout(tryOnce, 400);
     };
+
     const tryOnce = () => {
+      if (settled) return;
+      if (!nextProcess) {
+        finish(reject, new Error("Next.js server process is not running."));
+        return;
+      }
       const req = http.get(url, (res) => {
         res.resume();
         // Port open alone is not enough — Next can answer with 500 while
         // still warming up. Only treat 2xx/3xx as ready.
         if (res.statusCode && res.statusCode < 400) {
-          resolve();
+          finish(resolve);
           return;
         }
         retry();
@@ -52,6 +106,8 @@ function waitForServer(url, timeoutMs = 60_000) {
         retry();
       });
     };
+
+    nextProcess?.once("exit", onChildExit);
     tryOnce();
   });
 }
@@ -68,6 +124,22 @@ function resolveStandaloneDir() {
   return null;
 }
 
+const nextLogChunks = [];
+const NEXT_LOG_LIMIT = 8_000;
+
+function appendNextLog(chunk) {
+  const text = String(chunk);
+  nextLogChunks.push(text);
+  let total = nextLogChunks.reduce((n, s) => n + s.length, 0);
+  while (total > NEXT_LOG_LIMIT && nextLogChunks.length > 1) {
+    total -= nextLogChunks.shift().length;
+  }
+}
+
+function nextLogTail() {
+  return nextLogChunks.join("").trim().slice(-NEXT_LOG_LIMIT);
+}
+
 function startNextServer() {
   const standaloneDir = resolveStandaloneDir();
   if (!standaloneDir) {
@@ -77,6 +149,12 @@ function startNextServer() {
   }
 
   const serverJs = path.join(standaloneDir, "server.js");
+  if (!fs.existsSync(path.join(standaloneDir, "node_modules", "next"))) {
+    throw new Error(
+      `Packaged standalone is missing node_modules/next.\n\nLooked in:\n  ${standaloneDir}`
+    );
+  }
+
   // Stable per-user folder (survives rebuilds, which regenerate .next/standalone)
   // for the SQLite database when DB_BACKEND=sqlite.
   const dataDir = path.join(app.getPath("userData"), "data");
@@ -94,6 +172,11 @@ function startNextServer() {
       PORT: String(PORT),
       HOSTNAME: HOST,
       CRICKSCORE_SQLITE_IPC: "1",
+      // Desktop build is always local SQLite + no Firebase login.
+      DB_BACKEND: "sqlite",
+      NEXT_PUBLIC_DB_BACKEND: "sqlite",
+      AUTH_MODE: "none",
+      NEXT_PUBLIC_AUTH_MODE: "none",
     },
     stdio: ["ignore", "pipe", "pipe", "ipc"],
   });
@@ -101,17 +184,21 @@ function startNextServer() {
   attachToChild(nextProcess);
 
   nextProcess.stdout?.on("data", (chunk) => {
+    appendNextLog(chunk);
     process.stdout.write(`[next] ${chunk}`);
   });
   nextProcess.stderr?.on("data", (chunk) => {
+    appendNextLog(chunk);
     process.stderr.write(`[next] ${chunk}`);
   });
   nextProcess.on("exit", (code) => {
     nextProcess = null;
     if (!shuttingDown && code && code !== 0) {
+      const detail = nextLogTail();
       dialog.showErrorBox(
         "CrickScore server stopped",
-        `The Next.js server exited (code ${code}).`
+        `The Next.js server exited (code ${code}).` +
+          (detail ? `\n\n${detail}` : "")
       );
       app.quit();
     }
@@ -206,6 +293,7 @@ function stopNextServer() {
 
 app.whenReady().then(async () => {
   try {
+    await assertPortFree(PORT);
     startNextServer();
     await waitForServer(LOCAL_URL);
     await createWindow();

@@ -15,7 +15,10 @@
     "electron:prepare": "npm run prepare-standalone --prefix electron",
     "electron:build": "npm run build && npm run electron:prepare",
     "electron:install": "npm install --prefix electron",
-    "electron:start": "npm run electron:build && npm start --prefix electron"
+    "electron:start": "npm run electron:build && npm start --prefix electron",
+    "electron:pack": "npm run pack --prefix electron",
+    "electron:dist": "npm run dist --prefix electron",
+    "electron:dist:win": "npm run dist:win --prefix electron"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

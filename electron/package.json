@@ -3,20 +3,101 @@
   "version": "0.1.0",
   "private": true,
   "description": "Electron desktop wrapper for CrickScore (Next.js standalone)",
+  "author": "CrickScore",
   "main": "main.cjs",
   "scripts": {
     "start": "electron .",
     "prepare-standalone": "node scripts/prepare-standalone.cjs",
     "build": "npm run build --prefix .. && npm run prepare-standalone",
     "app": "npm run build && electron .",
-    "postinstall": "electron-rebuild -f -w better-sqlite3"
+    "pack": "node scripts/dist.cjs --dir",
+    "dist": "node scripts/dist.cjs",
+    "dist:win": "node scripts/dist.cjs --win",
+    "dist:mac": "node scripts/dist.cjs --mac",
+    "dist:linux": "node scripts/dist.cjs --linux",
+    "postinstall": "node node_modules/@electron/rebuild/lib/cli.js -f -w better-sqlite3"
   },
   "dependencies": {
-    "better-sqlite3": "^12.11.1",
-    "crickscore": "file:.."
+    "better-sqlite3": "^12.11.1"
   },
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",
-    "electron": "^37.2.0"
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.crickscore.app",
+    "productName": "CrickScore",
+    "copyright": "Copyright © CrickScore",
+    "afterPack": "./scripts/after-pack.cjs",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.cjs",
+      "sql-bridge.cjs",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "**/node_modules/better-sqlite3/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../.next/standalone",
+        "to": "standalone",
+        "filter": [
+          "**/*",
+          "!node_modules"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": false
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.sports"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Game"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "CrickScore"
+    }
   }
 }

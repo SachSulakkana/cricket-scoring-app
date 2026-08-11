@@ -18,3 +18,5 @@ data/*.db-*
 data/*.sqlite
 data/*.sqlite-*
 electron/.native-cache/
+electron/dist/
+electron/build/icons/
