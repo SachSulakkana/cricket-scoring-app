@@ -70,7 +70,7 @@ export function useLiveMatchSnapshot() {
   const firestore = useFirestoreLiveDraft(user?.uid ?? null, useOwnerRealtime);
   const publicPoll = usePublicLiveMatchPoll(usePublic ? shareKey : null);
   const polled = useLiveMatchPoll(
-    3000,
+    1000,
     !usePublic && (!firebaseEnabled || !user)
   );
 

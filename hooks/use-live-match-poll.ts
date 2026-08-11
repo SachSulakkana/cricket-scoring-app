@@ -6,7 +6,7 @@ import {
   type LiveMatchDraft,
 } from "@/lib/live-match-draft";
 
-const DEFAULT_INTERVAL_MS = 3000;
+const DEFAULT_INTERVAL_MS = 1000;
 
 export function useLiveMatchPoll(intervalMs = DEFAULT_INTERVAL_MS, enabled = true) {
   const [draft, setDraft] = useState<LiveMatchDraft | null>(null);

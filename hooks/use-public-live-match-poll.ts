@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { LiveMatchDraft } from "@/lib/live-match-draft";
 import { LIVE_SHARE_QUERY_PARAM } from "@/lib/live-share-constants";
 
-const DEFAULT_INTERVAL_MS = 3000;
+const DEFAULT_INTERVAL_MS = 1000;
 
 export function usePublicLiveMatchPoll(
   shareKey: string | null,
