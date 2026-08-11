@@ -30,17 +30,26 @@ function getLanUrls() {
 function waitForServer(url, timeoutMs = 60_000) {
   const started = Date.now();
   return new Promise((resolve, reject) => {
+    const retry = () => {
+      if (Date.now() - started > timeoutMs) {
+        reject(new Error(`Server did not become ready at ${url}`));
+        return;
+      }
+      setTimeout(tryOnce, 400);
+    };
     const tryOnce = () => {
       const req = http.get(url, (res) => {
         res.resume();
-        resolve();
-      });
-      req.on("error", () => {
-        if (Date.now() - started > timeoutMs) {
-          reject(new Error(`Server did not become ready at ${url}`));
+        // Port open alone is not enough — Next can answer with 500 while
+        // still warming up. Only treat 2xx/3xx as ready.
+        if (res.statusCode && res.statusCode < 400) {
+          resolve();
           return;
         }
-        setTimeout(tryOnce, 400);
+        retry();
+      });
+      req.on("error", () => {
+        retry();
       });
     };
     tryOnce();
