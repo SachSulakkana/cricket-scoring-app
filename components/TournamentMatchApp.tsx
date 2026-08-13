@@ -103,7 +103,7 @@ interface TournamentMatchAppProps {
   tournament: SavedTournament;
   teams: Team[];
   onBack: () => void;
-  onComplete: (result: TournamentFixtureResult) => void;
+  onComplete: (result: TournamentFixtureResult) => void | Promise<void>;
 }
 
 function getInningsRuns(innings: MatchState["innings1"]): number {
@@ -290,6 +290,16 @@ function createRainAbandonedResult(
   };
 }
 
+function createNoPlayDrawResult(): TournamentFixtureResult {
+  return {
+    runsA: 0,
+    wicketsA: 0,
+    runsB: 0,
+    wicketsB: 0,
+    drawn: true,
+  };
+}
+
 export default function TournamentMatchApp({
   fixture,
   teamA,
@@ -461,6 +471,19 @@ export default function TournamentMatchApp({
     );
   };
 
+  const handleTossDraw = async () => {
+    if (submitted) return;
+    setSubmitted(true);
+    try {
+      finalizeLiveMatch();
+      resetMatch();
+      await onComplete(createNoPlayDrawResult());
+    } catch (err) {
+      setSubmitted(false);
+      throw err;
+    }
+  };
+
   const handleMatchEnd = () => {
     if (matchState.superOver?.active) {
       completeSuperOver();
@@ -575,6 +598,7 @@ export default function TournamentMatchApp({
           variant="tournament"
           eyebrow="Tournament match setup"
           onContinue={handleTossContinue}
+          onDrawMatch={handleTossDraw}
         />
       </CricketPage>
     );

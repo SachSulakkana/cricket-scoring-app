@@ -65,6 +65,8 @@ interface TournamentFixtureResultProps {
   teamBLabel?: string;
   abandoned?: boolean;
   abandonedMessage?: string;
+  drawn?: boolean;
+  drawnMessage?: string;
   winnerId?: string;
   runsA?: number;
   wicketsA?: number;
@@ -78,6 +80,8 @@ export function TournamentFixtureResult({
   teamBLabel,
   abandoned,
   abandonedMessage = "Abandoned due to rain — no points",
+  drawn,
+  drawnMessage = "1 point each",
   winnerId,
   runsA = 0,
   wicketsA = 0,
@@ -97,7 +101,10 @@ export function TournamentFixtureResult({
     ? "MATCH ABANDONED"
     : winnerName
       ? `${winnerName} WON`
-      : "MATCH TIED";
+      : drawn
+        ? "MATCH DRAWN"
+        : "MATCH TIED";
+  const showScores = !abandoned && !drawn;
 
   return (
     <div className="border-b border-[oklch(0.28_0.04_288/0.45)] bg-gradient-to-b from-[oklch(0.16_0.05_295/0.35)] to-[oklch(0.12_0.02_255/0.15)] px-4 py-5 text-center">
@@ -114,23 +121,7 @@ export function TournamentFixtureResult({
         {headline}
       </p>
 
-      {abandoned ? (
-        <>
-          <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3">
-            <ResultTeamColumn team={teamA} name={teamAName} />
-            <span
-              className="cricket-display self-center px-1 text-xs font-semibold text-[var(--cricket-gold)] sm:text-sm"
-              aria-hidden
-            >
-              Vs
-            </span>
-            <ResultTeamColumn team={teamB} name={teamBName} />
-          </div>
-          <p className="mt-3 text-sm text-[oklch(0.58_0.03_255)]">
-            {abandonedMessage}
-          </p>
-        </>
-      ) : (
+      {showScores ? (
         <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3">
           <ResultTeamColumn
             team={teamA}
@@ -146,6 +137,22 @@ export function TournamentFixtureResult({
             score={formatScore(runsB, wicketsB)}
           />
         </div>
+      ) : (
+        <>
+          <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3">
+            <ResultTeamColumn team={teamA} name={teamAName} />
+            <span
+              className="cricket-display self-center px-1 text-xs font-semibold text-[var(--cricket-gold)] sm:text-sm"
+              aria-hidden
+            >
+              Vs
+            </span>
+            <ResultTeamColumn team={teamB} name={teamBName} />
+          </div>
+          <p className="mt-3 text-sm text-[oklch(0.58_0.03_255)]">
+            {abandoned ? abandonedMessage : drawnMessage}
+          </p>
+        </>
       )}
     </div>
   );

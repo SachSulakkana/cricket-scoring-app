@@ -195,6 +195,7 @@ export default function TournamentScheduleList({
                   teamA={fx.teamA}
                   teamB={fx.teamB}
                   abandoned={fx.fixture.result?.abandoned}
+                  drawn={fx.fixture.result?.drawn}
                   winnerId={fx.winnerId}
                   runsA={fx.runsA}
                   wicketsA={fx.wicketsA}

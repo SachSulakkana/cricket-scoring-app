@@ -93,4 +93,36 @@ describe("computeStandings", () => {
     assert.equal(standings[0].teamId, "a");
     assert.equal(getTopTeamIds(standings, 3).length, 3);
   });
+
+  it("awards 1 point each for a no-play draw", () => {
+    const fixtures: TournamentFixture[] = [
+      {
+        id: "1",
+        teamAId: "a",
+        teamBId: "b",
+        played: true,
+        stageIndex: 0,
+        result: {
+          runsA: 0,
+          wicketsA: 0,
+          runsB: 0,
+          wicketsB: 0,
+          drawn: true,
+        },
+      },
+    ];
+    const standings = computeStandings(["a", "b"], fixtures, {
+      totalOvers: 20,
+      ballsPerOver: 6,
+    });
+    const byId = Object.fromEntries(standings.map((row) => [row.teamId, row]));
+    assert.equal(byId.a?.played, 1);
+    assert.equal(byId.b?.played, 1);
+    assert.equal(byId.a?.points, 1);
+    assert.equal(byId.b?.points, 1);
+    assert.equal(byId.a?.tied, 1);
+    assert.equal(byId.b?.tied, 1);
+    assert.equal(byId.a?.won, 0);
+    assert.equal(byId.b?.won, 0);
+  });
 });

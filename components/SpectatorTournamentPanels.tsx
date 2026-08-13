@@ -171,6 +171,7 @@ function SpectatorTournamentMatchCard({
               teamB={fx.teamB}
               teamBLabel={teamBName}
               abandoned={fx.fixture.result?.abandoned}
+              drawn={fx.fixture.result?.drawn}
               winnerId={fx.winnerId}
               runsA={fx.runsA}
               wicketsA={fx.wicketsA}

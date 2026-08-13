@@ -105,6 +105,9 @@ export function buildTournamentMatchResultLines(
   if (result.abandoned) {
     return ["Match abandoned (rain) — no points awarded"];
   }
+  if (result.drawn) {
+    return ["Match drawn — 1 point each"];
+  }
   const lines = [
     `${teamA.name}: ${result.runsA}/${result.wicketsA}`,
     `${teamB.name}: ${result.runsB}/${result.wicketsB}`,
@@ -434,6 +437,7 @@ function formatFixtureOutcome(
 ) {
   if (!fx.result) return "Not played";
   if (fx.result.abandoned) return "Abandoned (rain)";
+  if (fx.result.drawn) return "Drawn — 1 point each";
   const scoreA = `${fx.result.runsA}/${fx.result.wicketsA}`;
   const scoreB = `${fx.result.runsB}/${fx.result.wicketsB}`;
   if (fx.result.winnerTeamId === fx.teamAId) {

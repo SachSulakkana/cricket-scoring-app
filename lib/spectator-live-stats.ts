@@ -1,4 +1,4 @@
-import type { InningsData } from "./cricket-types";
+import type { ExtraType, InningsData } from "./cricket-types";
 import {
   countsAsBowlerWicket,
   countsAsDelivery,
@@ -96,6 +96,17 @@ export function formatWideNoBallChip(
 ): string {
   const runningRuns = Math.max(extraRuns - 1, 0);
   return runningRuns > 0 ? `${runningRuns}${suffix}` : suffix;
+}
+
+/** Number shown on a ball-by-ball chip (bye/leg-bye live in extraRuns). */
+export function getBallChipRuns(ball: {
+  runs: number;
+  extra: ExtraType;
+  extraRuns: number;
+}): number {
+  if (ball.extra === "overthrow") return ball.runs + ball.extraRuns;
+  if (ball.extra !== "none") return ball.extraRuns;
+  return ball.runs;
 }
 
 export function formatBallChip(ball: InningsData["balls"][number]): string {

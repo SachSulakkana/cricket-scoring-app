@@ -212,6 +212,17 @@ function normalizeTournament(
                   }
                 : undefined,
               scorecard: normalizeMatchSnapshot(fx.result.scorecard),
+              ...(fx.result.abandoned
+                ? {
+                    abandoned: true,
+                    abandonedReason:
+                      typeof fx.result.abandonedReason === "string" &&
+                      fx.result.abandonedReason.length > 0
+                        ? fx.result.abandonedReason
+                        : undefined,
+                  }
+                : {}),
+              ...(fx.result.drawn ? { drawn: true } : {}),
             }
           : undefined,
     }));

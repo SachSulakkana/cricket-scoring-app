@@ -83,44 +83,45 @@ export default function PlayTournamentFixturePage() {
       tournament={tournament}
       teams={allTeams}
       onBack={() => router.push(gameRoute)}
-      onComplete={(result) => {
-        void (async () => {
-          let updated = {
-            ...tournament,
-            fixtures: tournament.fixtures.map((fx) =>
-              fx.id === fixture.id
-                ? {
-                    ...fx,
-                    played: true,
-                    result,
-                  }
-                : fx
-            ),
-          };
-          updated = afterMatchUpdate(updated);
-          const advance = tryAdvanceStage(updated);
-          updated = advance.tournament;
-          try {
-            await updateTournament(updated);
-            getStore().dispatch(matchActions.resetLiveMatch());
-            if (advance.championTeamId) {
-              appToast.success("Tournament complete — champion crowned!");
-            } else if (advance.advanced && advance.message) {
-              appToast.success(advance.message);
-            } else if (result.abandoned) {
-              appToast.success("Match abandoned due to rain — no points awarded");
-            } else {
-              appToast.success("Match result saved");
-            }
-            router.push(gameRoute);
-          } catch (err) {
-            appToast.error(
-              err instanceof Error
-                ? err.message
-                : "Could not save match result"
-            );
+      onComplete={async (result) => {
+        let updated = {
+          ...tournament,
+          fixtures: tournament.fixtures.map((fx) =>
+            fx.id === fixture.id
+              ? {
+                  ...fx,
+                  played: true,
+                  result,
+                }
+              : fx
+          ),
+        };
+        updated = afterMatchUpdate(updated);
+        const advance = tryAdvanceStage(updated);
+        updated = advance.tournament;
+        try {
+          await updateTournament(updated);
+          getStore().dispatch(matchActions.resetLiveMatch());
+          if (advance.championTeamId) {
+            appToast.success("Tournament complete — champion crowned!");
+          } else if (advance.advanced && advance.message) {
+            appToast.success(advance.message);
+          } else if (result.abandoned) {
+            appToast.success("Match abandoned due to rain — no points awarded");
+          } else if (result.drawn) {
+            appToast.success("Match drawn — 1 point each");
+          } else {
+            appToast.success("Match result saved");
           }
-        })();
+          router.push(gameRoute);
+        } catch (err) {
+          appToast.error(
+            err instanceof Error
+              ? err.message
+              : "Could not save match result"
+          );
+          throw err;
+        }
       }}
     />
   );

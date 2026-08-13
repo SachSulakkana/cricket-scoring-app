@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import CricketLoader from "@/components/CricketLoader";
 
 interface ConfirmActionDialogProps {
   open: boolean;
@@ -35,7 +36,13 @@ export default function ConfirmActionDialog({
   variant = "default",
 }: ConfirmActionDialogProps) {
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (loading && !next) return;
+        onOpenChange(next);
+      }}
+    >
       <AlertDialogContent className="border-[oklch(0.32_0.04_255)] bg-[oklch(0.14_0.025_255)] text-[var(--cricket-cream)]">
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
@@ -43,6 +50,9 @@ export default function ConfirmActionDialog({
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {loading ? (
+          <CricketLoader size="sm" label="Saving match result…" />
+        ) : null}
         <AlertDialogFooter>
           <AlertDialogCancel
             disabled={loading}

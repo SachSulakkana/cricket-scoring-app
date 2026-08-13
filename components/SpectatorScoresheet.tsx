@@ -9,6 +9,7 @@ import {
 } from "@/components/cricket-shell";
 import {
   formatOversFromLegalBalls,
+  getBallChipRuns,
   getInningsRuns,
   getInningsWickets,
   getLegalBalls,
@@ -116,9 +117,7 @@ export default function SpectatorScoresheet({
                           ? ball.runs > 0
                             ? `${ball.runs}W`
                             : "W"
-                          : ball.extra === "overthrow"
-                            ? ball.runs + ball.extraRuns
-                            : ball.runs}
+                          : getBallChipRuns(ball)}
                       </div>
                       {ball.extra !== "none" && (
                         <div className="text-[0.6rem] font-bold text-[var(--cricket-gold)]">

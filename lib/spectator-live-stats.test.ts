@@ -4,6 +4,7 @@ import type { InningsData } from "./cricket-types";
 import {
   formatBallChip,
   formatBroadcastBallChip,
+  getBallChipRuns,
   getDismissalReplacementEnd,
   getBallsInCurrentOver,
 } from "./spectator-live-stats";
@@ -92,6 +93,32 @@ describe("spectator-live-stats", () => {
     assert.equal(formatBroadcastBallChip(wideWithOne), "1Wd");
     assert.equal(formatBallChip(noBallWithTwo), "2Nb");
     assert.equal(formatBroadcastBallChip(noBallWithTwo), "2Nb");
+  });
+
+  it("shows extra runs on bye and leg-bye chips, not bat runs", () => {
+    const bye = {
+      ...baseBall,
+      id: "b1",
+      runs: 0,
+      extra: "bye" as const,
+      extraRuns: 1,
+      ballNumber: 1,
+      overNumber: 0,
+    };
+    const legBye = {
+      ...baseBall,
+      id: "lb1",
+      runs: 0,
+      extra: "leg-bye" as const,
+      extraRuns: 2,
+      ballNumber: 2,
+      overNumber: 0,
+    };
+
+    assert.equal(getBallChipRuns(bye), 1);
+    assert.equal(getBallChipRuns(legBye), 2);
+    assert.equal(formatBallChip(bye), "1B");
+    assert.equal(formatBallChip(legBye), "2Lb");
   });
 
   it("shows runs and W for run-out deliveries with completed runs", () => {

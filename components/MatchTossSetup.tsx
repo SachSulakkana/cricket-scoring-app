@@ -7,6 +7,7 @@ import {
   CricketBroadcastCard,
   CricketEyebrow,
 } from "@/components/cricket-shell";
+import ConfirmActionDialog from "@/components/ConfirmActionDialog";
 
 export type TossDecision = "bat" | "bowl";
 
@@ -19,6 +20,8 @@ interface MatchTossSetupProps {
     tossWinnerId: string;
     tossDecision: TossDecision;
   }) => void;
+  /** Tournament only — complete as a draw with no ball bowled (1 point each). */
+  onDrawMatch?: () => void | Promise<void>;
   variant?: "quick" | "tournament";
   eyebrow?: string;
   title?: string;
@@ -35,12 +38,15 @@ export default function MatchTossSetup({
   teamA,
   teamB,
   onContinue,
+  onDrawMatch,
   variant = "quick",
   eyebrow = "Match setup",
   title = "Toss and opening setup",
 }: MatchTossSetupProps) {
   const [tossWinnerId, setTossWinnerId] = useState<string | null>(null);
   const [tossDecision, setTossDecision] = useState<TossDecision | null>(null);
+  const [showDrawConfirm, setShowDrawConfirm] = useState(false);
+  const [drawSaving, setDrawSaving] = useState(false);
 
   const handleContinue = () => {
     if (!tossWinnerId || !tossDecision) return;
@@ -101,15 +107,49 @@ export default function MatchTossSetup({
         </div>
       </div>
 
-      <CricketAddButton
-        type="button"
-        variant={variant === "tournament" ? "tournament" : "team"}
-        size="inline"
-        onClick={handleContinue}
-        disabled={!tossWinnerId || !tossDecision}
-      >
-        Continue
-      </CricketAddButton>
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <CricketAddButton
+          type="button"
+          variant={variant === "tournament" ? "tournament" : "team"}
+          size="inline"
+          onClick={handleContinue}
+          disabled={!tossWinnerId || !tossDecision || drawSaving}
+        >
+          Continue
+        </CricketAddButton>
+        {onDrawMatch ? (
+          <button
+            type="button"
+            className="btn-12 btn-12--outline btn-12--md !w-auto !min-h-[2.5rem] px-4"
+            onClick={() => setShowDrawConfirm(true)}
+            disabled={drawSaving}
+          >
+            Match Draw
+          </button>
+        ) : null}
+      </div>
+
+      {onDrawMatch ? (
+        <ConfirmActionDialog
+          open={showDrawConfirm}
+          onOpenChange={(open) => {
+            if (drawSaving && !open) return;
+            setShowDrawConfirm(open);
+          }}
+          title="Record this match as a draw?"
+          description="No ball will be bowled. Both teams get 1 point."
+          confirmLabel="Match Draw"
+          loading={drawSaving}
+          onConfirm={() => {
+            if (drawSaving) return;
+            setDrawSaving(true);
+            void Promise.resolve(onDrawMatch())
+              .catch(() => {
+                setDrawSaving(false);
+              });
+          }}
+        />
+      ) : null}
     </CricketBroadcastCard>
   );
 }

@@ -303,6 +303,8 @@ function StageFixtureResultsPanel({
                 teamBLabel={teamBName}
                 abandoned={fx.fixture.result?.abandoned}
                 abandonedMessage="Abandoned (rain) — no points"
+                drawn={fx.fixture.result?.drawn}
+                drawnMessage="1 point each"
                 winnerId={fx.winnerId}
                 runsA={fx.runsA}
                 wicketsA={fx.wicketsA}

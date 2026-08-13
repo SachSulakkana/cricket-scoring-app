@@ -37,6 +37,8 @@ export interface TournamentFixtureResult {
   /** Match ended without a result — excluded from points table. */
   abandoned?: boolean;
   abandonedReason?: string;
+  /** No-play draw (e.g. from toss) — both teams get 1 point. */
+  drawn?: boolean;
 }
 
 export type PlayoffMatchKind = "qualifier" | "final";

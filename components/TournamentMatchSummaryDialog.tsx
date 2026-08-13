@@ -90,7 +90,9 @@ export default function TournamentMatchSummaryDialog({
   const outcomeText = result
     ? result.abandoned
       ? "Abandoned (rain) — no points awarded"
-      : result.scorecard?.mainMatchTied && result.winnerTeamId
+      : result.drawn
+        ? "Match drawn — 1 point each"
+        : result.scorecard?.mainMatchTied && result.winnerTeamId
         ? `Main match tied · ${
             result.winnerTeamId === teamA.id ? teamA.name : teamB.name
           } won super over`

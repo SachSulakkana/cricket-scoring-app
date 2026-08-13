@@ -2,6 +2,7 @@
 
 import { useCricket } from "@/lib/cricket-context";
 import { InningsData, BallData, countsAsDelivery, countsAsLegalBall, countsAsWicket } from "@/lib/cricket-types";
+import { getBallChipRuns } from "@/lib/spectator-live-stats";
 import {
   CricketBroadcastCard,
   CricketEyebrow,
@@ -119,9 +120,7 @@ export default function Scoresheet({ innings }: ScoresheetProps) {
                           ? ball.runs > 0
                             ? `${ball.runs}W`
                             : "W"
-                          : ball.extra === "overthrow"
-                            ? ball.runs + ball.extraRuns
-                            : ball.runs}
+                          : getBallChipRuns(ball)}
                       </div>
                       {ball.extra !== "none" && (
                         <div className="text-[0.6rem] font-bold text-[var(--cricket-gold)]">
