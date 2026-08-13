@@ -7,6 +7,7 @@ import { useCricket } from "@/lib/cricket-context";
 import { useOfferLiveMatchRestore } from "@/hooks/use-offer-live-match-restore";
 import {
   deriveQuickMatchPage,
+  shouldConfirmMatchEnd,
   shouldShowInningsBreak,
   type QuickMatchPage,
 } from "@/lib/match-session-restore";
@@ -36,8 +37,9 @@ function applyQuickMatchRestore(
   const nextPage = deriveQuickMatchPage(matchState);
   setPage(nextPage);
   const inningsBreak = shouldShowInningsBreak(matchState);
+  const pendingMatchEnd = shouldConfirmMatchEnd(matchState);
   setInnings1AutoEnded(inningsBreak);
-  setRequireUndoAfterInningsBreak(inningsBreak);
+  setRequireUndoAfterInningsBreak(inningsBreak || pendingMatchEnd);
 }
 
 export default function QuickMatchApp({ onBackToHome }: QuickMatchAppProps) {
@@ -197,6 +199,10 @@ export default function QuickMatchApp({ onBackToHome }: QuickMatchAppProps) {
     setPage("scorecard");
   };
 
+  const handleInnings2AutoEnd = () => {
+    setRequireUndoAfterInningsBreak(true);
+  };
+
   const handleStartSecondInnings = () => {
     switchInnings();
     setInnings1AutoEnded(false);
@@ -289,6 +295,7 @@ export default function QuickMatchApp({ onBackToHome }: QuickMatchAppProps) {
           onMatchTied={handleMatchTied}
           onViewScorecard={handleViewScorecard}
           onInnings1AutoEnd={handleInnings1AutoEnd}
+          onInnings2AutoEnd={handleInnings2AutoEnd}
           onSuperOverInnings1End={handleSuperOverInnings1End}
           onEndDueToRain={handleRainAbandon}
           lockActionsUntilUndo={requireUndoAfterInningsBreak}
@@ -317,6 +324,10 @@ export default function QuickMatchApp({ onBackToHome }: QuickMatchAppProps) {
           onBack={handleBackFromScorecard}
           showStartSecondInnings={innings1AutoEnded}
           onStartSecondInnings={handleStartSecondInnings}
+          showConfirmMatchEnd={
+            requireUndoAfterInningsBreak && !innings1AutoEnded
+          }
+          onConfirmMatchEnd={handleScoringEnd}
         />
       )}
 

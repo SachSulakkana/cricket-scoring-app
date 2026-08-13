@@ -1,12 +1,10 @@
 import type { MatchState } from "./cricket-types";
-import { isMatchComplete } from "./match-result";
 
 /** Quick match still being scored (not finished summary / settled draw). */
 export function isQuickMatchInProgress(state: MatchState): boolean {
   if (!state.matchStarted) return false;
   if (state.superOver?.settledAsDraw) return false;
   if (state.superOver?.completed) return false;
-  if (isMatchComplete(state) && !state.superOver?.active) return false;
   return true;
 }
 

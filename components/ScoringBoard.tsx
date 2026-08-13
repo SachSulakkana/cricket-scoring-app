@@ -26,6 +26,7 @@ interface ScoringBoardProps {
   onMatchTied?: () => void;
   onViewScorecard: () => void;
   onInnings1AutoEnd: () => void;
+  onInnings2AutoEnd?: () => void;
   onSuperOverInnings1End?: () => void;
   lockActionsUntilUndo?: boolean;
   onUnlockAfterUndo?: () => void;
@@ -38,6 +39,7 @@ export default function ScoringBoard({
   onMatchTied,
   onViewScorecard,
   onInnings1AutoEnd,
+  onInnings2AutoEnd,
   onSuperOverInnings1End,
   lockActionsUntilUndo = false,
   onUnlockAfterUndo,
@@ -117,14 +119,14 @@ export default function ScoringBoard({
           } else if (isSuperOverInningsTied(matchState)) {
             onMatchTied?.();
           } else {
-            onMatchEnd();
+            onInnings2AutoEnd?.();
           }
         } else if (scoring.currentInningsNumber === 1) {
           onInnings1AutoEnd();
         } else if (isRegularInningsTied(matchState)) {
           onMatchTied?.();
         } else {
-          onMatchEnd();
+          onInnings2AutoEnd?.();
         }
       }
       return;
@@ -142,6 +144,7 @@ export default function ScoringBoard({
     isSuperOver,
     lockActionsUntilUndo,
     onInnings1AutoEnd,
+    onInnings2AutoEnd,
     onSuperOverInnings1End,
     onMatchEnd,
     onMatchTied,
@@ -243,7 +246,9 @@ export default function ScoringBoard({
                 <button
                   type="button"
                   onClick={onViewScorecard}
-                  disabled={lockActionsUntilUndo}
+                  disabled={
+                    lockActionsUntilUndo && scoring.currentInningsNumber === 1
+                  }
                   className="cricket-tab disabled:opacity-40"
                 >
                   Scorecard
@@ -252,7 +257,9 @@ export default function ScoringBoard({
             </div>
             {lockActionsUntilUndo && (
               <p className="text-[oklch(0.75_0.12_75)] text-sm mt-2 font-medium">
-                Undo last ball to continue scoring.
+                {scoring.currentInningsNumber === 2
+                  ? "Undo last ball to continue scoring, or confirm the result."
+                  : "Undo last ball to continue scoring."}
               </p>
             )}
           </CricketMatchHeader>
@@ -372,6 +379,16 @@ export default function ScoringBoard({
             <Scoresheet innings={currentInnings} />
           </div>
         </div>
+
+        {lockActionsUntilUndo && scoring.currentInningsNumber === 2 ? (
+          <button
+            type="button"
+            onClick={onMatchEnd}
+            className="w-full rounded-md border border-[oklch(0.55_0.12_82)] bg-[oklch(0.32_0.08_75)] py-4 cricket-display text-lg font-bold text-[var(--cricket-cream)] tracking-wider hover:brightness-110"
+          >
+            Confirm result
+          </button>
+        ) : null}
 
         {onEndDueToRain && !isSuperOver && (
           <button

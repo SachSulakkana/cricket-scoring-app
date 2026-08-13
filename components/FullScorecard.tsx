@@ -25,6 +25,8 @@ interface FullScorecardProps {
   onBack: () => void;
   showStartSecondInnings?: boolean;
   onStartSecondInnings?: () => void;
+  showConfirmMatchEnd?: boolean;
+  onConfirmMatchEnd?: () => void;
 }
 
 interface BattingRow {
@@ -59,6 +61,8 @@ export default function FullScorecard({
   onBack,
   showStartSecondInnings = false,
   onStartSecondInnings,
+  showConfirmMatchEnd = false,
+  onConfirmMatchEnd,
 }: FullScorecardProps) {
   const { matchState } = useCricket();
   const [expandedBowlerKeys, setExpandedBowlerKeys] = useState<
@@ -558,6 +562,15 @@ export default function FullScorecard({
                 onClick={onStartSecondInnings}
               >
                 Start 2nd innings
+              </button>
+            )}
+            {showConfirmMatchEnd && onConfirmMatchEnd && (
+              <button
+                type="button"
+                className="btn-12 btn-12--lg btn-12--full !min-h-9 !text-xs px-4"
+                onClick={onConfirmMatchEnd}
+              >
+                Confirm result
               </button>
             )}
             <button

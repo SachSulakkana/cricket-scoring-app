@@ -45,6 +45,7 @@ import {
   loadPersistedLiveDraft,
   deriveBattingBowlingTeams,
   deriveTournamentMatchPage,
+  shouldConfirmMatchEnd,
   shouldShowInningsBreak,
 } from "@/lib/match-session-restore";
 import { liveMetaMatches, type LiveMatchMeta } from "@/lib/store/match-slice";
@@ -81,8 +82,9 @@ function applyTournamentMatchRestore(
     }
   }
   const inningsBreak = shouldShowInningsBreak(restored);
+  const pendingMatchEnd = shouldConfirmMatchEnd(restored);
   setInnings1AutoEnded(inningsBreak);
-  setRequireUndoAfterInningsBreak(inningsBreak);
+  setRequireUndoAfterInningsBreak(inningsBreak || pendingMatchEnd);
 }
 
 type TournamentMatchPage =
@@ -535,6 +537,10 @@ export default function TournamentMatchApp({
     setPage("scorecard");
   };
 
+  const handleInnings2AutoEnd = () => {
+    setRequireUndoAfterInningsBreak(true);
+  };
+
   const handleStartSecondInnings = () => {
     switchInnings();
     setInnings1AutoEnded(false);
@@ -706,6 +712,7 @@ export default function TournamentMatchApp({
           onMatchTied={handleMatchTied}
           onViewScorecard={() => setPage("scorecard")}
           onInnings1AutoEnd={handleInnings1AutoEnd}
+          onInnings2AutoEnd={handleInnings2AutoEnd}
           onSuperOverInnings1End={handleSuperOverInnings1End}
           lockActionsUntilUndo={requireUndoAfterInningsBreak}
           onUnlockAfterUndo={handleUnlockAfterUndo}
@@ -735,6 +742,10 @@ export default function TournamentMatchApp({
         onBack={() => setPage("scoring")}
         showStartSecondInnings={innings1AutoEnded}
         onStartSecondInnings={handleStartSecondInnings}
+        showConfirmMatchEnd={
+          requireUndoAfterInningsBreak && !innings1AutoEnded
+        }
+        onConfirmMatchEnd={handleMatchEnd}
       />
     );
   }

@@ -54,7 +54,7 @@ export function deriveQuickMatchPage(matchState: MatchState): QuickMatchPage {
     return "summary";
   }
   if (matchState.superOver?.active) return "scoring";
-  if (isMatchComplete(matchState)) return "summary";
+  if (isMatchComplete(matchState)) return "scoring";
   if (
     matchState.innings1 &&
     matchState.currentInnings === 1 &&
@@ -73,7 +73,7 @@ export function deriveTournamentMatchPage(
     return "finished";
   }
   if (matchState.superOver?.active) return "scoring";
-  if (isMatchComplete(matchState)) return "finished";
+  if (isMatchComplete(matchState)) return "scoring";
   if (
     matchState.innings1 &&
     matchState.currentInnings === 1 &&
@@ -114,4 +114,12 @@ export function shouldShowInningsBreak(matchState: MatchState): boolean {
     matchState.currentInnings === 1 &&
     isInningsComplete(matchState, matchState.innings1)
   );
+}
+
+/** 2nd innings (or super-over chase) is complete with a winner — wait for undo or confirm. */
+export function shouldConfirmMatchEnd(matchState: MatchState): boolean {
+  if (matchState.superOver?.settledAsDraw || matchState.superOver?.completed) {
+    return false;
+  }
+  return isMatchComplete(matchState);
 }
