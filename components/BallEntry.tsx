@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Pencil } from "lucide-react";
+import { useState, useMemo, useRef, type PointerEvent } from "react";
+import { GripVertical, Pencil } from "lucide-react";
 import { useCricket } from "@/lib/cricket-context";
+import { cn } from "@/lib/utils";
 import {
   countsAsBowlerWicket,
   countsAsDelivery,
@@ -10,6 +11,7 @@ import {
   countsAsWicket,
   DismissalType,
   ExtraType,
+  strikeRotationRuns,
 } from "@/lib/cricket-types";
 import { getDismissalReplacementEnd, getBatsmanBalls, getBatsmanRuns } from "@/lib/spectator-live-stats";
 import DismissalModal from "./DismissalModal";
@@ -23,6 +25,13 @@ interface BallEntryProps {
   onOverComplete?: () => void;
   lockActionsUntilUndo?: boolean;
   onUnlockAfterUndo?: () => void;
+}
+
+type CreaseEnd = "striker" | "non-striker";
+
+function pointInRect(rect: DOMRect | undefined, x: number, y: number) {
+  if (!rect) return false;
+  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
 }
 
 export default function BallEntry({
@@ -60,6 +69,16 @@ export default function BallEntry({
     dismissedPlayerId: string;
     fielderId?: string;
   } | null>(null);
+  const [draggingBatsmanEnd, setDraggingBatsmanEnd] = useState<CreaseEnd | null>(
+    null
+  );
+  const [batsmanDropTarget, setBatsmanDropTarget] = useState<CreaseEnd | null>(
+    null
+  );
+  const draggingBatsmanEndRef = useRef<CreaseEnd | null>(null);
+  const batsmanDropTargetRef = useRef<CreaseEnd | null>(null);
+  const strikerPanelRef = useRef<HTMLDivElement>(null);
+  const nonStrikerPanelRef = useRef<HTMLDivElement>(null);
 
   if (!currentInnings || !scoring) return null;
 
@@ -175,6 +194,70 @@ export default function BallEntry({
   }, [currentInnings.balls, scoring]);
 
   const scoringLocked = lockActionsUntilUndo || isInningsComplete;
+  const canSwapBatsmen = Boolean(nonStrikerInfo) && !scoringLocked;
+
+  const hitBatsmanEnd = (x: number, y: number): CreaseEnd | null => {
+    if (pointInRect(strikerPanelRef.current?.getBoundingClientRect(), x, y)) {
+      return "striker";
+    }
+    if (
+      pointInRect(nonStrikerPanelRef.current?.getBoundingClientRect(), x, y)
+    ) {
+      return "non-striker";
+    }
+    return null;
+  };
+
+  const clearBatsmanDrag = () => {
+    draggingBatsmanEndRef.current = null;
+    batsmanDropTargetRef.current = null;
+    setDraggingBatsmanEnd(null);
+    setBatsmanDropTarget(null);
+  };
+
+  const handleBatsmanPointerDown = (
+    end: CreaseEnd,
+    event: PointerEvent<HTMLDivElement>
+  ) => {
+    if (!canSwapBatsmen) return;
+    if (event.button !== 0) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    draggingBatsmanEndRef.current = end;
+    batsmanDropTargetRef.current = null;
+    setDraggingBatsmanEnd(end);
+    setBatsmanDropTarget(null);
+  };
+
+  const handleBatsmanPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!draggingBatsmanEndRef.current) return;
+    const hit = hitBatsmanEnd(event.clientX, event.clientY);
+    const target =
+      hit && hit !== draggingBatsmanEndRef.current ? hit : null;
+    if (batsmanDropTargetRef.current !== target) {
+      batsmanDropTargetRef.current = target;
+      setBatsmanDropTarget(target);
+    }
+  };
+
+  const handleBatsmanPointerUp = () => {
+    const from = draggingBatsmanEndRef.current;
+    const to = batsmanDropTargetRef.current;
+    if (from && to && from !== to) {
+      swapStrike();
+    }
+    clearBatsmanDrag();
+  };
+
+  const batsmanDragHandlers = (end: CreaseEnd) =>
+    canSwapBatsmen
+      ? {
+          onPointerDown: (event: PointerEvent<HTMLDivElement>) =>
+            handleBatsmanPointerDown(end, event),
+          onPointerMove: handleBatsmanPointerMove,
+          onPointerUp: handleBatsmanPointerUp,
+          onPointerCancel: clearBatsmanDrag,
+        }
+      : {};
 
   const recordBall = (runs: number, extra: string, extraRuns: number = 0) => {
     if (scoringLocked) return;
@@ -196,15 +279,7 @@ export default function BallEntry({
     addBall(newBall);
 
     // Auto-change striker/non-striker based on delivery outcome.
-    // For extras, rotate strike using extra runs scored on that ball.
-    const strikeRotationRuns =
-      extra === "none"
-        ? runs
-        : extra === "overthrow"
-          ? runs + extraRuns
-          : extraRuns;
-    if (strikeRotationRuns % 2 === 1) {
-      // Odd runs: change strike
+    if (strikeRotationRuns(newBall) % 2 === 1) {
       swapStrike();
     }
     // Even runs (0, 2, 4, 6) keep same strike
@@ -446,39 +521,91 @@ export default function BallEntry({
           <p className="cricket-display text-sm font-semibold text-[var(--cricket-cream)]">
             {isSuperOver
               ? `Ball ${Math.min(currentLegalBallCount + 1, ballsPerOver)} of ${ballsPerOver}`
-              : `Over ${currentOver + 1}.${ballsInCurrentOver}`}
+              : `Over ${currentOver}.${ballsInCurrentOver}`}
           </p>
           <span className="cricket-eyebrow mb-0">Ball {currentBallNumber}</span>
         </div>
         <div className="p-4 space-y-5">
           <div className="grid grid-cols-2 gap-3">
-            <div className="cricket-striker-panel">
-              <p className="cricket-panel-label text-[var(--cricket-score)]">
-                Striker
-              </p>
-              <p className="cricket-score text-xl text-[var(--cricket-cream)] mt-1">
-                {strikerInfo.name}{" "}
-                <span className="text-[var(--cricket-gold)]">
-                  {strikerRuns} ({strikerBalls})
-                </span>
-              </p>
-            </div>
-            <div className="cricket-non-striker-panel">
-              <p className="cricket-panel-label text-[oklch(0.65_0.08_300)]">
-                Non-striker
-              </p>
-              <p className="cricket-score text-xl text-[var(--cricket-cream)] mt-1">
-                {nonStrikerInfo ? (
-                  <>
-                    {nonStrikerInfo.name}{" "}
-                    <span className="text-[oklch(0.72_0.06_300)]">
-                      {nonStrikerRuns} ({nonStrikerBalls})
+            <div
+              ref={strikerPanelRef}
+              className={cn(
+                "cricket-striker-panel",
+                canSwapBatsmen && "cursor-grab touch-none select-none",
+                draggingBatsmanEnd === "striker" &&
+                  "scale-[0.99] cursor-grabbing opacity-50",
+                batsmanDropTarget === "striker" &&
+                  "shadow-[0_0_0_2px_oklch(0.55_0.12_300/0.7)]"
+              )}
+              aria-label={
+                canSwapBatsmen
+                  ? "Striker. Drag onto non-striker to swap."
+                  : "Striker"
+              }
+              {...batsmanDragHandlers("striker")}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="cricket-panel-label text-[var(--cricket-score)]">
+                    Striker
+                  </p>
+                  <p className="cricket-score text-xl text-[var(--cricket-cream)] mt-1">
+                    {strikerInfo.name}{" "}
+                    <span className="text-[var(--cricket-gold)]">
+                      {strikerRuns} ({strikerBalls})
                     </span>
-                  </>
-                ) : (
-                  "—"
-                )}
-              </p>
+                  </p>
+                </div>
+                {canSwapBatsmen ? (
+                  <GripVertical
+                    className="mt-0.5 h-4 w-4 shrink-0 text-[oklch(0.72_0.04_300)]"
+                    aria-hidden
+                  />
+                ) : null}
+              </div>
+            </div>
+            <div
+              ref={nonStrikerPanelRef}
+              className={cn(
+                "cricket-non-striker-panel",
+                canSwapBatsmen && "cursor-grab touch-none select-none",
+                draggingBatsmanEnd === "non-striker" &&
+                  "scale-[0.99] cursor-grabbing opacity-50",
+                batsmanDropTarget === "non-striker" &&
+                  "shadow-[0_0_0_2px_oklch(0.55_0.12_300/0.7)]"
+              )}
+              aria-label={
+                canSwapBatsmen
+                  ? "Non-striker. Drag onto striker to swap."
+                  : "Non-striker"
+              }
+              {...batsmanDragHandlers("non-striker")}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="cricket-panel-label text-[oklch(0.65_0.08_300)]">
+                    Non-striker
+                  </p>
+                  <p className="cricket-score text-xl text-[var(--cricket-cream)] mt-1">
+                    {nonStrikerInfo ? (
+                      <>
+                        {nonStrikerInfo.name}{" "}
+                        <span className="text-[oklch(0.72_0.06_300)]">
+                          {nonStrikerRuns} ({nonStrikerBalls})
+                        </span>
+                      </>
+                    ) : (
+                      "—"
+                    )}
+                  </p>
+                </div>
+                {canSwapBatsmen ? (
+                  <GripVertical
+                    className="mt-0.5 h-4 w-4 shrink-0 text-[oklch(0.72_0.04_300)]"
+                    aria-hidden
+                  />
+                ) : null}
+              </div>
             </div>
           </div>
 
@@ -590,6 +717,11 @@ export default function BallEntry({
               type="button"
               onClick={() => {
                 undoLastBall();
+                setShowBowlerSelector(false);
+                setShowReplacementModal(false);
+                setShowDismissalModal(false);
+                setDismissedPlayerInfo(null);
+                setPendingRunOutDismissal(null);
                 if (lockActionsUntilUndo) {
                   onUnlockAfterUndo?.();
                 }

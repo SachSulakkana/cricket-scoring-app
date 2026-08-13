@@ -33,6 +33,17 @@ export function countsAsLegalBall(ball: {
   );
 }
 
+/** Runs that rotate strike on this delivery (odd → swap). */
+export function strikeRotationRuns(ball: {
+  runs: number;
+  extra: ExtraType;
+  extraRuns: number;
+}): number {
+  if (ball.extra === "none") return ball.runs;
+  if (ball.extra === "overthrow") return ball.runs + ball.extraRuns;
+  return ball.extraRuns;
+}
+
 export type ExtraType = "wide" | "no-ball" | "bye" | "leg-bye" | "overthrow" | "none";
 
 export type TournamentPreset = "T20" | "ODI" | "T10";

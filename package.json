@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint lib app/api",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test lib/match-result.test.ts lib/super-over.test.ts lib/scorecard-stats.test.ts lib/tournament-nrr.test.ts lib/tournament-stage-engine/tournament-stage-engine.test.ts",
+    "test": "tsx --test lib/match-result.test.ts lib/super-over.test.ts lib/scorecard-stats.test.ts lib/tournament-nrr.test.ts lib/tournament-stage-engine/tournament-stage-engine.test.ts lib/store/match-slice.test.ts",
     "electron:prepare": "npm run prepare-standalone --prefix electron",
     "electron:build": "npm run build && npm run electron:prepare",
     "electron:install": "npm install --prefix electron",

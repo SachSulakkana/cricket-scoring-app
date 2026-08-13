@@ -6,7 +6,12 @@ import type {
   MatchState,
   Team,
 } from "@/lib/cricket-types";
-import { countsAsDelivery, countsAsLegalBall } from "@/lib/cricket-types";
+import {
+  countsAsDelivery,
+  countsAsLegalBall,
+  countsAsWicket,
+  strikeRotationRuns,
+} from "@/lib/cricket-types";
 import { createSuperOverInnings } from "@/lib/scoring-context";
 import { SUPER_OVER_MAX_BALLS } from "@/lib/super-over";
 
@@ -97,12 +102,36 @@ function getBowlingTeamForInnings(
   return state.team2;
 }
 
+function getBattingTeamForInnings(
+  state: MatchState,
+  innings: InningsData
+): Team {
+  if (innings.teamId === state.team1.id) return state.team1;
+  if (innings.teamId === state.team2.id) return state.team2;
+  return state.team1;
+}
+
+function getBallsPerOver(state: MatchState): number | undefined {
+  if (isSuperOverScoring(state) && state.superOver) {
+    return state.superOver.ballsPerOver;
+  }
+  return state.config?.ballsPerOver;
+}
+
+function playerIdNamed(team: Team, name: string | undefined): string | undefined {
+  if (!name) return undefined;
+  return team.players.find((player) => player.name === name)?.id;
+}
+
+function swapInningsStrike(innings: InningsData) {
+  const prevStriker = innings.strikerPlayerId;
+  innings.strikerPlayerId = innings.nonStrikerPlayerId;
+  innings.nonStrikerPlayerId = prevStriker;
+}
+
 /** Rebuild participant ids from balls in the incomplete over (for undo). */
 function rebuildCurrentOverBowlerIds(state: MatchState, innings: InningsData) {
-  const ballsPerOver =
-    isSuperOverScoring(state) && state.superOver
-      ? state.superOver.ballsPerOver
-      : state.config?.ballsPerOver;
+  const ballsPerOver = getBallsPerOver(state);
   if (!ballsPerOver || ballsPerOver < 1) {
     innings.currentOverBowlerPlayerIds = [];
     return;
@@ -236,8 +265,60 @@ const matchSlice = createSlice({
     undoLastBall(state) {
       mutateActiveInnings(state.matchState, (innings) => {
         if (innings.balls.length === 0) return;
+        const popped = innings.balls[innings.balls.length - 1]!;
+        const ballsPerOver = getBallsPerOver(state.matchState);
+        const legalIncluding = innings.balls.filter((ball) =>
+          countsAsLegalBall(ball)
+        ).length;
+        const completedOver = Boolean(
+          ballsPerOver &&
+            ballsPerOver > 0 &&
+            countsAsLegalBall(popped) &&
+            legalIncluding % ballsPerOver === 0
+        );
+        const oddStrike = strikeRotationRuns(popped) % 2 === 1;
+        const isWicket = countsAsWicket(popped.dismissal);
+
         innings.balls.pop();
         rebuildCurrentOverBowlerIds(state.matchState, innings);
+
+        const battingTeam = getBattingTeamForInnings(state.matchState, innings);
+        const dismissedId = playerIdNamed(battingTeam, popped.dismissedPlayer);
+        const dismissedStillAtCrease = Boolean(
+          dismissedId &&
+            (innings.strikerPlayerId === dismissedId ||
+              innings.nonStrikerPlayerId === dismissedId)
+        );
+        // End-of-over swap is applied immediately for legal balls, but for a
+        // wicket it waits until the replacement batsman is confirmed.
+        const overSwapApplied =
+          completedOver && (!isWicket || !dismissedStillAtCrease);
+
+        if (overSwapApplied) swapInningsStrike(innings);
+        if (oddStrike) swapInningsStrike(innings);
+
+        if (completedOver) {
+          const bowlingTeam = getBowlingTeamForInnings(
+            state.matchState,
+            innings
+          );
+          const poppedBowlerId = playerIdNamed(bowlingTeam, popped.bowlerName);
+          if (
+            poppedBowlerId &&
+            innings.currentBowlerPlayerId !== poppedBowlerId
+          ) {
+            innings.currentBowlerPlayerId = poppedBowlerId;
+            const prevOverLast = innings.balls.filter(
+              (ball) =>
+                ball.overNumber === popped.overNumber - 1 &&
+                countsAsDelivery(ball)
+            ).at(-1);
+            innings.lastBowlerPlayerId = playerIdNamed(
+              bowlingTeam,
+              prevOverLast?.bowlerName
+            );
+          }
+        }
       });
     },
     switchInnings(state) {
@@ -304,9 +385,7 @@ const matchSlice = createSlice({
     },
     swapStrike(state) {
       mutateActiveInnings(state.matchState, (innings) => {
-        const prevStriker = innings.strikerPlayerId;
-        innings.strikerPlayerId = innings.nonStrikerPlayerId;
-        innings.nonStrikerPlayerId = prevStriker;
+        swapInningsStrike(innings);
       });
     },
   },

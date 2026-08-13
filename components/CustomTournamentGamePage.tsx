@@ -41,7 +41,7 @@ import {
   addNrrTotals,
   computeTournamentNrr,
   emptyNrrTotals,
-  formatTournamentNrr,
+  formatStandingNrr,
   getMatchNrrContributions,
 } from "@/lib/tournament-nrr";
 import { buildTournamentPlayerStats } from "@/lib/tournament-stats";
@@ -118,7 +118,22 @@ function buildPointsTable(
   const stageIndices = normalizeStageFilter(stageFilter);
   const nrrTotals = new Map<string, ReturnType<typeof emptyNrrTotals>>();
   const map = new Map<string, StandingRow>();
-  teams.forEach((team) => {
+  const participantIds = new Set<string>();
+  fixtures.forEach((fx) => {
+    if (
+      stageIndices != null &&
+      !stageIndices.includes(fx.fixture.stageIndex)
+    ) {
+      return;
+    }
+    participantIds.add(fx.teamA.id);
+    participantIds.add(fx.teamB.id);
+  });
+  const tableTeams =
+    participantIds.size > 0
+      ? teams.filter((team) => participantIds.has(team.id))
+      : teams;
+  tableTeams.forEach((team) => {
     map.set(team.id, {
       team,
       played: 0,
@@ -330,13 +345,20 @@ function PointsTableBlock({
     ) : null;
   }
 
-  const displayRows = rows.filter((r) => r.played > 0).slice(0, 10);
+  const nonePlayed = rows.every((r) => r.played === 0);
+  const displayRows = nonePlayed
+    ? [...rows].sort((a, b) =>
+        a.team.name.localeCompare(b.team.name, undefined, { sensitivity: "base" })
+      )
+    : rows.slice(0, 10);
 
   return (
     <section className="space-y-2">
-      <div className="tournament-game-section-head">
-        <span className="tournament-game-pill shrink-0">Top 10</span>
-      </div>
+      {!nonePlayed ? (
+        <div className="tournament-game-section-head">
+          <span className="tournament-game-pill shrink-0">Top 10</span>
+        </div>
+      ) : null}
       <div
         className="tournament-points-table-scroll rounded-md border border-[oklch(0.32_0.04_255)] bg-[oklch(0.1_0.02_288/0.65)]"
         role="table"
@@ -409,7 +431,7 @@ function PointsTableBlock({
                 className="text-center text-base font-bold tabular-nums text-[var(--cricket-gold)] sm:text-[1.0625rem]"
                 role="cell"
               >
-                {formatTournamentNrr(row.nrr)}
+                {formatStandingNrr(row.nrr, row.played)}
               </span>
             </div>
           ))}
