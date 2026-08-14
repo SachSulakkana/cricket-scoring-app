@@ -222,8 +222,10 @@ function buildPointsTable(
 
   return Array.from(map.values()).sort((x, y) => {
     if (y.points !== x.points) return y.points - x.points;
-    const xNrr = x.nrr ?? -Infinity;
-    const yNrr = y.nrr ?? -Infinity;
+    // No completed innings yet ranks as 0.000, matching the displayed value, so a
+    // team that hasn't played stays above one carrying a negative NRR.
+    const xNrr = x.nrr ?? 0;
+    const yNrr = y.nrr ?? 0;
     if (yNrr !== xNrr) return yNrr - xNrr;
     if (y.runDiff !== x.runDiff) return y.runDiff - x.runDiff;
     return x.team.name.localeCompare(y.team.name);

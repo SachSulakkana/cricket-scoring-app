@@ -19,8 +19,10 @@ export interface StandingEntry {
 
 function compareStandings(a: StandingEntry, b: StandingEntry): number {
   if (b.points !== a.points) return b.points - a.points;
-  const aNrr = a.nrr ?? -Infinity;
-  const bNrr = b.nrr ?? -Infinity;
+  // No completed innings yet ranks as 0.000, matching the displayed value, so a
+  // team that hasn't played stays above one carrying a negative NRR.
+  const aNrr = a.nrr ?? 0;
+  const bNrr = b.nrr ?? 0;
   if (bNrr !== aNrr) return bNrr - aNrr;
   if (b.runDiff !== a.runDiff) return b.runDiff - a.runDiff;
   return a.teamId.localeCompare(b.teamId);

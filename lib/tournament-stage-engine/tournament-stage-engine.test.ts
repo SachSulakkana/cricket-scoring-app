@@ -6,7 +6,11 @@ import {
   resolvePlayoffFinalOpponent,
 } from "./generate-fixtures";
 import { computeStandings, getTopTeamIds } from "./standings";
-import type { TournamentFixture } from "@/lib/roster-types";
+import type {
+  TournamentFixture,
+  TournamentMatchSnapshot,
+} from "@/lib/roster-types";
+import type { BallData, InningsData } from "@/lib/cricket-types";
 
 describe("generateRoundRobinFixtures", () => {
   it("creates 6 matches for 4 teams", () => {
@@ -92,6 +96,70 @@ describe("computeStandings", () => {
     });
     assert.equal(standings[0].teamId, "a");
     assert.equal(getTopTeamIds(standings, 3).length, 3);
+  });
+
+  it("ranks a team with negative NRR below teams yet to play", () => {
+    const makeInnings = (
+      teamId: string,
+      runsPerBall: number,
+      ballsPerOver: number
+    ): InningsData => ({
+      teamId,
+      teamName: teamId.toUpperCase(),
+      balls: Array.from({ length: ballsPerOver }, (_, i): BallData => ({
+        id: `${teamId}-${i}`,
+        runs: runsPerBall,
+        extra: "none",
+        extraRuns: 0,
+        dismissal: "none",
+        bowlerName: "bowler",
+        batsmanName: "batsman",
+        ballNumber: i + 1,
+        overNumber: 0,
+      })),
+      currentBatsmanIndex: 0,
+      currentBowlerIndex: 0,
+      strikerPlayerId: "p1",
+      nonStrikerPlayerId: "p2",
+      currentBowlerPlayerId: "p3",
+    });
+
+    // "a" thrashes "b" (36 vs 6 off one over), while "c" and "d" have not played.
+    const scorecard: TournamentMatchSnapshot = {
+      team1: { id: "a", name: "A", players: [] },
+      team2: { id: "b", name: "B", players: [] },
+      config: { totalOvers: 20, ballsPerOver: 6 },
+      innings1: makeInnings("a", 6, 6),
+      innings2: makeInnings("b", 1, 6),
+    };
+    const fixtures: TournamentFixture[] = [
+      {
+        id: "1",
+        teamAId: "a",
+        teamBId: "b",
+        played: true,
+        stageIndex: 0,
+        result: {
+          runsA: 36,
+          wicketsA: 0,
+          runsB: 6,
+          wicketsB: 0,
+          winnerTeamId: "a",
+          scorecard,
+        },
+      },
+    ];
+
+    const standings = computeStandings(["a", "b", "c", "d"], fixtures, {
+      totalOvers: 20,
+      ballsPerOver: 6,
+    });
+
+    assert.ok((standings.find((r) => r.teamId === "b")?.nrr ?? 0) < 0);
+    assert.deepEqual(
+      standings.map((row) => row.teamId),
+      ["a", "c", "d", "b"]
+    );
   });
 
   it("awards 1 point each for a no-play draw", () => {
